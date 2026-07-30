@@ -11,6 +11,8 @@ backend/*.jar
 backend/*.war
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/HELP.md
+!**/rmigrations/
+!**/rmigrations/**
 
 # Ignorowane pliki Frontend (Angular / Node)
 frontend/node_modules/
