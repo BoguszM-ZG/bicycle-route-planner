@@ -13,7 +13,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping("/routes")
+@RequestMapping("/api/routes")
 @RequiredArgsConstructor
 public class RouteController {
     private final RouteService routeService;
