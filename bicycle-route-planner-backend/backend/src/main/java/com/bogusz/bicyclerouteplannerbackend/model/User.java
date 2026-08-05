@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -11,6 +12,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@NoArgsConstructor
 @Getter
 @Setter
 @Entity
@@ -51,8 +53,8 @@ public class User {
     @OneToMany(mappedBy = "user")
     private Set<Folder> folders = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "user")
-    private Set<Route> routes = new LinkedHashSet<>();
+//    @OneToMany(mappedBy = "user")
+//    private Set<Route> routes = new LinkedHashSet<>();
 
 
 }

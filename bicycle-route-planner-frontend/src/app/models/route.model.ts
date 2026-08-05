@@ -1,5 +1,5 @@
 export interface RouteDetailDto {
-  id: number;
+  id?: number;
   userEmail: string;
   name: string;
   routeType: string;

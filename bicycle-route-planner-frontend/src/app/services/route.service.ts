@@ -15,4 +15,8 @@ export class RouteService {
   getRoutes(): Observable<RouteDetailDto[]> {
     return this.http.get<RouteDetailDto[]>(this.apiUrl);
   }
+
+  public addRoute(routeData: RouteDetailDto) : Observable<any> {
+    return this.http.post<any>(this.apiUrl, routeData);
+  }
 }

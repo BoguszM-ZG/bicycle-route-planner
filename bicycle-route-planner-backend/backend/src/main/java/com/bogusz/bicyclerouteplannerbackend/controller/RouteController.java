@@ -3,10 +3,8 @@ package com.bogusz.bicyclerouteplannerbackend.controller;
 import com.bogusz.bicyclerouteplannerbackend.dto.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,7 +17,14 @@ public class RouteController {
     private final RouteService routeService;
 
     @GetMapping
-    public List<RouteDetailDto> getAllRoutes() {
-        return routeService.getAllRoutes();
+    public ResponseEntity<List<RouteDetailDto>> getAllRoutes() {
+        List<RouteDetailDto> routes = routeService.getAllRoutes();
+        return ResponseEntity.ok(routes);
+    }
+
+    @PostMapping
+    public ResponseEntity<RouteDetailDto> saveRoute(@RequestBody RouteDetailDto routeDetailDto) {
+        RouteDetailDto savedRoute = routeService.saveRoute(routeDetailDto);
+        return ResponseEntity.ok(savedRoute);
     }
 }

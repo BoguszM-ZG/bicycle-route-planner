@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { AfterViewInit, Component, NgZone } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { RouteService } from '../../services/route.service';
@@ -28,12 +28,23 @@ export class MapComponent implements AfterViewInit {
   private map!: L.Map;
   private routingControl?: L.Routing.Control;
 
-  private currentRouteData: {
+  protected currentRouteData: {
     geometryWkt?: string;
     distanceMeters?: number;
-  } = {};
+    elevationGain?: number;
+    elevationLoss?: number;
+    name?: string;
+    routeType?: string;
+    startPoint?: string;
+  } = {
+    name: '',
+    routeType: 'cycling',
+  };
 
-  constructor(private routeService: RouteService) {}
+  constructor(
+    private readonly routeService: RouteService,
+    private readonly ngZone: NgZone
+  ) {}
 
   ngAfterViewInit(): void {
     this.initMap();
@@ -68,8 +79,8 @@ export class MapComponent implements AfterViewInit {
   }
 
   private initRoutingControl(): void {
-    const customOrsRouter = {
-      route: (waypoints: any[], callback: any, context: any, options: any) => {
+    const customOrsRouter: L.Routing.IRouter = {
+      route: (waypoints: any[], callback: any, context: any, _options: any) => {
         const coords = waypoints.map((w: any) => [w.latLng.lng, w.latLng.lat]);
 
         fetch('https://api.openrouteservice.org/v2/directions/cycling-road/geojson', {
@@ -86,43 +97,53 @@ export class MapComponent implements AfterViewInit {
         })
           .then(res => res.json())
           .then(data => {
-            if (data.error) {
-              callback.call(context, { status: -1, message: data.error.message });
-              return;
-            }
+            this.ngZone.run(() => {
+              if (data.error) {
+                callback.call(context, { status: -1, message: data.error.message });
+                return;
+              }
 
-            const feature = data.features[0];
-            const geometry = feature.geometry.coordinates;
-            const summary = feature.properties.summary;
+              if (!data.features || data.features.length === 0) {
+                callback.call(context, { status: -1, message: 'Brak wyników trasy.' });
+                return;
+              }
 
-            const routeCoordinates = geometry.map((coord: number[]) =>
-              L.latLng(coord[1], coord[0], coord[2])
-            );
+              const feature = data.features[0];
+              const geometry = feature.geometry.coordinates;
+              const summary = feature.properties?.summary;
 
-            const result = [{
-              name: "Trasa 3D",
-              summary: {
-                totalDistance: summary.distance,
-                totalTime: summary.duration
-              },
-              coordinates: routeCoordinates,
-              waypoints: waypoints,
-              inputWaypoints: waypoints,
-              instructions: []
-            }];
+              const routeCoordinates = geometry.map((coord: number[]) =>
+                L.latLng(coord[1], coord[0], coord[2])
+              );
 
-            callback.call(context, null, result);
+              this.updateRouteData(routeCoordinates, summary?.distance ?? 0);
+
+              const result = [{
+                name: 'Trasa 3D',
+                summary: {
+                  totalDistance: summary?.distance ?? 0,
+                  totalTime: summary?.duration ?? 0
+                },
+                coordinates: routeCoordinates,
+                waypoints: waypoints,
+                inputWaypoints: waypoints,
+                instructions: []
+              }];
+
+              callback.call(context, null, result);
+            });
           })
           .catch(err => {
-            callback.call(context, err);
+            this.ngZone.run(() => {
+              callback.call(context, err);
+            });
           });
 
-        return { abort: () => {} };
       }
     };
 
     const routePlan = L.Routing.plan([], {
-      createMarker: (i, waypoint, n) => {
+      createMarker: (_i, waypoint, _n) => {
         return L.marker(waypoint.latLng, { draggable: true });
       },
     });
@@ -141,24 +162,8 @@ export class MapComponent implements AfterViewInit {
       show: false,
     }).addTo(this.map);
 
-
-    this.routingControl.on('routesfound', (e: any) => {
-      const routes = e.routes;
-      const summary = routes[0].summary;
-      const coordinates = routes[0].coordinates;
-
-      console.log(`Znaleziono trasę 3D! Dystans: ${(summary.totalDistance / 1000).toFixed(2)} km`);
-
-
-      const wktPoints = coordinates
-        .map((pt: any) => `${pt.lng} ${pt.lat} ${pt.alt || 0}`)
-        .join(', ');
-
-
-      this.currentRouteData.geometryWkt = `LINESTRING Z(${wktPoints})`;
-      this.currentRouteData.distanceMeters = summary.totalDistance;
-
-      console.log('Gotowy WKT 3D:', this.currentRouteData.geometryWkt);
+    this.routingControl.on('routingerror', (e: any) => {
+      console.error('Błąd wyznaczania trasy:', e);
     });
 
     this.map.on('click', (e: any) => {
@@ -169,4 +174,79 @@ export class MapComponent implements AfterViewInit {
       }
     });
   }
+
+  private updateRouteData(coordinates: L.LatLng[], totalDistance: number): void {
+    const wktPoints = coordinates
+      .map((pt: L.LatLng) => `${pt.lng} ${pt.lat} ${pt.alt ?? 0}`)
+      .join(', ');
+
+    this.currentRouteData.geometryWkt = `LINESTRING Z(${wktPoints})`;
+    this.currentRouteData.distanceMeters = totalDistance;
+
+    let gain = 0;
+    let loss = 0;
+
+    for (let i = 1; i < coordinates.length; i++) {
+      const prevAlt = coordinates[i - 1].alt ?? 0;
+      const currAlt = coordinates[i].alt ?? 0;
+      const diff = currAlt - prevAlt;
+
+      if (diff > 0) {
+        gain += diff;
+      } else {
+        loss -= diff;
+      }
+    }
+
+    if (coordinates.length > 0) {
+      const start = coordinates[0];
+      this.currentRouteData.startPoint = `POINT(${start.lng.toFixed(5)} ${start.lat.toFixed(5)})`;
+    }
+
+    this.currentRouteData.elevationGain = gain;
+    this.currentRouteData.elevationLoss = loss;
+
+    console.log(`Wzniesienie: ${gain.toFixed(2)} m, Spadek: ${loss.toFixed(2)} m`);
+    console.log('Gotowy WKT 3D:', this.currentRouteData.geometryWkt);
+  }
+
+  public clearRoute(): void {
+    this.routingControl?.setWaypoints([]);
+    this.currentRouteData = {
+      name: '',
+      routeType: 'cycling',
+    };
+  }
+
+  public saveRoute(): void {
+    if(!this.currentRouteData.geometryWkt) {
+      alert('Najpierw wyznacz trasę, żeby ją zapisać.');
+      return;
+    }
+
+    this.routeService.addRoute({
+      id: 0,
+      userEmail: 'test@gmail.com',
+      name: this.currentRouteData.name || 'brak nazwy',
+      routeType: this.currentRouteData.routeType || 'cycling',
+      targetDistance: this.currentRouteData.distanceMeters!,
+      distanceMeters: this.currentRouteData.distanceMeters!,
+      elevationGain: this.currentRouteData.elevationGain || 0,
+      elevationLoss: this.currentRouteData.elevationLoss || 0,
+      startPoint: this.currentRouteData.startPoint!,
+      routeGeom: this.currentRouteData.geometryWkt,
+      createdAt: new Date().toISOString()
+    })    .subscribe({
+      next: (response) => {
+        console.log('Trasa została zapisana:', response);
+        alert('Trasa została zapisana!');
+      },
+      error: (err) => {
+        console.error('Błąd podczas zapisywania trasy:', err);
+        alert('Wystąpił błąd podczas zapisywania trasy.');
+      }
+    });
+  }
+
+
 }
