@@ -1,4 +1,4 @@
-package com.bogusz.bicyclerouteplannerbackend.dto;
+package com.bogusz.bicyclerouteplannerbackend.dto.route;
 
 
 import lombok.AllArgsConstructor;

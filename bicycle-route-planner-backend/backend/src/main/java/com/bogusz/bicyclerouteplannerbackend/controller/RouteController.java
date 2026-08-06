@@ -1,9 +1,10 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.RouteDetailDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,14 +18,15 @@ public class RouteController {
     private final RouteService routeService;
 
     @GetMapping
-    public ResponseEntity<List<RouteDetailDto>> getAllRoutes() {
-        List<RouteDetailDto> routes = routeService.getAllRoutes();
+    public ResponseEntity<List<RouteDetailDto>> getAllRoutes(Authentication authentication) {
+        List<RouteDetailDto> routes = routeService.getRoutesForUser(authentication.getName());
         return ResponseEntity.ok(routes);
     }
 
     @PostMapping
-    public ResponseEntity<RouteDetailDto> saveRoute(@RequestBody RouteDetailDto routeDetailDto) {
-        RouteDetailDto savedRoute = routeService.saveRoute(routeDetailDto);
+    public ResponseEntity<RouteDetailDto> saveRoute(@RequestBody RouteDetailDto routeDetailDto,
+                                                    Authentication authentication) {
+        RouteDetailDto savedRoute = routeService.saveRouteForUser(routeDetailDto, authentication.getName());
         return ResponseEntity.ok(savedRoute);
     }
 }

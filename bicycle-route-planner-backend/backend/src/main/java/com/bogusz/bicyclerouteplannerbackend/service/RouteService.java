@@ -1,6 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.RouteDetailDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -13,7 +13,9 @@ import org.locationtech.jts.io.WKTWriter;
 import org.springframework.stereotype.Service;
 
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,17 +23,16 @@ import java.util.stream.Collectors;
 public class RouteService {
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
 
 
-    public List<RouteDetailDto> getAllRoutes(){
-        return routeRepository.findAll().stream()
+    public List<RouteDetailDto> getRoutesForUser(String userEmail){
+        return routeRepository.findAllByUserEmailOrderByCreatedAtDesc(userEmail).stream()
                 .map(this::toRouteDetailDto)
                 .collect(Collectors.toList());
     }
 
-    public RouteDetailDto saveRoute(RouteDetailDto routeDetailDto) {
-        Route route = toRoute(routeDetailDto);
+    public RouteDetailDto saveRouteForUser(RouteDetailDto routeDetailDto, String userEmail) {
+        Route route = toRoute(routeDetailDto, userEmail);
         route = routeRepository.save(route);
         return toRouteDetailDto(route);
     }
@@ -54,17 +55,12 @@ public class RouteService {
                 .build();
     }
 
-    private Route toRoute(RouteDetailDto routeDetailDto) {
+    private Route toRoute(RouteDetailDto routeDetailDto, String userEmail) {
         WKTReader wktReader = new WKTReader();
         Route route = new Route();
 
-        String userEmail = routeDetailDto.getUserEmail();
-        if (userEmail == null || userEmail.isBlank()) {
-            throw new IllegalArgumentException("userEmail is required");
-        }
-
         route.setUser(userRepository.findByEmail(userEmail)
-                .orElseGet(() -> userService.createRouteUser(userEmail)));
+                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + userEmail)));
         route.setName(routeDetailDto.getName());
         route.setRouteType(routeDetailDto.getRouteType());
         route.setTargetDistance(routeDetailDto.getTargetDistance());
@@ -88,7 +84,7 @@ public class RouteService {
             throw new RuntimeException("Błąd podczas parsowania geometrii WKT z frontendu: " + e.getMessage(), e);
         }
 
-        route.setCreatedAt(routeDetailDto.getCreatedAt());
+        route.setCreatedAt(Optional.ofNullable(routeDetailDto.getCreatedAt()).orElseGet(Instant::now));
         return route;
 
     }
