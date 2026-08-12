@@ -4,6 +4,11 @@ export interface RegisterRequest {
   fullName?: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password?: string;
+}
+
 export interface UserDto {
   id: number;
   email: string;
