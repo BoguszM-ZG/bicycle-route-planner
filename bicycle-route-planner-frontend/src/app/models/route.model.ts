@@ -11,3 +11,29 @@ export interface RouteDetailDto {
   routeGeom: string;
   createdAt: string;
 }
+
+export interface RouteStats  {
+  geometryWkt: string;
+  startPoint: string;
+  elevationGain: number;
+  elevationLoss: number;
+}
+
+export interface OrsGeoJsonFeature {
+  geometry: {
+    coordinates: number[][];
+  };
+  properties?: {
+    summary?: {
+      distance: number;
+      duration: number;
+    };
+  };
+}
+
+export interface OrsGeoJsonResponse{
+    features: OrsGeoJsonFeature[];
+    error?: {
+      message: string;
+    };
+}
