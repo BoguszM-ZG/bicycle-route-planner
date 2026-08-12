@@ -1,0 +1,34 @@
+name: Frontend Build (Angular)
+
+on:
+  push:
+    paths:
+      - 'bicycle-route-planner-frontend/**'
+  pull_request:
+    paths:
+      - 'bicycle-route-planner-frontend/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./bicycle-route-planner-frontend
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js (v24)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        cache-dependency-path: './bicycle-route-planner-frontend/package-lock.json'
+
+    - name: Install Dependencies
+      run: npm ci
+
+    - name: Build Project
+      run: npm run build
