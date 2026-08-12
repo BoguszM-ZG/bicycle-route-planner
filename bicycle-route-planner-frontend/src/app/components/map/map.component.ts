@@ -2,6 +2,7 @@ import { AfterViewInit, Component, NgZone } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { RouteService } from '../../services/route.service';
+import { AuthService } from '../../services/auth.service';
 import { parse } from 'wellknown';
 import { environment} from '../../../environments/environment.development';
 
@@ -43,6 +44,7 @@ export class MapComponent implements AfterViewInit {
 
   constructor(
     private readonly routeService: RouteService,
+    private readonly authService: AuthService,
     private readonly ngZone: NgZone
   ) {}
 
@@ -224,10 +226,18 @@ export class MapComponent implements AfterViewInit {
       return;
     }
 
+    if (!this.authService.isAuthenticated()) {
+      alert('Musisz być zalogowany, aby zapisać trasę.');
+      return;
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    const userEmail = currentUser ? currentUser.email : '';
+
     this.routeService.addRoute({
       id: 0,
-      userEmail: 'test@gmail.com',
-      name: this.currentRouteData.name || 'brak nazwy',
+      userEmail: userEmail,
+      name: this.currentRouteData.name || 'Nowa Trasa',
       routeType: this.currentRouteData.routeType || 'cycling',
       targetDistance: this.currentRouteData.distanceMeters!,
       distanceMeters: this.currentRouteData.distanceMeters!,
@@ -236,14 +246,19 @@ export class MapComponent implements AfterViewInit {
       startPoint: this.currentRouteData.startPoint!,
       routeGeom: this.currentRouteData.geometryWkt,
       createdAt: new Date().toISOString()
-    })    .subscribe({
+    }).subscribe({
       next: (response) => {
         console.log('Trasa została zapisana:', response);
-        alert('Trasa została zapisana!');
+        alert('Trasa została pomyślnie zapisana na Twoim koncie!');
       },
       error: (err) => {
         console.error('Błąd podczas zapisywania trasy:', err);
-        alert('Wystąpił błąd podczas zapisywania trasy.');
+        if (err.status === 401 || err.status === 403) {
+          alert('Twoja sesja wygasła lub token jest nieważny. Zaloguj się ponownie.');
+          localStorage.clear();
+        } else {
+          alert('Wystąpił błąd podczas zapisywania trasy.');
+        }
       }
     });
   }
