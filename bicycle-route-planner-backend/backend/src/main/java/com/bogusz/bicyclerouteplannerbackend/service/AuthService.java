@@ -5,13 +5,10 @@ import com.bogusz.bicyclerouteplannerbackend.dto.auth.LoginRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,13 +26,9 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
-        } catch (BadCredentialsException exception) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password", exception);
-        }
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
 
         User user = userService.getByEmail(request.getEmail());
         return createAuthResponse(user);

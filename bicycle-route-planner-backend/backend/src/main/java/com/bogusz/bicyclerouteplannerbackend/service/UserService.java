@@ -1,16 +1,16 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.user.UserDto;
+import com.bogusz.bicyclerouteplannerbackend.exception.UserAlreadyExistsException;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.Instant;
 
@@ -22,7 +22,7 @@ public class UserService implements UserDetailsService {
 
     public User registerUser(String email, String encodedPassword, String fullName) {
         if (userRepository.existsByEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User with this email already exists");
+            throw new UserAlreadyExistsException("User with email " + email + " already exists");
         }
 
         User user = new User();
