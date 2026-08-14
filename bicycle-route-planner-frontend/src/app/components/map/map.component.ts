@@ -1,11 +1,12 @@
-import { AfterViewInit, Component, NgZone } from '@angular/core';
+import { AfterViewInit, Component, inject, NgZone } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { RouteService } from '../../services/route.service';
 import { AuthService } from '../../services/auth.service';
-import { parse } from 'wellknown';
 import { OrsService} from '../../services/ors.service';
 import {RouteCalculationService} from '../../services/route-calculation.service';
+import { SidebarComponent} from '../sidebar/sidebar.component';
+import { MapRenderService} from '../../services/map-render.service';
 
 
 const defaultIcon = L.icon({
@@ -22,7 +23,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [],
+  imports: [SidebarComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
 })
@@ -43,45 +44,21 @@ export class MapComponent implements AfterViewInit {
     routeType: 'cycling',
   };
 
-  constructor(
-    private readonly routeService: RouteService,
-    private readonly authService: AuthService,
-    private readonly ngZone: NgZone,
-    private readonly orsService: OrsService,
-    private readonly routeCalculationService: RouteCalculationService,
-  ) {}
+
+    private readonly routeService: RouteService = inject(RouteService);
+    private readonly authService: AuthService = inject(AuthService);
+    private readonly ngZone: NgZone = inject(NgZone);
+    private readonly orsService: OrsService = inject(OrsService);
+    private readonly routeCalculationService: RouteCalculationService = inject(RouteCalculationService);
+    private readonly mapRenderService: MapRenderService = inject(MapRenderService);
 
   ngAfterViewInit(): void {
-    this.initMap();
-    this.loadExistingRoutes();
-    this.initRoutingControl();
+    this.mapRenderService.initMap('map');
+    this.map = this.mapRenderService.getMap()!;
+    this.initRoutingControl()
+
   }
 
-  private initMap(): void {
-    this.map = L.map('map').setView([52.069, 19.47], 6);
-
-    L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '@ OpenStreetMap',
-    }).addTo(this.map);
-  }
-
-  private loadExistingRoutes(): void {
-    this.routeService.getRoutes().subscribe({
-      next: (routesData) => {
-        routesData.forEach((route) => {
-          const geoJsonGeometry = parse(route.routeGeom);
-
-          if (geoJsonGeometry) {
-            L.geoJson(geoJsonGeometry as any, {
-              style: { color: 'blue', weight: 4 },
-            }).addTo(this.map);
-          }
-        });
-      },
-      error: (err) => console.error('Error loading routes:', err),
-    });
-  }
 
   private initRoutingControl(): void {
     const customOrsRouter: L.Routing.IRouter = {
@@ -187,6 +164,7 @@ export class MapComponent implements AfterViewInit {
 
   public clearRoute(): void {
     this.routingControl?.setWaypoints([]);
+    this.mapRenderService.clearRenderedRoute();
     this.currentRouteData = {
       name: '',
       routeType: 'cycling',

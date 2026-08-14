@@ -1,0 +1,46 @@
+<div class="sidebar-container">
+  <div class="sidebar-header">
+    <h2>Twój profil</h2>
+
+
+    @if (currentUser) {
+      <p class="user-email">
+        Zalogowano jako: <strong>{{ currentUser.fullName}}</strong>
+      </p>
+    }
+
+    <button class="logout-button" (click)="logout()">Wyloguj</button>
+  </div>
+
+  <div class="sidebar-content">
+    <h3>Zapisane Trasy</h3>
+
+    @if (isLoadingRoutes) {
+      <div class="loading-state">
+        <span>Pobieranie tras...</span>
+      </div>
+    }
+
+
+    @if (!isLoadingRoutes && savedRoutes.length === 0) {
+      <div class="empty-state">
+        Nie masz jeszcze żadnych zapisanych tras. Dodaj trasę, aby ją zobaczyć tutaj.
+      </div>
+    }
+
+    @if (!isLoadingRoutes && savedRoutes.length > 0) {
+      <ul class="route-list">
+
+        @for (route of savedRoutes; track route.id; let i = $index){
+          <li class="route-item" (click)="selectRoute(route)">
+            <span class="route-name">{{ route.name }}</span>
+            <span class="route-distance">{{ (route.distanceMeters / 1000 ) | number:'1.0-2' }} km</span>
+          </li>
+        }
+
+      </ul>
+
+    }
+  </div>
+</div>
+
