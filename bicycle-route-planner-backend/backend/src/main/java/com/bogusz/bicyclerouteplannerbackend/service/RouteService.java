@@ -4,6 +4,7 @@ import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -36,6 +37,24 @@ public class RouteService {
         route = routeRepository.save(route);
         return toRouteDetailDto(route);
     }
+
+    @Transactional
+    public void deleteRouteForUser(Long routeId, String userEmail) {
+        Route route = routeRepository.findRouteById(routeId);
+
+        if (route == null){
+            throw new IllegalArgumentException("Route not found with id: " + routeId);
+        }
+
+        if (route.getUser() == null || !route.getUser().getEmail().equals(userEmail)){
+            throw new IllegalArgumentException("Access denied, you are not the owner of this route");
+        }
+        routeRepository.delete(route);
+
+
+    }
+
+
 
     private RouteDetailDto toRouteDetailDto(Route route) {
         WKTWriter wtkWriter3D = new WKTWriter(3);

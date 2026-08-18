@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface RouteRepository extends JpaRepository<Route, Long> {
     List<Route> findAllByUserEmailOrderByCreatedAtDesc(String email);
+
+    Route findRouteById(Long id);
 }
