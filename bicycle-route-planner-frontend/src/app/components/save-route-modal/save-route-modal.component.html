@@ -1,0 +1,24 @@
+@if (isVisible) {
+  <div class="modal-backdrop">
+    <div class="modal-glass">
+      <h2>Zapisz Trasę</h2>
+      <label for="routeNameInput">Podaj nazwę dla swojej nowej trasy rowerowej</label>
+
+      <input
+      id="routeNameInput"
+      type="text"
+      [(ngModel)]="routeName"
+      placeholder="Np. Wieczorna pętla wokół jeziora"
+      class="route-name-input"
+      />
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="close()" [disabled]="isLoading">Anuluj</button>
+        <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading">
+          {{ isLoading ? 'Zapisywanie...' : 'Zapisz' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

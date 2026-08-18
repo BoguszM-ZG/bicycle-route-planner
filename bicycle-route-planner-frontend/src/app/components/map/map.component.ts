@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, NgZone } from '@angular/core';
+import { AfterViewInit, Component, inject, NgZone, ViewChild } from '@angular/core';
 import * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { RouteService } from '../../services/route.service';
@@ -7,7 +7,8 @@ import { OrsService} from '../../services/ors.service';
 import {RouteCalculationService} from '../../services/route-calculation.service';
 import { SidebarComponent} from '../sidebar/sidebar.component';
 import { MapRenderService} from '../../services/map-render.service';
-
+import { SaveRouteModalComponent} from '../save-route-modal/save-route-modal.component';
+import { MapControlsComponent } from '../map-controls/map-controls.component';
 
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -23,7 +24,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [SidebarComponent],
+  imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
 })
@@ -44,21 +45,19 @@ export class MapComponent implements AfterViewInit {
     routeType: 'cycling',
   };
 
-
-    private readonly routeService: RouteService = inject(RouteService);
-    private readonly authService: AuthService = inject(AuthService);
-    private readonly ngZone: NgZone = inject(NgZone);
-    private readonly orsService: OrsService = inject(OrsService);
-    private readonly routeCalculationService: RouteCalculationService = inject(RouteCalculationService);
-    private readonly mapRenderService: MapRenderService = inject(MapRenderService);
+  private readonly routeService: RouteService = inject(RouteService);
+  private readonly authService: AuthService = inject(AuthService);
+  private readonly ngZone: NgZone = inject(NgZone);
+  private readonly orsService: OrsService = inject(OrsService);
+  private readonly routeCalculationService: RouteCalculationService =
+    inject(RouteCalculationService);
+  private readonly mapRenderService: MapRenderService = inject(MapRenderService);
 
   ngAfterViewInit(): void {
     this.mapRenderService.initMap('map');
     this.map = this.mapRenderService.getMap()!;
-    this.initRoutingControl()
-
+    this.initRoutingControl();
   }
-
 
   private initRoutingControl(): void {
     const customOrsRouter: L.Routing.IRouter = {
@@ -162,6 +161,7 @@ export class MapComponent implements AfterViewInit {
     console.log('Ready WKT 3D:', this.currentRouteData.geometryWkt);
   }
 
+  @ViewChild('saveRouteModal') saveRouteModal!: SaveRouteModalComponent;
   public clearRoute(): void {
     this.routingControl?.setWaypoints([]);
     this.mapRenderService.clearRenderedRoute();
@@ -176,43 +176,10 @@ export class MapComponent implements AfterViewInit {
       alert('Najpierw wyznacz trasę, żeby ją zapisać.');
       return;
     }
-
     if (!this.authService.isAuthenticated()) {
       alert('Musisz być zalogowany, aby zapisać trasę.');
       return;
     }
-
-    const currentUser = this.authService.getCurrentUser();
-    const userEmail = currentUser ? currentUser.email : '';
-
-    this.routeService
-      .addRoute({
-        id: 0,
-        userEmail: userEmail,
-        name: this.currentRouteData.name || 'Nowa Trasa',
-        routeType: this.currentRouteData.routeType || 'cycling',
-        targetDistance: this.currentRouteData.distanceMeters!,
-        distanceMeters: this.currentRouteData.distanceMeters!,
-        elevationGain: this.currentRouteData.elevationGain || 0,
-        elevationLoss: this.currentRouteData.elevationLoss || 0,
-        startPoint: this.currentRouteData.startPoint!,
-        routeGeom: this.currentRouteData.geometryWkt,
-        createdAt: new Date().toISOString(),
-      })
-      .subscribe({
-        next: (response) => {
-          console.log('Trasa została zapisana:', response);
-          alert('Trasa została pomyślnie zapisana na Twoim koncie!');
-        },
-        error: (err) => {
-          console.error('Błąd podczas zapisywania trasy:', err);
-          if (err.status === 401 || err.status === 403) {
-            alert('Twoja sesja wygasła lub token jest nieważny. Zaloguj się ponownie.');
-            localStorage.clear();
-          } else {
-            alert('Wystąpił błąd podczas zapisywania trasy.');
-          }
-        },
-      });
+    this.saveRouteModal.open(this.currentRouteData);
   }
 }

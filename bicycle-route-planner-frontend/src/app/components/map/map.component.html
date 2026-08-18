@@ -1,21 +1,11 @@
 <app-sidebar></app-sidebar>
+<app-save-route-modal #saveRouteModal></app-save-route-modal>
 
-<div style="margin-bottom: 15px;">
-  <button
-    (click)="saveRoute()"
-    type="button"
-    style="margin-right: 10px; padding: 10px; cursor: pointer;">
-    Zapisz trasę
-  </button>
 
-  <button
-    (click)="clearRoute()"
-    type="button"
-    style="padding: 10px; cursor: pointer;">
-    Wyczyść
-  </button>
-
-</div>
+<app-map-controls
+  (save)="saveRoute()"
+  (clear)="clearRoute()">
+</app-map-controls>
 
 
 <div id="map"></div>

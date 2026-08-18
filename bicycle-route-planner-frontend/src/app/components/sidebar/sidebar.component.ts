@@ -31,6 +31,10 @@ export class SidebarComponent implements OnInit {
 
     this.fetchUserRoutes();
 
+
+    this.routeService.routeAdded$.subscribe(() => {
+      this.fetchUserRoutes();
+    });
   }
 
   private fetchUserRoutes(): void {
