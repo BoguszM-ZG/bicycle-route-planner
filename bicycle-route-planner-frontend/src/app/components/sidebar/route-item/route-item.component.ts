@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe} from '@angular/common';
 import { RouteDetailDto } from '../../../models/route.model';
 
@@ -8,6 +8,7 @@ import { RouteDetailDto } from '../../../models/route.model';
   imports: [DecimalPipe],
   templateUrl: './route-item.component.html',
   styleUrl: './route-item.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RouteItemComponent {
 

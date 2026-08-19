@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as L from 'leaflet';
 import { AuthService } from '../../services/auth.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -25,6 +25,7 @@ L.Marker.prototype.options.icon = defaultIcon;
   imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;

@@ -3,7 +3,7 @@ import  * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
 import { RouteCalculationService} from './route-calculation.service';
-import { RouteDraft } from '../models/route.model';
+import { RouteDraft, OrsGeoJsonResponse } from '../models/route.model';
 
 @Injectable({
   providedIn: 'root',
@@ -60,7 +60,7 @@ export class MapRoutingService {
     });
   }
 
-  private handleRouteSuccess(data: any, waypoints: any[], callback: any, context: any): void {
+  private handleRouteSuccess(data: OrsGeoJsonResponse, waypoints: any[], callback: any, context: any): void {
     this.ngZone.run(() => {
       if (data.error || !data.features || data.features.length === 0) {
         callback.call(context, { status: -1, message: data.error?.message || 'Brak wyników.' });
@@ -98,7 +98,7 @@ export class MapRoutingService {
 
     this.currentRouteDraft.set({
       name: '',
-      routeType: 'cycling', // Zawsze rower w tej aplikacji
+      routeType: 'cycling',
       geometryWkt: stats.geometryWkt,
       startPoint: stats.startPoint,
       elevationGain: stats.elevationGain,

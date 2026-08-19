@@ -1,82 +1,79 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule} from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService} from '../../services/auth.service';
 import { RouteService} from '../../services/route.service';
+import { RouteDraft} from '../../models/route.model';
 
 @Component({
   selector: 'app-save-route-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './save-route-modal.component.html',
   styleUrl: './save-route-modal.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaveRouteModalComponent {
   private readonly routeService = inject(RouteService);
   private readonly authService = inject(AuthService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
-  public isVisible: boolean = false;
+  public isVisible = signal<boolean>(false);
+  public isLoading = signal<boolean>(false);
+
   public routeName: string = '';
-  public isLoading: boolean = false;
-  private routeDataToSave: any = null;
+  private routeDataToSave: RouteDraft | null = null;
 
-
-  public open(routeData: any): void {
+  public open(routeData: RouteDraft): void {
     this.routeDataToSave = routeData;
     this.routeName = 'Moja trasa rowerowa';
-    this.isVisible = true;
-    this.cdr.detectChanges();
+    this.isVisible.set(true);
   }
 
   public close(): void {
-    this.isVisible = false;
+    this.isVisible.set(false);
     this.routeName = '';
     this.routeDataToSave = null;
-    this.cdr.detectChanges();
   }
 
   public saveRoute(): void {
-
     if (this.routeName.trim() === '') {
       alert('Proszę wpisać nazwę trasy');
       return;
     }
+    if (!this.routeDataToSave) {
+      return;
+    }
 
     const currentUser = this.authService.getCurrentUser();
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    this.routeService.addRoute({
-      id: 0,
-      userEmail: currentUser ? currentUser.email : '',
-      name: this.routeName.trim(),
-      routeType: this.routeDataToSave.routeType || 'cycling',
-      targetDistance: this.routeDataToSave.targetDistance,
-      distanceMeters: this.routeDataToSave.distanceMeters,
-      elevationGain: this.routeDataToSave.elevationGain || 0,
-      elevationLoss: this.routeDataToSave.elevationLoss || 0,
-      startPoint: this.routeDataToSave.startPoint,
-      routeGeom: this.routeDataToSave.geometryWkt,
-      createdAt: new Date().toISOString(),
-    }).subscribe({
-      next: () => {
+    this.routeService
+      .addRoute({
+        id: 0,
+        userEmail: currentUser?.email || '',
+        name: this.routeName.trim(),
+        routeType: this.routeDataToSave.routeType || 'cycling',
+        targetDistance: this.routeDataToSave.distanceMeters || 0,
+        distanceMeters: this.routeDataToSave.distanceMeters || 0,
+        elevationGain: this.routeDataToSave.elevationGain || 0,
+        elevationLoss: this.routeDataToSave.elevationLoss || 0,
+        startPoint: this.routeDataToSave.startPoint || '',
+        routeGeom: this.routeDataToSave.geometryWkt || '',
+        createdAt: new Date().toISOString(),
+      })
+      .subscribe({
+        next: () => {
+          this.routeService.routeAdded$.next();
 
-        this.routeService.routeAdded$.next();
+          alert('Trasa została zapisana pomyślnie!');
+          this.isLoading.set(false);
+          this.close();
+        },
 
-        alert('Trasa została zapisana pomyślnie!');
-        this.isLoading = false;
-        this.close();
-    },
-
-      error: err => {
-        console.error('Błąd podczas zapisywania trasy:', err);
-        alert('Wystąpił błąd podczas zapisywania trasy. Spróbuj ponownie.');
-        this.isLoading = false;
-      }
-    })
-
+        error: (err) => {
+          console.error('Błąd podczas zapisywania trasy:', err);
+          alert('Wystąpił błąd podczas zapisywania trasy. Spróbuj ponownie.');
+          this.isLoading.set(false);
+        },
+      });
   }
-
-
-
 }

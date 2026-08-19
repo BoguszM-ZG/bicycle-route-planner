@@ -15,7 +15,10 @@ export class MapRenderService {
   private currentGeoJsonLayer?: L.GeoJSON;
 
   public initMap(elementId: string): void {
-    if (this.map) return;
+    if (this.map) {
+      this.map.remove();
+      this.map = undefined;
+    }
 
     this.map = L.map(elementId).setView([52.069, 19.47], 6);
     L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {

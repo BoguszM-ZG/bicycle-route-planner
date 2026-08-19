@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, output, signal, ChangeDetectionStrategy} from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { RouteService } from '../../services/route.service';
 import { RouteDetailDto } from '../../models/route.model';
@@ -12,27 +11,27 @@ import { RouteItemComponent} from './route-item/route-item.component';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouteItemComponent],
+  imports: [RouteItemComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly routeService = inject(RouteService);
   private readonly routeStateService = inject(RouteStateService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
-  public currentUser: UserDto | null = null;
-  public savedRoutes: RouteDetailDto[] = [];
-  public isLoadingRoutes: boolean = false;
 
-  @Output() routeSelected: EventEmitter<RouteDetailDto> = new EventEmitter<RouteDetailDto>();
+  public currentUser = signal<UserDto | null>(null);
+  public savedRoutes = signal<RouteDetailDto[]>([]);
+  public isLoadingRoutes = signal<boolean>(false);
+
+  routeSelected = output<RouteDetailDto>();
 
   ngOnInit() {
-    this.currentUser = this.authService.getCurrentUser();
 
+    this.currentUser.set(this.authService.getCurrentUser());
     this.fetchUserRoutes();
-
 
     this.routeService.routeAdded$.subscribe(() => {
       this.fetchUserRoutes();
@@ -40,17 +39,16 @@ export class SidebarComponent implements OnInit {
   }
 
   private fetchUserRoutes(): void {
-    this.isLoadingRoutes = true;
+    this.isLoadingRoutes.set(true);
     this.routeService.getRoutes().subscribe({
       next: (routes) => {
         console.log('Sidebar odebrał trasy z backendu!', routes);
-        this.savedRoutes = routes;
-        this.isLoadingRoutes = false;
-        this.cdr.detectChanges();
+        this.savedRoutes.set(routes);
+        this.isLoadingRoutes.set(false);
       },
       error: (err) => {
         console.error('Błąd podczas pobierania tras (Sidebar):', err);
-        this.isLoadingRoutes = false;
+        this.isLoadingRoutes.set(false);
       }
     });
   }
@@ -67,8 +65,7 @@ export class SidebarComponent implements OnInit {
   public deleteRoute(routeId: number): void {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
-        this.savedRoutes = this.savedRoutes.filter(route => route.id !== routeId);
-        this.cdr.detectChanges();
+        this.savedRoutes.set(this.savedRoutes().filter(route => route.id !== routeId));
       },
       error: (err) => {
         console.error('Błąd podczas usuwania trasy (Sidebar):', err);

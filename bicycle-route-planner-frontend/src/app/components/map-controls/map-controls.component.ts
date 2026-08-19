@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-map-controls',
@@ -6,10 +6,11 @@ import { Component, EventEmitter, Output } from '@angular/core';
   imports: [],
   templateUrl: './map-controls.component.html',
   styleUrl: './map-controls.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MapControlsComponent {
-  @Output() save = new EventEmitter<void>();
-  @Output() clear = new EventEmitter<void>();
+  save = output<void>();
+  clear = output<void>();
 
   public onSaveClick(): void {
     this.save.emit();
