@@ -29,4 +29,11 @@ public class RouteController {
         RouteDetailDto savedRoute = routeService.saveRouteForUser(routeDetailDto, authentication.getName());
         return ResponseEntity.ok(savedRoute);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRoute(@PathVariable Long id, Authentication authentication){
+        routeService.deleteRouteForUser(id, authentication.getName());
+
+        return ResponseEntity.noContent().build();
+    }
 }

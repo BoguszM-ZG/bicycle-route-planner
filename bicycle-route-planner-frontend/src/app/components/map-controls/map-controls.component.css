@@ -1,0 +1,70 @@
+.map-floating-controls {
+  position: fixed;
+
+  bottom: 30px;
+
+
+  left: 50%;
+  transform: translateX(-50%);
+
+
+  z-index: 999;
+
+
+  display: flex;
+  gap: 15px;
+  align-items: center;
+
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  padding: 10px 15px;
+  border-radius: 50px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+
+.control-btn {
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 30px;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+
+
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+
+.btn-save {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+}
+
+.btn-save:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+}
+
+
+.btn-clear {
+  background: transparent;
+  color: #ef4444;
+}
+
+.btn-clear:hover {
+
+  background: rgba(239, 68, 68, 0.1);
+  transform: translateY(-2px);
+}

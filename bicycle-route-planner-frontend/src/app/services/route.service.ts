@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { RouteDetailDto } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
 
@@ -8,9 +8,12 @@ import { environment } from '../../environments/environment.development';
   providedIn: 'root',
 })
 export class RouteService {
-  private apiUrl = `${environment.apiUrl}/routes`;
+  private readonly apiUrl = `${environment.apiUrl}/routes`;
+  private readonly http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  public routeAdded$ = new Subject<void>();
+
+
 
   getRoutes(): Observable<RouteDetailDto[]> {
     return this.http.get<RouteDetailDto[]>(this.apiUrl);
@@ -18,5 +21,10 @@ export class RouteService {
 
   public addRoute(routeData: RouteDetailDto) : Observable<any> {
     return this.http.post<any>(this.apiUrl, routeData);
+  }
+
+
+  public deleteRoute(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
 }

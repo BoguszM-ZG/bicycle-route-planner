@@ -5,17 +5,19 @@
       <p>Join the Bicycle Route Planner community today.</p>
     </div>
 
-    <div *ngIf="errorMessage" class="error-alert">
-      {{ errorMessage }}
-    </div>
+    @if (errorMessage()) {
+      <div class="error-alert">
+        {{ errorMessage() }}
+      </div>
+    }
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
       <div class="form-group">
         <label for="fullName">Full Name</label>
-        <input 
-          id="fullName" 
-          type="text" 
-          formControlName="fullName" 
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
           placeholder="e.g. John Doe"
           [class.invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
         />
@@ -23,38 +25,45 @@
 
       <div class="form-group">
         <label for="email">Email Address <span class="required">*</span></label>
-        <input 
-          id="email" 
-          type="email" 
-          formControlName="email" 
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
           placeholder="you@example.com"
           [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
         />
-        <div class="error-text" *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
-          Please enter a valid email address.
-        </div>
+        @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+          <div class="error-text">
+            Please enter a valid email address.
+          </div>
+        }
       </div>
 
       <div class="form-group">
         <label for="password">Password <span class="required">*</span></label>
-        <input 
-          id="password" 
-          type="password" 
-          formControlName="password" 
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
           placeholder="Minimum 8 characters"
           [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
         />
-        <div class="error-text" *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
-          Password must be at least 8 characters long.
-        </div>
+        @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+          <div class="error-text">
+            Password must be at least 8 characters long.
+          </div>
+        }
       </div>
 
-      <button type="submit" class="submit-btn" [disabled]="isLoading">
-        <span *ngIf="!isLoading">Sign Up</span>
-        <span *ngIf="isLoading" class="loader"></span>
-      </button>
+      <button type="submit" class="submit-btn" [disabled]="isLoading()">
+        @if(!isLoading()) {
+          <span >Sign Up</span>
+        } @else {
+        <span class="loader"></span>
+      }
+        </button>
     </form>
-    
+
     <div class="register-footer">
       Already have an account? <a href="/login">Log in here</a>
     </div>
