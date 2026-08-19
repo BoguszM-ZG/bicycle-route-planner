@@ -21,4 +21,9 @@ export class RouteService {
   public addRoute(routeData: RouteDetailDto) : Observable<any> {
     return this.http.post<any>(this.apiUrl, routeData);
   }
+
+
+  public deleteRoute(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
+  }
 }

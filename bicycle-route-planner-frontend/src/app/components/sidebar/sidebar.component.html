@@ -1,5 +1,5 @@
 <div class="sidebar-container">
-  <div class="sidebar-header">
+ <div class="sidebar-header">
     <h2>Twój profil</h2>
 
 
@@ -29,16 +29,13 @@
     }
 
     @if (!isLoadingRoutes && savedRoutes.length > 0) {
-      <ul class="route-list">
-
-        @for (route of savedRoutes; track route.id; let i = $index){
-          <li class="route-item" (click)="selectRoute(route)">
-            <span class="route-name">{{ route.name }}</span>
-            <span class="route-distance">{{ (route.distanceMeters / 1000 ) | number:'1.0-2' }} km</span>
-          </li>
-        }
-
-      </ul>
+      @for (route of savedRoutes; track route.id) {
+        <app-route-item
+          [route]="route"
+          (routeSelected)="selectRoute($event)"
+          (routeDeleted)="deleteRoute($event)">
+        </app-route-item>
+      }
 
     }
   </div>

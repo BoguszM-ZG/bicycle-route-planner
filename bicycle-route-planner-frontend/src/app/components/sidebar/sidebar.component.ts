@@ -5,12 +5,14 @@ import { RouteService } from '../../services/route.service';
 import { RouteDetailDto } from '../../models/route.model';
 import { UserDto } from '../../models/auth.model';
 import { RouteStateService } from '../../services/route-state.service';
+import { RouteItemComponent} from './route-item/route-item.component';
+
 
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouteItemComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
 })
@@ -60,6 +62,19 @@ export class SidebarComponent implements OnInit {
   public selectRoute(route: RouteDetailDto): void {
     console.log('Wybrana trasa w sidebarze:', route.name);
     this.routeStateService.selectRoute(route);
+  }
+
+  public deleteRoute(routeId: number): void {
+    this.routeService.deleteRoute(routeId).subscribe({
+      next: () => {
+        this.savedRoutes = this.savedRoutes.filter(route => route.id !== routeId);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Błąd podczas usuwania trasy (Sidebar):', err);
+        alert('Wystąpił błąd podczas usuwania trasy. Spróbuj ponownie.');
+      }
+    });
   }
 
 

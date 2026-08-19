@@ -12,6 +12,16 @@ export interface RouteDetailDto {
   createdAt: string;
 }
 
+export interface RouteDraft {
+  geometryWkt?: string;
+  distanceMeters?: number;
+  elevationGain?: number;
+  elevationLoss?: number;
+  name?: string;
+  routeType?: string;
+  startPoint?: string;
+}
+
 export interface RouteStats  {
   geometryWkt: string;
   startPoint: string;
