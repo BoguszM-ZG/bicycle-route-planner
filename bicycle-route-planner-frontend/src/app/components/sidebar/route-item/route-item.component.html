@@ -1,27 +1,32 @@
 <div class="route-item">
 
-  @if (!isConfirmingDelete()){
-    <button class="route-info" (click)="onSelect()" title="Zobacz trasę na mapie">
-      <span class="route-name">{{ route().name }}</span>
-      <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
-    </button>
+  <div class="route-item-header">
+    @if (!isConfirmingDelete()){
+      <button class="route-info" (click)="onSelect()" title="Zobacz trasę na mapie">
+        <span class="route-name">{{ route().name }}</span>
+        <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
+      </button>
 
-    <button class="icon-btn delete-icon" (click)="promptDelete($event)" title="Usuń trasę">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-           fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-      </svg>
-    </button>
-  } @else {
-    <div class="delete-confirmation">
-      <span class="warning-text">Czy na pewno chcesz usunąć trasę?</span>
-      <div class="action-buttons">
-        <button class="confirm-btn cancel" (click)="cancelDelete($event)">Nie</button>
-        <button class="confirm-btn danger" (click)="confirmDelete($event)">Tak</button>
+      <button class="icon-btn delete-icon" (click)="promptDelete($event)" title="Usuń trasę">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+      </button>
+    } @else {
+      <div class="delete-confirmation">
+        <span class="warning-text">Czy na pewno chcesz usunąć trasę?</span>
+        <div class="action-buttons">
+          <button class="confirm-btn cancel" (click)="cancelDelete($event)">Nie</button>
+          <button class="confirm-btn danger" (click)="confirmDelete($event)">Tak</button>
+        </div>
       </div>
-    </div>
-  }
+    }
+  </div>
 
+  @if (isSelected()) {
+    <app-route-details [routeDetail]="route()"></app-route-details>
+  }
 
 </div>

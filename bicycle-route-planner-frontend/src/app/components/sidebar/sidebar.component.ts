@@ -14,22 +14,21 @@ import { RouteItemComponent} from './route-item/route-item.component';
   imports: [RouteItemComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly routeService = inject(RouteService);
   private readonly routeStateService = inject(RouteStateService);
 
-
   public currentUser = signal<UserDto | null>(null);
   public savedRoutes = signal<RouteDetailDto[]>([]);
   public isLoadingRoutes = signal<boolean>(false);
+  public selectedRouteId = signal<number | null>(null);
 
   routeSelected = output<RouteDetailDto>();
 
   ngOnInit() {
-
     this.currentUser.set(this.authService.getCurrentUser());
     this.fetchUserRoutes();
 
@@ -49,7 +48,7 @@ export class SidebarComponent implements OnInit {
       error: (err) => {
         console.error('Błąd podczas pobierania tras (Sidebar):', err);
         this.isLoadingRoutes.set(false);
-      }
+      },
     });
   }
 
@@ -58,23 +57,24 @@ export class SidebarComponent implements OnInit {
   }
 
   public selectRoute(route: RouteDetailDto): void {
-    console.log('Wybrana trasa w sidebarze:', route.name);
-    this.routeStateService.selectRoute(route);
+    if (this.selectedRouteId() === route.id) {
+      this.selectedRouteId.set(null);
+      this.routeStateService.selectRoute(null);
+    } else {
+      this.selectedRouteId.set(route.id!);
+      this.routeStateService.selectRoute(route);
+    }
   }
 
   public deleteRoute(routeId: number): void {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
-        this.savedRoutes.set(this.savedRoutes().filter(route => route.id !== routeId));
+        this.savedRoutes.set(this.savedRoutes().filter((route) => route.id !== routeId));
       },
       error: (err) => {
         console.error('Błąd podczas usuwania trasy (Sidebar):', err);
         alert('Wystąpił błąd podczas usuwania trasy. Spróbuj ponownie.');
-      }
+      },
     });
   }
-
-
-
-
 }

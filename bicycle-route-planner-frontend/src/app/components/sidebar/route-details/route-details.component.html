@@ -1,0 +1,28 @@
+<div class="details-container">
+  <div class="detail-row">
+    <span class="detail-label">Data utworzenia</span>
+    <span class="detail-value">{{ routeDetail().createdAt | date:'mediumDate'}}</span>
+  </div>
+
+  <div class="detail-row">
+    <span class="detail-label">Dystans</span>
+    <span class="detail-value"> {{( routeDetail().distanceMeters / 1000 ) | number:'1.2-2' }} km</span>
+  </div>
+
+  <div class="detail-row stats-row">
+    <div class="stat-box gain">
+      <span class="stat-icon">⬆️</span>
+      <span class="stat-value">{{ routeDetail().elevationGain | number:'1.0-0' }} m</span>
+      <span class="stat-title">Podjazdy</span>
+    </div>
+
+    <div class="stat-box loss">
+      <span class="stat-icon">⬇️</span>
+      <span class="stat-value"> {{ routeDetail().elevationLoss | number:'1.0-0' }} m</span>
+      <span class="stat-title">Zjazdy</span>
+    </div>
+
+  </div>
+
+
+</div>
