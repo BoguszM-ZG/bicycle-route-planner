@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class RouteService {
     public List<RouteDetailDto> getRoutesForUser(String userEmail){
         return routeRepository.findAllByUserEmailOrderByCreatedAtDesc(userEmail).stream()
                 .map(this::toRouteDetailDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public RouteDetailDto saveRouteForUser(RouteDetailDto routeDetailDto, String userEmail) {
@@ -100,7 +100,7 @@ public class RouteService {
                 route.setRouteGeom((LineString) routeGeom);
             }
         } catch (org.locationtech.jts.io.ParseException e) {
-            throw new RuntimeException("Błąd podczas parsowania geometrii WKT z frontendu: " + e.getMessage(), e);
+            throw new RuntimeException("Error parsing WKT geometry: " + e.getMessage(), e);
         }
 
         route.setCreatedAt(Optional.ofNullable(routeDetailDto.getCreatedAt()).orElseGet(Instant::now));
