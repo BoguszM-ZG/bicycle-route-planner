@@ -4,6 +4,8 @@ import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
 import { RouteCalculationService} from './route-calculation.service';
 import { RouteDraft, OrsGeoJsonResponse } from '../models/route.model';
+import * as wellknown from 'wellknown';
+import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +14,7 @@ export class MapRoutingService {
   private readonly ngZone = inject(NgZone);
   private readonly orsService = inject(OrsService);
   private readonly routeCalculationService = inject(RouteCalculationService);
+  private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
 
   private routingControl?: L.Routing.Control;
 
@@ -19,9 +22,26 @@ export class MapRoutingService {
 
   public initRouting(map: L.Map): void {
     const customOrsRouter: L.Routing.IRouter = {
+
       route: (waypoints: any[], callback: any, context: any, _options: any) => {
+
         const coords = waypoints.map((w: any) => [w.latLng.lng, w.latLng.lat]);
-        this.orsService.getRouteGeoJson(coords).subscribe({
+        const allZones = this.avoidanceZoneStateService.zones();
+
+        const activeZones = allZones.filter(zone => zone.isActive);
+
+        const avoidPolygonsGeoJson = activeZones.length > 0
+          ? {
+              type: 'MultiPolygon',
+              coordinates: activeZones.map(zone => (wellknown.parse(zone.zoneGeom) as any).coordinates)
+            }
+          : undefined;
+
+
+
+
+
+        this.orsService.getRouteGeoJson(coords, avoidPolygonsGeoJson).subscribe({
           next: (data) => this.handleRouteSuccess(data, waypoints, callback, context),
           error: (err) => this.handleRouteError(err, callback, context),
         });
@@ -48,13 +68,16 @@ export class MapRoutingService {
 
     this.routingControl.on('routingerror', (e: any) => console.error('Błąd wyznaczania trasy', e));
 
+    let isDrawingMode = false;
+    map.on('draw:drawstart', () => isDrawingMode = true);
+    map.on('draw:drawstop', () => isDrawingMode = false);
+
     map.on('click', (e: any) => {
+      if (isDrawingMode) return;
+
       if (this.routingControl) {
-        // Pobieramy obecne punkty, odrzucamy puste...
         const waypoints = this.routingControl.getWaypoints().filter((w: any) => w.latLng);
-        // ...dodajemy nowy punkt tam, gdzie było kliknięcie...
         waypoints.push(L.Routing.waypoint(e.latlng));
-        // ...i podmieniamy tablicę, co automatycznie wyzwoli funkcję 'route' (wyżej).
         this.routingControl.setWaypoints(waypoints);
       }
     });

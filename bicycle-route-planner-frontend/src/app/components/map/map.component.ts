@@ -7,6 +7,7 @@ import { SaveRouteModalComponent } from '../save-route-modal/save-route-modal.co
 import { MapControlsComponent } from '../map-controls/map-controls.component';
 
 import { MapRoutingService } from '../../services/map-routing.service';
+import { MapDrawService } from '../../services/map-draw.service';
 
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -25,7 +26,7 @@ L.Marker.prototype.options.icon = defaultIcon;
   imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
@@ -33,12 +34,14 @@ export class MapComponent implements AfterViewInit {
   private readonly authService = inject(AuthService);
   private readonly mapRenderService = inject(MapRenderService);
   public readonly mapRoutingService = inject(MapRoutingService);
+  private readonly mapDrawService = inject(MapDrawService);
 
   @ViewChild('saveRouteModal') saveRouteModal!: SaveRouteModalComponent;
   ngAfterViewInit(): void {
     this.mapRenderService.initMap('map');
     this.map = this.mapRenderService.getMap()!;
     this.mapRoutingService.initRouting(this.map);
+    this.mapDrawService.init(this.map);
   }
 
   public clearRoute(): void {

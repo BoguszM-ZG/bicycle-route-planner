@@ -37,8 +37,8 @@ public class AvoidanceZoneController {
     }
 
     @PatchMapping("/{id}/active")
-    public ResponseEntity<Void> toggleAvoidanceActiveStatus(@PathVariable Long id, @RequestParam boolean active, Authentication authentication){
-        avoidanceZoneService.toggleAvoidanceActiveStatus(id, authentication.getName(), active);
+    public ResponseEntity<Void> toggleAvoidanceActiveStatus(@PathVariable Long id, @RequestParam boolean isActive, Authentication authentication){
+        avoidanceZoneService.toggleAvoidanceActiveStatus(id, authentication.getName(), isActive);
         return ResponseEntity.noContent().build();
     }
 
