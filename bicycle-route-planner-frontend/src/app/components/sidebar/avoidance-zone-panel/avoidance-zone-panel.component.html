@@ -1,0 +1,23 @@
+<div class="panel-container">
+
+  <h3>Strefy omijalne</h3>
+
+  @if (zones().length === 0){
+    <div class="empty-message">
+      <p>Brak stref omijalnych.</p>
+    </div>
+  }
+  @else {
+    <div class="zones-list">
+    @for (zone of zones(); track zone.id) {
+      <app-avoidance-zone-item [zone]="zone"
+      (toggleActive)="onToggleZone($event)"
+      (deleteZone)="onDeleteZone($event)">
+      </app-avoidance-zone-item>
+    }
+    </div>
+  }
+
+
+
+</div>

@@ -5,13 +5,14 @@ import { RouteDetailDto } from '../../models/route.model';
 import { UserDto } from '../../models/auth.model';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteItemComponent} from './route-item/route-item.component';
+import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zone-panel.component';
 
 
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouteItemComponent],
+  imports: [RouteItemComponent, AvoidanceZonePanelComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

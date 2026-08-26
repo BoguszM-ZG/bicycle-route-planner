@@ -1,0 +1,27 @@
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { AvoidanceZoneDto} from '../../../models/avoidance-zone.model';
+
+@Component({
+  selector: 'app-avoidance-zone-item',
+  standalone: true,
+  imports: [],
+  templateUrl: './avoidance-zone-item.component.html',
+  styleUrl: './avoidance-zone-item.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+
+export class AvoidanceZoneItemComponent {
+
+  public zone = input.required<AvoidanceZoneDto>();
+
+  public toggleActive = output<AvoidanceZoneDto>();
+  public deleteZone = output<number>();
+
+  public onToggleClick(): void{
+    this.toggleActive.emit(this.zone());
+  }
+
+  public onDeleteClick(): void{
+    this.deleteZone.emit(this.zone().id!);
+  }
+}

@@ -1,0 +1,26 @@
+<div class="zone-card" [class.inactive]="!zone().isActive">
+
+  <div class="zone-info">
+    <strong> {{ zone().name }}</strong>
+    @if (!zone().isActive) {
+      <span class="inactive-label">Wyłączona</span>
+    }
+  </div>
+
+  <div class="zone-actions">
+    <button class="icon-btn" (click)="onToggleClick()" title="Przełącz status">
+      @if (zone().isActive) {
+        👁️
+      } @else {
+        <span style="opacity: 0.5;">👁️‍🗨️</span>
+      }
+    </button>
+
+    <button class="icon-btn" (click)="onDeleteClick()" title="Usuń strefę">
+      🗑️
+    </button>
+
+  </div>
+
+
+</div>

@@ -27,7 +27,7 @@ export class AvoidanceZoneService {
   }
 
   public toggleAvoidanceZoneActiveStatus(id: number, isActive: boolean): Observable<void> {
-    return this.http.patch<void>(`${this.apiUrl}/${id}/active?status=${isActive}`, null);
+    return this.http.patch<void>(`${this.apiUrl}/${id}/active?isActive=${isActive}`, null);
   }
 
 }
