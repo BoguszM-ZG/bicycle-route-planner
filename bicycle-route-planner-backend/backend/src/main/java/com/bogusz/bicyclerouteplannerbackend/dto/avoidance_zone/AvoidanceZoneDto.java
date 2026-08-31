@@ -1,21 +1,19 @@
 package com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone;
 
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-
-
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class AvoidanceZoneDto {
+public record AvoidanceZoneDto(
+        Long id,
 
-    private Long id;
-    private String name;
-    private String zoneGeom;
-    private Boolean isActive;
+        @NotBlank(message = "Name of the avoidance zone is required")
+        String name,
 
-}
+        @NotBlank(message = "Geometry of the avoidance zone is required")
+        String zoneGeom,
+
+        @NotNull(message = "Availability of the avoidance zone is required")
+        Boolean isActive
+) {}

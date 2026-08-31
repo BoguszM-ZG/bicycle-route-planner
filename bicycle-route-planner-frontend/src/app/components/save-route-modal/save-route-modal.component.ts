@@ -1,6 +1,5 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService} from '../../services/auth.service';
 import { RouteService} from '../../services/route.service';
 import { RouteDraft} from '../../models/route.model';
 
@@ -14,8 +13,6 @@ import { RouteDraft} from '../../models/route.model';
 })
 export class SaveRouteModalComponent {
   private readonly routeService = inject(RouteService);
-  private readonly authService = inject(AuthService);
-
   public isVisible = signal<boolean>(false);
   public isLoading = signal<boolean>(false);
 
@@ -43,13 +40,11 @@ export class SaveRouteModalComponent {
       return;
     }
 
-    const currentUser = this.authService.getCurrentUser();
     this.isLoading.set(true);
 
     this.routeService
       .addRoute({
         id: 0,
-        userEmail: currentUser?.email || '',
         name: this.routeName.trim(),
         routeType: this.routeDataToSave.routeType || 'cycling',
         targetDistance: this.routeDataToSave.distanceMeters || 0,

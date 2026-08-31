@@ -1,21 +1,22 @@
 package com.bogusz.bicyclerouteplannerbackend.dto.user;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Builder;
 import java.time.Instant;
 
-@Getter
-@Setter
-@AllArgsConstructor
-public class UserDto{
-    private Long id;
-    private String email;
-    private String fullName;
-    private String role;
-    private Boolean active;
-    private Instant createdAt;
+@Builder
+public record UserDto(
+        Long id,
 
-}
+        @Email(message = "Invalid email format")
+        @NotBlank
+        String email,
 
+        @NotBlank
+        String fullName,
+
+        String role,
+        Boolean active,
+        Instant createdAt
+) {}

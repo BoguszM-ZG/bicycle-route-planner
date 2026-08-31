@@ -1,6 +1,5 @@
 export interface RouteDetailDto {
   id?: number;
-  userEmail: string;
   name: string;
   routeType: string;
   targetDistance: number;

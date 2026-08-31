@@ -83,20 +83,20 @@ public class AvoidanceZoneService {
         WKTReader wktReader = new WKTReader();
         AvoidanceZone avoidanceZone = new AvoidanceZone();
 
-        avoidanceZone.setId(avoidanceZoneDto.getId());
+        avoidanceZone.setId(avoidanceZoneDto.id());
         avoidanceZone.setUser(userRepository.findByEmail(userEmail).orElseThrow(() -> new RuntimeException("User not found " + userEmail)));
-        avoidanceZone.setName(avoidanceZoneDto.getName());
+        avoidanceZone.setName(avoidanceZoneDto.name());
 
         try {
-            if (avoidanceZoneDto.getZoneGeom() != null) {
-                Geometry geom = wktReader.read(avoidanceZoneDto.getZoneGeom());
+            if (avoidanceZoneDto.zoneGeom() != null) {
+                Geometry geom = wktReader.read(avoidanceZoneDto.zoneGeom());
                 geom.setSRID(4326);
                 avoidanceZone.setZoneGeom((Polygon) geom);
             }
         } catch (ParseException e) {
             throw new RuntimeException("Error parsing WKT geometry " + e.getMessage(), e);
         }
-        avoidanceZone.setIsActive(avoidanceZoneDto.getIsActive() != Boolean.FALSE);
+        avoidanceZone.setIsActive(avoidanceZoneDto.isActive() != Boolean.FALSE);
 
         return avoidanceZone;
     }

@@ -26,7 +26,7 @@ public class RouteService {
     private final UserRepository userRepository;
 
 
-    public List<RouteDetailDto> getRoutesForUser(String userEmail){
+    public List<RouteDetailDto> getRoutesForUser(String userEmail) {
         return routeRepository.findAllByUserEmailOrderByCreatedAtDesc(userEmail).stream()
                 .map(this::toRouteDetailDto)
                 .toList();
@@ -42,11 +42,11 @@ public class RouteService {
     public void deleteRouteForUser(Long routeId, String userEmail) {
         Route route = routeRepository.findRouteById(routeId);
 
-        if (route == null){
+        if (route == null) {
             throw new IllegalArgumentException("Route not found with id: " + routeId);
         }
 
-        if (route.getUser() == null || !route.getUser().getEmail().equals(userEmail)){
+        if (route.getUser() == null || !route.getUser().getEmail().equals(userEmail)) {
             throw new IllegalArgumentException("Access denied, you are not the owner of this route");
         }
         routeRepository.delete(route);
@@ -55,13 +55,11 @@ public class RouteService {
     }
 
 
-
     private RouteDetailDto toRouteDetailDto(Route route) {
         WKTWriter wtkWriter3D = new WKTWriter(3);
 
         return RouteDetailDto.builder()
                 .id(route.getId())
-                .userEmail(route.getUser() != null ? route.getUser().getEmail() : null)
                 .name(route.getName())
                 .routeType(route.getRouteType())
                 .targetDistance(route.getTargetDistance())
@@ -80,22 +78,22 @@ public class RouteService {
 
         route.setUser(userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + userEmail)));
-        route.setName(routeDetailDto.getName());
-        route.setRouteType(routeDetailDto.getRouteType());
-        route.setTargetDistance(routeDetailDto.getTargetDistance());
-        route.setDistanceMeters(routeDetailDto.getDistanceMeters());
-        route.setElevationGain(routeDetailDto.getElevationGain());
-        route.setElevationLoss(routeDetailDto.getElevationLoss());
+        route.setName(routeDetailDto.name());
+        route.setRouteType(routeDetailDto.routeType());
+        route.setTargetDistance(routeDetailDto.targetDistance());
+        route.setDistanceMeters(routeDetailDto.distanceMeters());
+        route.setElevationGain(routeDetailDto.elevationGain());
+        route.setElevationLoss(routeDetailDto.elevationLoss());
 
         try {
-            if (routeDetailDto.getStartPoint() != null) {
-                Geometry startGeom = wktReader.read(routeDetailDto.getStartPoint());
+            if (routeDetailDto.startPoint() != null) {
+                Geometry startGeom = wktReader.read(routeDetailDto.startPoint());
                 startGeom.setSRID(4326);
                 route.setStartPoint((Point) startGeom);
             }
 
-            if (routeDetailDto.getRouteGeom() != null) {
-                Geometry routeGeom = wktReader.read(routeDetailDto.getRouteGeom());
+            if (routeDetailDto.routeGeom() != null) {
+                Geometry routeGeom = wktReader.read(routeDetailDto.routeGeom());
                 routeGeom.setSRID(4326);
                 route.setRouteGeom((LineString) routeGeom);
             }
@@ -103,11 +101,10 @@ public class RouteService {
             throw new RuntimeException("Error parsing WKT geometry: " + e.getMessage(), e);
         }
 
-        route.setCreatedAt(Optional.ofNullable(routeDetailDto.getCreatedAt()).orElseGet(Instant::now));
+        route.setCreatedAt(Optional.ofNullable(routeDetailDto.createdAt()).orElseGet(Instant::now));
         return route;
 
     }
-
 
 
 }
