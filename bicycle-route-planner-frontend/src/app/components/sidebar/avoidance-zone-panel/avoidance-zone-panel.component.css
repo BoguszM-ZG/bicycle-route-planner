@@ -1,0 +1,30 @@
+.panel-container {
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-top: 2px solid #eee;
+}
+
+.panel-container h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  color: #2c3e50;
+}
+
+.empty-state {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  text-align: center;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  border: 1px dashed #bdc3c7;
+}
+
+.zones-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 5px;
+}

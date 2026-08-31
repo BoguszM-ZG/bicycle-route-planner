@@ -32,6 +32,7 @@
       @for (route of savedRoutes(); track route.id) {
         <app-route-item
           [route]="route"
+          [isSelected] = "route.id === selectedRouteId()"
           (routeSelected)="selectRoute($event)"
           (routeDeleted)="deleteRoute($event)">
         </app-route-item>
@@ -39,5 +40,7 @@
 
     }
   </div>
+  <app-avoidance-zone-panel></app-avoidance-zone-panel>
 </div>
+
 

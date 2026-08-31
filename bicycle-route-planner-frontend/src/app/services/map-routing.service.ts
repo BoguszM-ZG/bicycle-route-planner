@@ -4,6 +4,8 @@ import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
 import { RouteCalculationService} from './route-calculation.service';
 import { RouteDraft, OrsGeoJsonResponse } from '../models/route.model';
+import * as wellknown from 'wellknown';
+import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,16 +14,41 @@ export class MapRoutingService {
   private readonly ngZone = inject(NgZone);
   private readonly orsService = inject(OrsService);
   private readonly routeCalculationService = inject(RouteCalculationService);
+  private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
 
   private routingControl?: L.Routing.Control;
+  private  roundTripLayer?: L.Polyline;
+  private roundTripMarker?: L.Marker;
+  private map?: L.Map;
 
   public currentRouteDraft = signal<RouteDraft | null>(null);
+  public routingMode = signal<'direct' | 'roundTrip'>('direct');
+  public roundTripDistanceMeters = signal<number>(20000);
+
 
   public initRouting(map: L.Map): void {
+    this.map = map;
     const customOrsRouter: L.Routing.IRouter = {
+
       route: (waypoints: any[], callback: any, context: any, _options: any) => {
+
         const coords = waypoints.map((w: any) => [w.latLng.lng, w.latLng.lat]);
-        this.orsService.getRouteGeoJson(coords).subscribe({
+        const allZones = this.avoidanceZoneStateService.zones();
+
+        const activeZones = allZones.filter(zone => zone.isActive);
+
+        const avoidPolygonsGeoJson = activeZones.length > 0
+          ? {
+              type: 'MultiPolygon',
+              coordinates: activeZones.map(zone => (wellknown.parse(zone.zoneGeom) as any).coordinates)
+            }
+          : undefined;
+
+
+
+
+
+        this.orsService.getRouteGeoJson(coords, avoidPolygonsGeoJson).subscribe({
           next: (data) => this.handleRouteSuccess(data, waypoints, callback, context),
           error: (err) => this.handleRouteError(err, callback, context),
         });
@@ -48,17 +75,83 @@ export class MapRoutingService {
 
     this.routingControl.on('routingerror', (e: any) => console.error('Błąd wyznaczania trasy', e));
 
+    let isDrawingMode = false;
+    map.on('draw:drawstart', () => isDrawingMode = true);
+    map.on('draw:drawstop', () => isDrawingMode = false);
+
     map.on('click', (e: any) => {
-      if (this.routingControl) {
-        // Pobieramy obecne punkty, odrzucamy puste...
+      if (isDrawingMode) return;
+
+      if (this.routingMode() === 'roundTrip') {
+        this.generateRoundTrip(e.latlng, this.roundTripDistanceMeters(), map);
+      } else if (this.routingControl) {
         const waypoints = this.routingControl.getWaypoints().filter((w: any) => w.latLng);
-        // ...dodajemy nowy punkt tam, gdzie było kliknięcie...
         waypoints.push(L.Routing.waypoint(e.latlng));
-        // ...i podmieniamy tablicę, co automatycznie wyzwoli funkcję 'route' (wyżej).
         this.routingControl.setWaypoints(waypoints);
       }
+
     });
   }
+
+
+
+
+  public generateRoundTrip(startPoint: L.LatLng, distanceMeters: number, map: L.Map): void {
+
+        const coords = [[startPoint.lng, startPoint.lat]];
+
+
+
+        const avoidPolygonsGeoJson = this.getAvoidanceZones() || undefined;
+
+        this.orsService
+          .getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson)
+          .subscribe({
+            next: (data) => {
+              if (data.error || !data.features || data.features.length === 0) {
+                console.error('Brak danych o trasie');
+                return;
+              }
+              const feature = data.features[0];
+              const routeCoordinates = feature.geometry.coordinates.map((coord: number[]) =>
+                L.latLng(coord[1], coord[0], coord[2])
+              );
+              const summary = feature.properties?.summary;
+              this.updateRouteData(routeCoordinates, summary?.distance ?? 0);
+
+              if (this.roundTripLayer) {
+                map.removeLayer(this.roundTripLayer);
+                this.roundTripLayer = undefined;
+              }
+              if (this.roundTripMarker) {
+                map.removeLayer(this.roundTripMarker);
+                this.roundTripMarker = undefined;
+              }
+
+              this.roundTripLayer = L.polyline(routeCoordinates, {color: '#8e44ad', weight: 6}).addTo(map);
+
+              this.roundTripMarker = L.marker(startPoint).addTo(map);
+
+            },
+          });
+
+  }
+
+  private getAvoidanceZones(): any{
+    const allZones = this.avoidanceZoneStateService.zones();
+    const activeZones = allZones.filter(zone => zone.isActive);
+
+    if (activeZones.length === 0){
+      return undefined;
+    }
+
+    return {
+      type: 'MultiPolygon',
+      coordinates: activeZones.map((zone) => (wellknown.parse(zone.zoneGeom) as any).coordinates),
+    };
+  }
+
+
 
   private handleRouteSuccess(data: OrsGeoJsonResponse, waypoints: any[], callback: any, context: any): void {
     this.ngZone.run(() => {
@@ -109,6 +202,17 @@ export class MapRoutingService {
 
   public clearRoute(): void {
     this.routingControl?.setWaypoints([]);
+    if(this.map){
+      if (this.roundTripLayer) {
+        this.map.removeLayer(this.roundTripLayer);
+        this.roundTripLayer = undefined;
+      }
+      if (this.roundTripMarker) {
+        this.map.removeLayer(this.roundTripMarker);
+        this.roundTripMarker = undefined;
+      }
+    }
+
     this.currentRouteDraft.set(null);
   }
 }

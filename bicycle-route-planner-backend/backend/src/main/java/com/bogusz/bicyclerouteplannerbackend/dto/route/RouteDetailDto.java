@@ -1,25 +1,37 @@
 package com.bogusz.bicyclerouteplannerbackend.dto.route;
 
-
-import lombok.AllArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
-import lombok.Data;
-
 import java.time.Instant;
 
-@Data
 @Builder
-@AllArgsConstructor
-public class RouteDetailDto {
-    Long id;
-    String userEmail;
-    String name;
-    String routeType;
-    Double targetDistance;
-    Double distanceMeters;
-    Double elevationGain;
-    Double elevationLoss;
-    String startPoint;
-    String routeGeom;
-    Instant createdAt;
-}
+public record RouteDetailDto(
+        Long id,
+
+        @NotBlank(message = "Name of the route is required")
+        String name,
+
+        @NotBlank(message = "Type of the route is required")
+        String routeType,
+
+        @PositiveOrZero(message = "Distance must be positive")
+        Double targetDistance,
+
+        @PositiveOrZero(message = "Distance must be positive")
+        Double distanceMeters,
+
+        @PositiveOrZero
+        Double elevationGain,
+
+        @PositiveOrZero
+        Double elevationLoss,
+
+        @NotBlank(message = "Start point is required")
+        String startPoint,
+
+        @NotBlank(message = "Route geometry is required")
+        String routeGeom,
+
+        Instant createdAt
+) {}
