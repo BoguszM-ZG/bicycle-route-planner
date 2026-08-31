@@ -1,0 +1,37 @@
+<div class="mode-panel">
+
+  <div class="button-group">
+
+    <button
+      (click)="setMode('direct')"
+    [class.active]="mapRoutingService.routingMode() === 'direct'">
+      📍 Trasa Punktowa
+    </button>
+
+    <button
+      (click)="setMode('roundTrip')"
+    [class.active]="mapRoutingService.routingMode() === 'roundTrip'">
+      🔄 Pętla (Auto)
+    </button>
+
+  </div>
+
+  @if (mapRoutingService.routingMode() === 'roundTrip') {
+
+    <div class="slider-container">
+      <label for="distance">
+        Odległość (km): <strong>{{ mapRoutingService.roundTripDistanceMeters() / 1000 }} km </strong>
+      </label>
+    <input
+      type="range"
+      id="distance"
+      (input)="onDistanceChange($event)"
+      min="5"
+      max="150"
+      step="5"
+    [value]="mapRoutingService.roundTripDistanceMeters() / 1000">
+      <small>Wybierz długość trasy i wybierz na mapie punkt startowy</small>
+    </div>
+  }
+
+</div>

@@ -8,6 +8,7 @@ import { MapControlsComponent } from '../map-controls/map-controls.component';
 
 import { MapRoutingService } from '../../services/map-routing.service';
 import { MapDrawService } from '../../services/map-draw.service';
+import { MapModePanelComponent } from './map-mode-panel/map-mode-panel.component';
 
 const defaultIcon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -23,7 +24,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent],
+  imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent, MapModePanelComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

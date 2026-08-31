@@ -31,4 +31,33 @@ export class OrsService {
 
     return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
   }
+
+
+  public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Authorization: environment.orsApiKey,
+    });
+    const body = {
+      coordinates: [startCoord],
+      elevation: true,
+      instructions: false,
+      options: {
+        round_trip: {
+          length: distanceMeters,
+          points: 3,
+          seed: Math.floor(Math.random() * 100)
+        },
+        avoid_polygons: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
+      }
+    };
+
+    if (avoidPolygons) {
+      body.options.avoid_polygons = avoidPolygons;
+    }
+
+    return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
+
+  }
+
 }
