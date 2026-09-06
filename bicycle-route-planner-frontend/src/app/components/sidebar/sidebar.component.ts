@@ -1,4 +1,12 @@
-import { Component, OnInit, inject, output, signal, ChangeDetectionStrategy} from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+  DestroyRef,
+} from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { RouteService } from '../../services/route.service';
 import { RouteDetailDto } from '../../models/route.model';
@@ -6,6 +14,7 @@ import { UserDto } from '../../models/auth.model';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteItemComponent} from './route-item/route-item.component';
 import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zone-panel.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 
 
@@ -21,6 +30,7 @@ export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly routeService = inject(RouteService);
   private readonly routeStateService = inject(RouteStateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   public currentUser = signal<UserDto | null>(null);
   public savedRoutes = signal<RouteDetailDto[]>([]);
@@ -33,7 +43,9 @@ export class SidebarComponent implements OnInit {
     this.currentUser.set(this.authService.getCurrentUser());
     this.fetchUserRoutes();
 
-    this.routeService.routeAdded$.subscribe(() => {
+    this.routeService.routeAdded$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.fetchUserRoutes();
     });
   }

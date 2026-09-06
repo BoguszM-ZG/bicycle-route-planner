@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly apiUrl = 'http://localhost:8080/api/auth';
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data);
@@ -29,7 +30,7 @@ export class AuthService {
     if (userStr) {
       try {
         return JSON.parse(userStr) as UserDto;
-      } catch (e) {
+      } catch {
         return null;
       }
     }
@@ -40,6 +41,6 @@ export class AuthService {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('currentUser');
 
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }
