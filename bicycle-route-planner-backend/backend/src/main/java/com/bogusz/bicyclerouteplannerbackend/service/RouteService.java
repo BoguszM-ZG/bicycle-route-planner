@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
@@ -24,6 +25,7 @@ import java.util.Optional;
 public class RouteService {
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
+    private final GpxExportService gpxExportService;
 
 
     public List<RouteDetailDto> getRoutesForUser(String userEmail) {
@@ -40,6 +42,18 @@ public class RouteService {
 
     @Transactional
     public void deleteRouteForUser(Long routeId, String userEmail) {
+        Route route = getValidRouteForUser(routeId, userEmail);
+        routeRepository.delete(route);
+    }
+
+    public GpxExportDto exportRouteToGpx(Long routeId, String userEmail) {
+        Route route = getValidRouteForUser(routeId, userEmail);
+        byte[] gpxData = gpxExportService.generateGpxFile(route);
+        return new GpxExportDto(gpxData, route.getName());
+    }
+
+
+    private Route getValidRouteForUser(Long routeId, String userEmail){
         Route route = routeRepository.findRouteById(routeId);
 
         if (route == null) {
@@ -49,10 +63,10 @@ public class RouteService {
         if (route.getUser() == null || !route.getUser().getEmail().equals(userEmail)) {
             throw new IllegalArgumentException("Access denied, you are not the owner of this route");
         }
-        routeRepository.delete(route);
-
-
+        return route;
     }
+
+
 
 
     private RouteDetailDto toRouteDetailDto(Route route) {

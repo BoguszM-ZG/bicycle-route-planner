@@ -1,8 +1,11 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -35,5 +38,20 @@ public class RouteController {
         routeService.deleteRouteForUser(id, authentication.getName());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/export/gpx")
+    public ResponseEntity<byte[]> exportRouteToGpx(@PathVariable Long id, Authentication authentication){
+
+        GpxExportDto exportData = routeService.exportRouteToGpx(id, authentication.getName());
+
+        String safeFileName = exportData.routeName().replaceAll("[^a-zA-Z0-9\\-ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", "_") + ".gpx";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", safeFileName);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(exportData.gpxData());
     }
 }
