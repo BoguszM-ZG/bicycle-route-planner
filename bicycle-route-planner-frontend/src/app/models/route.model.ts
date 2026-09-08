@@ -46,3 +46,8 @@ export interface OrsGeoJsonResponse{
       message: string;
     };
 }
+
+export interface ElevationPointDto {
+  distance: number;
+  elevation: number;
+}

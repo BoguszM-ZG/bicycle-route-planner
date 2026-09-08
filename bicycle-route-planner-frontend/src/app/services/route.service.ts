@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
-import { RouteDetailDto } from '../models/route.model';
+import { ElevationPointDto, RouteDetailDto } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
 
 @Injectable({
@@ -53,6 +53,10 @@ export class RouteService {
           alert('Error downloading GPX file');
         }
       });
+  }
+
+  public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {
+    return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`);
   }
 
 

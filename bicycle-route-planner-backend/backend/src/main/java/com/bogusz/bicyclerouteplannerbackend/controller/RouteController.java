@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
@@ -53,5 +54,11 @@ public class RouteController {
         return ResponseEntity.ok()
                 .headers(headers)
                 .body(exportData.gpxData());
+    }
+
+    @GetMapping("/{id}/elevation")
+    public ResponseEntity<List<ElevationPointDto>> getElevationPoints(@PathVariable Long id, Authentication authentication){
+        List<ElevationPointDto> elevationPoints = routeService.getElevationPointsForRoute(id, authentication.getName());
+        return ResponseEntity.ok(elevationPoints);
     }
 }
