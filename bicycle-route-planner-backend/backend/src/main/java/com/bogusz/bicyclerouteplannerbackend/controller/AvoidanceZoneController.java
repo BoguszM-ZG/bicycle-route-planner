@@ -2,6 +2,7 @@ package com.bogusz.bicyclerouteplannerbackend.controller;
 
 
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.service.AvoidanceZoneService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +29,8 @@ public class AvoidanceZoneController {
 
     @PostMapping
     public ResponseEntity<AvoidanceZoneDto> createAvoidanceZone(
-            @Valid @RequestBody AvoidanceZoneDto avoidanceZoneDto, Authentication authentication){
-        AvoidanceZoneDto savedAvoidanceZone = avoidanceZoneService.saveAvoidanceZoneForUser(avoidanceZoneDto, authentication.getName());
+            @Valid @RequestBody CreateAvoidanceZoneRequestDto request, Authentication authentication){
+        AvoidanceZoneDto savedAvoidanceZone = avoidanceZoneService.saveAvoidanceZoneForUser(request, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedAvoidanceZone);
     }
 

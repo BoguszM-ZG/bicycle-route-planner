@@ -4,3 +4,8 @@ export interface AvoidanceZoneDto{
   zoneGeom: string;
   isActive?: boolean;
 }
+
+export interface CreateAvoidanceZoneRequestDto{
+  name: string;
+  zoneGeom: string;
+}

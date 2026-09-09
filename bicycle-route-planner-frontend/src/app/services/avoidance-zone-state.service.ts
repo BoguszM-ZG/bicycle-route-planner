@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { AvoidanceZoneDto } from '../models/avoidance-zone.model';
+import { AvoidanceZoneDto, CreateAvoidanceZoneRequestDto } from '../models/avoidance-zone.model';
 import { AvoidanceZoneService } from './avoidance-zone.service';
 
 @Injectable({
@@ -22,7 +22,7 @@ export class AvoidanceZoneStateService {
 
   public saveZone(name: string, wktGeom: string): void {
 
-    const newZone: AvoidanceZoneDto = {name: name, zoneGeom: wktGeom, isActive: true};
+    const newZone: CreateAvoidanceZoneRequestDto = {name: name, zoneGeom: wktGeom};
 
     this.apiService.saveAvoidanceZone(newZone).subscribe({
       next: (savedZone) => {

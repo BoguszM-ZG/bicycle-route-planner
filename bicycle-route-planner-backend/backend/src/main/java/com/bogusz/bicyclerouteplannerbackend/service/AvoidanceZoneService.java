@@ -2,6 +2,7 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.model.AvoidanceZone;
 import com.bogusz.bicyclerouteplannerbackend.repository.AvoidanceZoneRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -29,8 +30,8 @@ public class AvoidanceZoneService {
                 .toList();
     }
 
-    public AvoidanceZoneDto saveAvoidanceZoneForUser(AvoidanceZoneDto avoidanceZoneDto, String userEmail){
-        AvoidanceZone avoidanceZone = toAvoidanceZone(avoidanceZoneDto, userEmail);
+    public AvoidanceZoneDto saveAvoidanceZoneForUser(CreateAvoidanceZoneRequestDto request, String userEmail){
+        AvoidanceZone avoidanceZone = createAvoidanceZoneRequestDtoToAvoidanceZone(request, userEmail);
         avoidanceZone = avoidanceZoneRepository.save(avoidanceZone);
         return toAvoidanceZoneDto(avoidanceZone);
     }
@@ -67,6 +68,27 @@ public class AvoidanceZoneService {
     }
 
 
+    private AvoidanceZone createAvoidanceZoneRequestDtoToAvoidanceZone(
+            CreateAvoidanceZoneRequestDto request, String userEmail){
+        WKTReader wktReader = new WKTReader();
+        AvoidanceZone avoidanceZone = new AvoidanceZone();
+
+        avoidanceZone.setUser(userRepository.findByEmail(userEmail).orElseThrow(
+                () -> new RuntimeException("User not found " + userEmail)));
+        avoidanceZone.setName(request.name());
+        try {
+            if (request.zoneGeom() != null) {
+                Geometry geom = wktReader.read(request.zoneGeom());
+                geom.setSRID(4326);
+                avoidanceZone.setZoneGeom((Polygon) geom);
+            }
+        } catch (ParseException e) {
+            throw new RuntimeException("Error parsing WKT geometry " + e.getMessage(), e);
+        }
+
+        avoidanceZone.setIsActive(true);
+        return avoidanceZone;
+    }
 
 
     private AvoidanceZoneDto toAvoidanceZoneDto(AvoidanceZone avoidanceZone){
@@ -79,25 +101,4 @@ public class AvoidanceZoneService {
                 .build();
     }
 
-    private AvoidanceZone toAvoidanceZone(AvoidanceZoneDto avoidanceZoneDto, String userEmail){
-        WKTReader wktReader = new WKTReader();
-        AvoidanceZone avoidanceZone = new AvoidanceZone();
-
-        avoidanceZone.setId(avoidanceZoneDto.id());
-        avoidanceZone.setUser(userRepository.findByEmail(userEmail).orElseThrow(() -> new RuntimeException("User not found " + userEmail)));
-        avoidanceZone.setName(avoidanceZoneDto.name());
-
-        try {
-            if (avoidanceZoneDto.zoneGeom() != null) {
-                Geometry geom = wktReader.read(avoidanceZoneDto.zoneGeom());
-                geom.setSRID(4326);
-                avoidanceZone.setZoneGeom((Polygon) geom);
-            }
-        } catch (ParseException e) {
-            throw new RuntimeException("Error parsing WKT geometry " + e.getMessage(), e);
-        }
-        avoidanceZone.setIsActive(avoidanceZoneDto.isActive() != Boolean.FALSE);
-
-        return avoidanceZone;
-    }
 }

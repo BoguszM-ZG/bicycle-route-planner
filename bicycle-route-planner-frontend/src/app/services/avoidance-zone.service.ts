@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable} from 'rxjs';
 import { environment} from '../../environments/environment.development';
-import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
+import { AvoidanceZoneDto, CreateAvoidanceZoneRequestDto } from '../models/avoidance-zone.model';
 
 @Injectable({
   providedIn: 'root',
@@ -18,7 +18,7 @@ export class AvoidanceZoneService {
   }
 
 
-  public saveAvoidanceZone(zone: AvoidanceZoneDto): Observable<AvoidanceZoneDto> {
+  public saveAvoidanceZone(zone: CreateAvoidanceZoneRequestDto): Observable<AvoidanceZoneDto> {
     return this.http.post<AvoidanceZoneDto>(this.apiUrl, zone);
   }
 
