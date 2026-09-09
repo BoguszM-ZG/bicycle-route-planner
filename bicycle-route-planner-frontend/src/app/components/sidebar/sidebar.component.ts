@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { RouteService } from '../../services/route.service';
-import { RouteDetailDto } from '../../models/route.model';
+import { RouteSummaryDto } from '../../models/route.model';
 import { UserDto } from '../../models/auth.model';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteItemComponent} from './route-item/route-item.component';
@@ -33,11 +33,11 @@ export class SidebarComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   public currentUser = signal<UserDto | null>(null);
-  public savedRoutes = signal<RouteDetailDto[]>([]);
+  public savedRoutes = signal<RouteSummaryDto[]>([]);
   public isLoadingRoutes = signal<boolean>(false);
   public selectedRouteId = signal<number | null>(null);
 
-  routeSelected = output<RouteDetailDto>();
+  routeSelected = output<RouteSummaryDto>();
 
   ngOnInit() {
     this.currentUser.set(this.authService.getCurrentUser());
@@ -69,13 +69,20 @@ export class SidebarComponent implements OnInit {
     this.authService.logout();
   }
 
-  public selectRoute(route: RouteDetailDto): void {
+  public selectRoute(route: RouteSummaryDto): void {
     if (this.selectedRouteId() === route.id) {
       this.selectedRouteId.set(null);
       this.routeStateService.selectRoute(null);
     } else {
       this.selectedRouteId.set(route.id!);
-      this.routeStateService.selectRoute(route);
+      this.routeService.getRouteDetails(route.id!).subscribe({
+        next: (routeDetails) => {
+          this.routeStateService.selectRoute(routeDetails)
+          },
+        error: (err) => {
+          console.error('Error during loading route details', err);
+        }
+      });
     }
   }
 

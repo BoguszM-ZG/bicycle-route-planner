@@ -11,6 +11,24 @@ export interface RouteDetailDto {
   createdAt: string;
 }
 
+export interface RouteSummaryDto {
+   id: number;
+   name: string;
+   distanceMeters: number;
+}
+
+export interface CreateRouteRequestDto {
+  name: string;
+  routeType: string;
+  targetDistance: number;
+  distanceMeters: number;
+  elevationGain: number;
+  elevationLoss: number;
+  startPoint: string;
+  routeGeom: string;
+  folderId?: number | null;
+}
+
 export interface RouteDraft {
   geometryWkt?: string;
   distanceMeters?: number;

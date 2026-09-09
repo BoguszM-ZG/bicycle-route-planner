@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, Input, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  Input,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
@@ -13,7 +21,7 @@ import { ElevationPointDto } from '../../../models/route.model';
   styleUrl: './elevation-chart.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ElevationChartComponent implements OnInit {
+export class ElevationChartComponent implements OnChanges {
   @Input({ required: true }) routeId!: number;
   private readonly routeService = inject(RouteService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -51,7 +59,16 @@ export class ElevationChartComponent implements OnInit {
     },
   };
 
-  ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['routeId']?.currentValue) {
+      this.loadChartData();
+    }
+
+  }
+
+
+  private loadChartData(): void {
+    this.isLoading = true;
     this.routeService.getElevationProfile(this.routeId).subscribe({
       next: (points: ElevationPointDto[]) => {
         const step = Math.max(1, Math.ceil(points.length / 200));

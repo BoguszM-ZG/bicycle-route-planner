@@ -1,11 +1,11 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,16 +22,24 @@ public class RouteController {
     private final RouteService routeService;
 
     @GetMapping
-    public ResponseEntity<List<RouteDetailDto>> getAllRoutes(Authentication authentication) {
-        List<RouteDetailDto> routes = routeService.getRoutesForUser(authentication.getName());
+    public ResponseEntity<List<RouteSummaryDto>> getAllRoutes(
+            @RequestParam(value = "folderId", required = false) Long folderId,
+            Authentication authentication) {
+        List<RouteSummaryDto> routes = routeService.getRoutesForUser(authentication.getName(), folderId);
         return ResponseEntity.ok(routes);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<RouteDetailDto> getRouteDetail(@PathVariable Long id, Authentication authentication){
+        RouteDetailDto routeDetail = routeService.getRouteDetail(id, authentication.getName());
+        return ResponseEntity.ok(routeDetail);
+    }
+
     @PostMapping
-    public ResponseEntity<RouteDetailDto> saveRoute(@RequestBody RouteDetailDto routeDetailDto,
+    public ResponseEntity<RouteDetailDto> saveRoute( @Valid @RequestBody CreateRouteRequestDto createRouteRequestDto,
                                                     Authentication authentication) {
-        RouteDetailDto savedRoute = routeService.saveRouteForUser(routeDetailDto, authentication.getName());
-        return ResponseEntity.ok(savedRoute);
+        RouteDetailDto savedRoute = routeService.saveRouteForUser(createRouteRequestDto, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedRoute);
     }
 
     @DeleteMapping("/{id}")

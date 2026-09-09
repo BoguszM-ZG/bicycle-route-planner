@@ -1,7 +1,8 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import {RouteDetailDto} from '../../../models/route.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ElevationChartComponent } from '../elevation-chart/elevation-chart.component';
+import { RouteStateService } from '../../../services/route-state.service';
 
 
 @Component({
@@ -12,7 +13,9 @@ import { ElevationChartComponent } from '../elevation-chart/elevation-chart.comp
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RouteDetailsComponent {
-  routeDetail = input.required<RouteDetailDto>();
 
+  private readonly routeStateService = inject(RouteStateService);
+
+  public routeDetail = toSignal(this.routeStateService.selectedRoute$)
 
 }

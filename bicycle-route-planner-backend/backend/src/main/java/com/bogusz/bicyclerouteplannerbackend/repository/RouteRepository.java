@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface RouteRepository extends JpaRepository<Route, Long> {
-    List<Route> findAllByUserEmailOrderByCreatedAtDesc(String email);
-
     Route findRouteById(Long id);
+    List<Route> findAllByUser_EmailAndFolderIsNullOrderByCreatedAtDesc(String email);
+    List<Route> findAllByUser_EmailAndFolder_IdOrderByCreatedAtDesc(String email, Long folderId);
 }

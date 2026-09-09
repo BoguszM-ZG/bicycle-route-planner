@@ -44,7 +44,6 @@ export class SaveRouteModalComponent {
 
     this.routeService
       .addRoute({
-        id: 0,
         name: this.routeName.trim(),
         routeType: this.routeDataToSave.routeType || 'cycling',
         targetDistance: this.routeDataToSave.distanceMeters || 0,
@@ -53,7 +52,7 @@ export class SaveRouteModalComponent {
         elevationLoss: this.routeDataToSave.elevationLoss || 0,
         startPoint: this.routeDataToSave.startPoint || '',
         routeGeom: this.routeDataToSave.geometryWkt || '',
-        createdAt: new Date().toISOString(),
+        folderId: null,
       })
       .subscribe({
         next: () => {

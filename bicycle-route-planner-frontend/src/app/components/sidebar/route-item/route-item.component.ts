@@ -1,6 +1,6 @@
 import { Component, input, output, signal, ChangeDetectionStrategy, inject } from '@angular/core';
 import { DecimalPipe} from '@angular/common';
-import { RouteDetailDto } from '../../../models/route.model';
+import { RouteSummaryDto } from '../../../models/route.model';
 import { RouteDetailsComponent} from '../route-details/route-details.component';
 import { RouteService } from '../../../services/route.service';
 
@@ -14,8 +14,8 @@ import { RouteService } from '../../../services/route.service';
 })
 export class RouteItemComponent {
   private readonly routeService = inject(RouteService);
-  public route = input.required<RouteDetailDto>();
-  public routeSelected = output<RouteDetailDto>();
+  public route = input.required<RouteSummaryDto>();
+  public routeSelected = output<RouteSummaryDto>();
   public routeDeleted = output<number>();
   public isSelected = input<boolean>(false);
 
