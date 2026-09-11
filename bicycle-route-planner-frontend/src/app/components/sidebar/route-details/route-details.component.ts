@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ElevationChartComponent } from '../elevation-chart/elevation-chart.component';
 import { RouteStateService } from '../../../services/route-state.service';
 
@@ -16,6 +15,6 @@ export class RouteDetailsComponent {
 
   private readonly routeStateService = inject(RouteStateService);
 
-  public routeDetail = toSignal(this.routeStateService.selectedRoute$)
+  public routeDetail = this.routeStateService.selectedRoute;
 
 }

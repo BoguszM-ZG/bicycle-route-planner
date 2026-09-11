@@ -2,21 +2,14 @@ import {
   Component,
   OnInit,
   inject,
-  output,
-  signal,
   ChangeDetectionStrategy,
-  DestroyRef,
+  computed
 } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { RouteService } from '../../services/route.service';
 import { RouteSummaryDto } from '../../models/route.model';
-import { UserDto } from '../../models/auth.model';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteItemComponent} from './route-item/route-item.component';
 import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zone-panel.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-
 
 @Component({
   selector: 'app-sidebar',
@@ -28,41 +21,18 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
-  private readonly routeService = inject(RouteService);
-  private readonly routeStateService = inject(RouteStateService);
-  private readonly destroyRef = inject(DestroyRef);
+  public readonly routeStateService = inject(RouteStateService);
 
-  public currentUser = signal<UserDto | null>(null);
-  public savedRoutes = signal<RouteSummaryDto[]>([]);
-  public isLoadingRoutes = signal<boolean>(false);
-  public selectedRouteId = signal<number | null>(null);
-
-  routeSelected = output<RouteSummaryDto>();
+  public currentUser = this.authService.currentUser;
+  
+  public savedRoutes = this.routeStateService.routes;
+  public isLoadingRoutes = this.routeStateService.isLoadingList;
+  public selectedRouteDetails = this.routeStateService.selectedRoute;
+  
+  public selectedRouteId = computed(() => this.selectedRouteDetails()?.id ?? null);
 
   ngOnInit() {
-    this.currentUser.set(this.authService.getCurrentUser());
-    this.fetchUserRoutes();
-
-    this.routeService.routeAdded$.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.fetchUserRoutes();
-    });
-  }
-
-  private fetchUserRoutes(): void {
-    this.isLoadingRoutes.set(true);
-    this.routeService.getRoutes().subscribe({
-      next: (routes) => {
-        console.log('Sidebar odebrał trasy z backendu!', routes);
-        this.savedRoutes.set(routes);
-        this.isLoadingRoutes.set(false);
-      },
-      error: (err) => {
-        console.error('Błąd podczas pobierania tras (Sidebar):', err);
-        this.isLoadingRoutes.set(false);
-      },
-    });
+    this.routeStateService.fetchRoutes();
   }
 
   public logout(): void {
@@ -70,31 +40,12 @@ export class SidebarComponent implements OnInit {
   }
 
   public selectRoute(route: RouteSummaryDto): void {
-    if (this.selectedRouteId() === route.id) {
-      this.selectedRouteId.set(null);
-      this.routeStateService.selectRoute(null);
-    } else {
-      this.selectedRouteId.set(route.id!);
-      this.routeService.getRouteDetails(route.id!).subscribe({
-        next: (routeDetails) => {
-          this.routeStateService.selectRoute(routeDetails)
-          },
-        error: (err) => {
-          console.error('Error during loading route details', err);
-        }
-      });
+    if (route.id) {
+      this.routeStateService.selectRoute(route.id);
     }
   }
 
   public deleteRoute(routeId: number): void {
-    this.routeService.deleteRoute(routeId).subscribe({
-      next: () => {
-        this.savedRoutes.set(this.savedRoutes().filter((route) => route.id !== routeId));
-      },
-      error: (err) => {
-        console.error('Błąd podczas usuwania trasy (Sidebar):', err);
-        alert('Wystąpił błąd podczas usuwania trasy. Spróbuj ponownie.');
-      },
-    });
+    this.routeStateService.deleteRoute(routeId);
   }
 }

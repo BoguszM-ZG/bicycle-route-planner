@@ -1,13 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   inject,
-  Input,
-  OnChanges,
-  SimpleChanges,
+  input,
+  effect,
+  signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { RouteService } from '../../../services/route.service';
@@ -16,30 +14,26 @@ import { ElevationPointDto } from '../../../models/route.model';
 @Component({
   selector: 'app-elevation-chart',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [BaseChartDirective],
   templateUrl: './elevation-chart.component.html',
   styleUrl: './elevation-chart.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ElevationChartComponent implements OnChanges {
-  @Input({ required: true }) routeId!: number;
+export class ElevationChartComponent {
+  public routeId = input.required<number>();
+
   private readonly routeService = inject(RouteService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
-  public chartData: ChartConfiguration<'scatter'>['data'] | null = null;
-  public isLoading = true;
-
-  public chartOptions: ChartOptions<'scatter'> = {
+  public chartData = signal<ChartConfiguration<'scatter'>['data'] | null>(null);
+  public isLoading = signal<boolean>(true);
+  public chartOptions = signal<ChartOptions<'scatter'>>({
     normalized: true,
     parsing: false,
     responsive: true,
     maintainAspectRatio: false,
     elements: {
       point: { radius: 0, hitRadius: 10 },
-      line: {
-        borderWidth: 2,
-        tension: 0.4,
-      },
+      line: { borderWidth: 2, tension: 0.4 },
     },
     scales: {
       x: {
@@ -57,19 +51,21 @@ export class ElevationChartComponent implements OnChanges {
       legend: { display: false },
       tooltip: { mode: 'nearest', intersect: false },
     },
-  };
+  });
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['routeId']?.currentValue) {
-      this.loadChartData();
-    }
-
+  constructor() {
+    effect(() => {
+      const id = this.routeId();
+      if (id) {
+        this.loadChartData(id);
+      }
+    });
   }
 
+  private loadChartData(id: number): void {
+    this.isLoading.set(true);
 
-  private loadChartData(): void {
-    this.isLoading = true;
-    this.routeService.getElevationProfile(this.routeId).subscribe({
+    this.routeService.getElevationProfile(id).subscribe({
       next: (points: ElevationPointDto[]) => {
         const step = Math.max(1, Math.ceil(points.length / 200));
 
@@ -80,8 +76,19 @@ export class ElevationChartComponent implements OnChanges {
             y: p.elevation,
           }));
 
-        this.chartOptions.scales!['x']!.max = dataPoints.at(-1)!.x;
-        this.chartData = {
+        const currentOptions = this.chartOptions();
+        this.chartOptions.set({
+          ...currentOptions,
+          scales: {
+            ...currentOptions.scales,
+            x: {
+              ...currentOptions.scales!['x']!,
+              max: dataPoints.length > 0 ? dataPoints.at(-1)!.x : 0
+            }
+          }
+        });
+
+        this.chartData.set({
           datasets: [
             {
               type: 'scatter',
@@ -92,15 +99,13 @@ export class ElevationChartComponent implements OnChanges {
               fill: true,
             },
           ],
-        };
+        });
 
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Błąd ładowania wysokości:', err);
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        console.error('Error loading elevation profile:', err);
+        this.isLoading.set(false);
       },
     });
   }

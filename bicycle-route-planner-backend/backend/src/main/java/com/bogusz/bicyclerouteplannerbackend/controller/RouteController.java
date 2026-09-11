@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
 import jakarta.validation.Valid;
@@ -68,5 +69,15 @@ public class RouteController {
     public ResponseEntity<List<ElevationPointDto>> getElevationPoints(@PathVariable Long id, Authentication authentication){
         List<ElevationPointDto> elevationPoints = routeService.getElevationPointsForRoute(id, authentication.getName());
         return ResponseEntity.ok(elevationPoints);
+    }
+
+    @PatchMapping("/{id}/folder")
+    public ResponseEntity<Void> updateRouteFolder(
+            @PathVariable Long id,
+            @RequestBody UpdateRouteFolderDto request,
+            Authentication authentication
+    ) {
+        routeService.updateRouteFolder(id, request, authentication.getName());
+        return ResponseEntity.noContent().build();
     }
 }

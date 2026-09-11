@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
@@ -94,6 +95,18 @@ public class RouteService {
         }
 
         return elevationProfile;
+    }
+
+    @Transactional
+    public void updateRouteFolder(Long routeId, UpdateRouteFolderDto request, String userEmail) {
+        Route route = getValidRouteForUser(routeId, userEmail);
+
+        if (request.folderId() == null) {
+            route.setFolder(null);
+        } else {
+            route.setFolder(folderRepository.findByIdAndUserEmail(request.folderId(), userEmail).orElseThrow(
+                    () -> new IllegalArgumentException("Folder not found or accesss denied")));
+        }
     }
 
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {

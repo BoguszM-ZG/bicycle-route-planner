@@ -11,10 +11,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +23,9 @@ public class FolderService {
 
     public List<FolderDto> getUserFolders(String userEmail) {
         List<Folder> allFolders = folderRepository.findAllByUser_Email(userEmail);
-        Map<Long, List<Folder>> foldersByParentId = allFolders.stream()
-                .collect(Collectors.groupingBy(f ->
-                        f.getParentFolder() == null ? 0L : f.getParentFolder().getId()
-                ));
-        return buildTree(0L, foldersByParentId);
+        return allFolders.stream()
+                .map(this::folderToFolderDto)
+                .toList();
     }
 
     public FolderDto createFolder(CreateFolderRequestDto request, String userEmail) {
@@ -74,24 +70,8 @@ public class FolderService {
         return new FolderDto(
                 folder.getId(),
                 folder.getName(),
-                folder.getParentFolder() != null ? folder.getParentFolder().getId() : null,
-                List.of()
+                folder.getParentFolder() != null ? folder.getParentFolder().getId() : null
         );
     }
-
-    private List<FolderDto> buildTree(Long parentId, Map<Long, List<Folder>> foldersByParentId) {
-        List<Folder> children = foldersByParentId.getOrDefault(parentId, Collections.emptyList());
-        return children.stream()
-                .map(folder -> new FolderDto(
-                        folder.getId(),
-                        folder.getName(),
-                        folder.getParentFolder() != null ? folder.getParentFolder().getId() : null,
-                        buildTree(folder.getId(), foldersByParentId)
-                ))
-                .toList();
-    }
-
-
-
 
 }

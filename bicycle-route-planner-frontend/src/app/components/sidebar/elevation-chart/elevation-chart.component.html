@@ -1,10 +1,10 @@
-@if (isLoading) {
+@if (isLoading()) {
   <div class="loading">Ładowanie wykresu przewyższeń...</div>
-} @else if (chartData) {
+} @else if (chartData()) {
   <div class="chart-container">
     <canvas baseChart
-            [data]="chartData"
-            [options]="chartOptions"
+            [data]="chartData()!"
+            [options]="chartOptions()"
             [type]="'scatter'">
     </canvas>
   </div>
