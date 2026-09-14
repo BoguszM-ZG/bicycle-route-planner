@@ -1,18 +1,28 @@
-import { Injectable, inject} from '@angular/core';
+import { Injectable, inject, effect } from '@angular/core';
 import * as L from 'leaflet';
 import { parse } from 'wellknown';
-import { RouteStateService} from './route-state.service';
-import { RouteDetailDto} from '../models/route.model';
+import { RouteStateService } from './route-state.service';
+import { RouteDetailDto } from '../models/route.model';
 
 @Injectable({
   providedIn: 'root',
 })
-
 export class MapRenderService {
   private readonly routeStateService = inject(RouteStateService);
 
   private map?: L.Map;
   private currentGeoJsonLayer?: L.GeoJSON;
+
+  constructor() {
+    effect(() => {
+      const routeState = this.routeStateService.selectedRoute();
+      if (routeState) {
+        this.renderSavedRoute(routeState);
+      } else {
+        this.clearRenderedRoute();
+      }
+    });
+  }
 
   public initMap(elementId: string): void {
     if (this.map) {
@@ -26,22 +36,14 @@ export class MapRenderService {
       attribution: '@ OpenStreetMap',
     }).addTo(this.map);
 
-    this.listenToSelectedRoute();
+    const currentRoute = this.routeStateService.selectedRoute();
+    if (currentRoute) {
+      this.renderSavedRoute(currentRoute);
+    }
   }
 
   public getMap(): L.Map | undefined {
     return this.map;
-  }
-
-  private listenToSelectedRoute(): void {
-    this.routeStateService.selectedRoute$.subscribe(routeState => {
-      if (routeState) {
-        this.renderSavedRoute(routeState);
-      } else {
-        this.clearRenderedRoute();
-      }
-    })
-
   }
 
   private renderSavedRoute(routeState: RouteDetailDto) {
@@ -59,7 +61,6 @@ export class MapRenderService {
       this.map.fitBounds(this.currentGeoJsonLayer.getBounds(), { padding: [50, 50] });
     }
   }
-
 
   public clearRenderedRoute(): void {
     if(this.currentGeoJsonLayer && this.map) {

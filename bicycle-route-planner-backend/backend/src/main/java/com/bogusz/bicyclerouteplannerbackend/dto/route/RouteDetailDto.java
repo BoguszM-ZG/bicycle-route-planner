@@ -33,5 +33,7 @@ public record RouteDetailDto(
         @NotBlank(message = "Route geometry is required")
         String routeGeom,
 
-        Instant createdAt
+        Instant createdAt,
+
+        Long folderId
 ) {}

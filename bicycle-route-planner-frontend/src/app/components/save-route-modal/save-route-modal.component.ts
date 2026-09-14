@@ -1,7 +1,8 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouteService} from '../../services/route.service';
-import { RouteDraft} from '../../models/route.model';
+import { RouteStateService } from '../../services/route-state.service';
+import { RouteDraft, CreateRouteRequestDto } from '../../models/route.model';
+import { FolderStateService } from '../../services/folder-state.service';
 
 @Component({
   selector: 'app-save-route-modal',
@@ -12,9 +13,14 @@ import { RouteDraft} from '../../models/route.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SaveRouteModalComponent {
-  private readonly routeService = inject(RouteService);
+  private readonly routeStateService = inject(RouteStateService);
+  private readonly folderStateService = inject(FolderStateService);
+
+
   public isVisible = signal<boolean>(false);
-  public isLoading = signal<boolean>(false);
+  public isLoading = this.routeStateService.isSaving;
+  public folders = this.folderStateService.folders;
+  public selectedFolderId: number | null = null;
 
   public routeName: string = '';
   private routeDataToSave: RouteDraft | null = null;
@@ -29,6 +35,7 @@ export class SaveRouteModalComponent {
     this.isVisible.set(false);
     this.routeName = '';
     this.routeDataToSave = null;
+    this.selectedFolderId = null;
   }
 
   public saveRoute(): void {
@@ -36,39 +43,25 @@ export class SaveRouteModalComponent {
       alert('Proszę wpisać nazwę trasy');
       return;
     }
-    if (!this.routeDataToSave) {
+    if (!this.routeDataToSave || this.isLoading()) {
       return;
     }
 
-    this.isLoading.set(true);
+    const dto: CreateRouteRequestDto = {
+      name: this.routeName.trim(),
+      routeType: this.routeDataToSave.routeType || 'cycling',
+      targetDistance: this.routeDataToSave.distanceMeters || 0,
+      distanceMeters: this.routeDataToSave.distanceMeters || 0,
+      elevationGain: this.routeDataToSave.elevationGain || 0,
+      elevationLoss: this.routeDataToSave.elevationLoss || 0,
+      startPoint: this.routeDataToSave.startPoint || '',
+      routeGeom: this.routeDataToSave.geometryWkt || '',
+      folderId: this.selectedFolderId,
+    };
 
-    this.routeService
-      .addRoute({
-        id: 0,
-        name: this.routeName.trim(),
-        routeType: this.routeDataToSave.routeType || 'cycling',
-        targetDistance: this.routeDataToSave.distanceMeters || 0,
-        distanceMeters: this.routeDataToSave.distanceMeters || 0,
-        elevationGain: this.routeDataToSave.elevationGain || 0,
-        elevationLoss: this.routeDataToSave.elevationLoss || 0,
-        startPoint: this.routeDataToSave.startPoint || '',
-        routeGeom: this.routeDataToSave.geometryWkt || '',
-        createdAt: new Date().toISOString(),
-      })
-      .subscribe({
-        next: () => {
-          this.routeService.routeAdded$.next();
-
-          alert('Trasa została zapisana pomyślnie!');
-          this.isLoading.set(false);
-          this.close();
-        },
-
-        error: (err) => {
-          console.error('Błąd podczas zapisywania trasy:', err);
-          alert('Wystąpił błąd podczas zapisywania trasy. Spróbuj ponownie.');
-          this.isLoading.set(false);
-        },
-      });
+    this.routeStateService.createRoute(dto, () => {
+      alert('Trasa została zapisana pomyślnie!');
+      this.close();
+    });
   }
 }

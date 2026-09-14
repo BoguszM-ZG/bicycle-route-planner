@@ -1,0 +1,60 @@
+.folder-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 4px;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 4px;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.folder-expand-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.folder-expand-btn:active {
+  transform: scale(0.99);
+}
+
+.folder-header.expanded {
+  background-color: #e5e7eb;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 2px solid #3b82f6;
+}
+
+.folder-icon {
+  font-size: 1.1rem;
+}
+
+.folder-name {
+  flex-grow: 1;
+}
+
+.folder-children {
+  display: flex;
+  flex-direction: column;
+
+  padding-left: 16px;
+  margin-left: 8px;
+  border-left: 2px dashed #d1d5db;
+  padding-top: 8px;
+  padding-bottom: 4px;
+}

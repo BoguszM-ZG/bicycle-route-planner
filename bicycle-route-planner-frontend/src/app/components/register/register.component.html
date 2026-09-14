@@ -55,7 +55,7 @@
         }
       </div>
 
-      <button type="submit" class="submit-btn" [disabled]="isLoading()">
+      <button type="submit" class="submit-btn" [disabled]="isLoading() || registerForm.invalid">
         @if(!isLoading()) {
           <span >Sign Up</span>
         } @else {

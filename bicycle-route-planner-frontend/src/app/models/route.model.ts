@@ -9,6 +9,26 @@ export interface RouteDetailDto {
   startPoint: string;
   routeGeom: string;
   createdAt: string;
+  folderId?: number | null;
+}
+
+export interface RouteSummaryDto {
+   id: number;
+   name: string;
+   distanceMeters: number;
+   folderId?: number | null;
+}
+
+export interface CreateRouteRequestDto {
+  name: string;
+  routeType: string;
+  targetDistance: number;
+  distanceMeters: number;
+  elevationGain: number;
+  elevationLoss: number;
+  startPoint: string;
+  routeGeom: string;
+  folderId?: number | null;
 }
 
 export interface RouteDraft {
@@ -45,4 +65,13 @@ export interface OrsGeoJsonResponse{
     error?: {
       message: string;
     };
+}
+
+export interface ElevationPointDto {
+  distance: number;
+  elevation: number;
+}
+
+export interface UpdateRouteFolderDto {
+  folderId: number | null;
 }

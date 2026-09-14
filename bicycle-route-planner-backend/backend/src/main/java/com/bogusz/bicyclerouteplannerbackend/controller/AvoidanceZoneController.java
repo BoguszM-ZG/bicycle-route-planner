@@ -2,8 +2,11 @@ package com.bogusz.bicyclerouteplannerbackend.controller;
 
 
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.service.AvoidanceZoneService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +28,10 @@ public class AvoidanceZoneController {
     }
 
     @PostMapping
-    public ResponseEntity<AvoidanceZoneDto> createAvoidanceZone(@RequestBody AvoidanceZoneDto avoidanceZoneDto, Authentication authentication){
-        AvoidanceZoneDto savedAvoidanceZone = avoidanceZoneService.saveAvoidanceZoneForUser(avoidanceZoneDto, authentication.getName());
-        return ResponseEntity.ok(savedAvoidanceZone);
+    public ResponseEntity<AvoidanceZoneDto> createAvoidanceZone(
+            @Valid @RequestBody CreateAvoidanceZoneRequestDto request, Authentication authentication){
+        AvoidanceZoneDto savedAvoidanceZone = avoidanceZoneService.saveAvoidanceZoneForUser(request, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAvoidanceZone);
     }
 
     @DeleteMapping("/{id}")

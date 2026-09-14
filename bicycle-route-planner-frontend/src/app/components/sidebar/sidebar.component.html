@@ -15,6 +15,29 @@
   <div class="sidebar-content">
     <h3>Zapisane Trasy</h3>
 
+    <div class="folder-actions">
+      @if (!isCreatingFolder()) {
+        <button class="create-folder-btn" (click)="toggleCreateFolder()">
+          + Nowy Folder
+        </button>
+      } @else {
+        <div class="create-folder-form">
+          <label for="newFolderInput" class="sr-only">Nazwa nowego folderu</label>
+          <input
+            id="newFolderInput"
+            class="folder-input"
+            type="text"
+            [formControl]="newFolderName"
+            placeholder="Nazwa folderu..."
+            (keyup.enter)="submitNewFolder()"
+            (keyup.escape)="toggleCreateFolder()"
+          >
+          <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" title="Zatwierdź">✔️</button>
+          <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" title="Anuluj">❌</button>
+        </div>
+      }
+    </div>
+
     @if (isLoadingRoutes()) {
       <div class="loading-state">
         <span>Pobieranie tras...</span>
@@ -22,25 +45,32 @@
     }
 
 
-    @if (!isLoadingRoutes() && savedRoutes().length === 0) {
+    @if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
       <div class="empty-state">
-        Nie masz jeszcze żadnych zapisanych tras. Dodaj trasę, aby ją zobaczyć tutaj.
+        Nie masz jeszcze żadnych zapisanych tras ani folderów. Dodaj trasę, aby ją zobaczyć tutaj.
       </div>
     }
 
-    @if (!isLoadingRoutes() && savedRoutes().length > 0) {
-      @for (route of savedRoutes(); track route.id) {
+    @if (!isLoadingRoutes() && (rootRoutes().length > 0 || rootFolders().length > 0)) {
+
+      @for (folder of rootFolders(); track folder.id) {
+        <app-folder-item [folderId]="folder.id"></app-folder-item>
+      }
+
+      @for (route of rootRoutes(); track route.id) {
         <app-route-item
           [route]="route"
           [isSelected] = "route.id === selectedRouteId()"
           (routeSelected)="selectRoute($event)"
-          (routeDeleted)="deleteRoute($event)">
+          (routeDeleted)="deleteRoute($event)"
+          (exportGpx)="routeStateService.exportGpx($event)"
+          [allFolders]="folders()"
+          (routeMoved)="routeStateService.moveRouteToFolder($event.routeId, $event.folderId)">
         </app-route-item>
       }
+
 
     }
   </div>
   <app-avoidance-zone-panel></app-avoidance-zone-panel>
 </div>
-
-

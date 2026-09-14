@@ -1,81 +1,89 @@
-import { Component, OnInit, inject, output, signal, ChangeDetectionStrategy} from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  ChangeDetectionStrategy,
+  computed,
+  signal,
+} from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { RouteService } from '../../services/route.service';
-import { RouteDetailDto } from '../../models/route.model';
-import { UserDto } from '../../models/auth.model';
+import { RouteSummaryDto } from '../../models/route.model';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteItemComponent} from './route-item/route-item.component';
 import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zone-panel.component';
-
-
+import { FolderStateService } from '../../services/folder-state.service';
+import { FolderItemComponent } from './folder-item/folder-item.component';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouteItemComponent, AvoidanceZonePanelComponent],
+  imports: [RouteItemComponent, AvoidanceZonePanelComponent, FolderItemComponent, ReactiveFormsModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
-  private readonly routeService = inject(RouteService);
-  private readonly routeStateService = inject(RouteStateService);
+  public readonly routeStateService = inject(RouteStateService);
+  private readonly folderStateService = inject(FolderStateService);
 
-  public currentUser = signal<UserDto | null>(null);
-  public savedRoutes = signal<RouteDetailDto[]>([]);
-  public isLoadingRoutes = signal<boolean>(false);
-  public selectedRouteId = signal<number | null>(null);
+  public currentUser = this.authService.currentUser;
 
-  routeSelected = output<RouteDetailDto>();
+  public savedRoutes = this.routeStateService.routes;
+  public isLoadingRoutes = this.routeStateService.isLoadingList;
+  public selectedRouteDetails = this.routeStateService.selectedRoute;
+
+  public selectedRouteId = computed(() => this.selectedRouteDetails()?.id ?? null);
+
+  public folders = this.folderStateService.folders;
+
+  public rootRoutes = computed(() => {
+    return this.savedRoutes().filter((r) => r.folderId == null);
+  });
+
+  public rootFolders = computed(() => {
+    return this.folderStateService.folders().filter((f) => f.parentFolderId == null);
+  });
+
+  public isCreatingFolder = signal<boolean>(false);
+
+  public newFolderName = new FormControl('', {
+    validators: [Validators.required, Validators.maxLength(50)],
+    nonNullable: true,
+  });
 
   ngOnInit() {
-    this.currentUser.set(this.authService.getCurrentUser());
-    this.fetchUserRoutes();
-
-    this.routeService.routeAdded$.subscribe(() => {
-      this.fetchUserRoutes();
-    });
-  }
-
-  private fetchUserRoutes(): void {
-    this.isLoadingRoutes.set(true);
-    this.routeService.getRoutes().subscribe({
-      next: (routes) => {
-        console.log('Sidebar odebrał trasy z backendu!', routes);
-        this.savedRoutes.set(routes);
-        this.isLoadingRoutes.set(false);
-      },
-      error: (err) => {
-        console.error('Błąd podczas pobierania tras (Sidebar):', err);
-        this.isLoadingRoutes.set(false);
-      },
-    });
+    this.routeStateService.fetchRoutes();
+    this.folderStateService.fetchFolders();
   }
 
   public logout(): void {
     this.authService.logout();
   }
 
-  public selectRoute(route: RouteDetailDto): void {
-    if (this.selectedRouteId() === route.id) {
-      this.selectedRouteId.set(null);
-      this.routeStateService.selectRoute(null);
-    } else {
-      this.selectedRouteId.set(route.id!);
-      this.routeStateService.selectRoute(route);
+  public selectRoute(route: RouteSummaryDto): void {
+    if (route.id) {
+      this.routeStateService.selectRoute(route.id);
     }
   }
 
   public deleteRoute(routeId: number): void {
-    this.routeService.deleteRoute(routeId).subscribe({
-      next: () => {
-        this.savedRoutes.set(this.savedRoutes().filter((route) => route.id !== routeId));
-      },
-      error: (err) => {
-        console.error('Błąd podczas usuwania trasy (Sidebar):', err);
-        alert('Wystąpił błąd podczas usuwania trasy. Spróbuj ponownie.');
-      },
-    });
+    this.routeStateService.deleteRoute(routeId);
+  }
+
+  public toggleCreateFolder(): void {
+    this.isCreatingFolder.update((v) => !v);
+    this.newFolderName.reset();
+  }
+
+  public submitNewFolder(): void {
+    if (this.newFolderName.invalid) return;
+
+    const folderName = this.newFolderName.value.trim();
+    if (!folderName) return;
+
+    this.folderStateService.createFolder({ name: folderName });
+    this.toggleCreateFolder();
   }
 }
