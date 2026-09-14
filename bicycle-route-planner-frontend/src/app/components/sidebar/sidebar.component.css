@@ -117,3 +117,32 @@ h2, h3 {
   font-size: 0.8rem;
   font-weight: bold;
 }
+
+
+.folder-actions {
+  margin-bottom: 15px;
+}
+
+.create-folder-form {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.folder-input {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

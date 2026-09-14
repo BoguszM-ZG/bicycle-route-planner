@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
+import { Observable} from 'rxjs';
 import {
   CreateRouteRequestDto,
   ElevationPointDto,
   RouteDetailDto,
-  RouteSummaryDto,
+  RouteSummaryDto, UpdateRouteFolderDto,
 } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
 
@@ -15,8 +15,6 @@ import { environment } from '../../environments/environment.development';
 export class RouteService {
   private readonly apiUrl = `${environment.apiUrl}/routes`;
   private readonly http = inject(HttpClient);
-
-  public routeAdded$ = new Subject<void>();
 
   getRoutes(): Observable<RouteSummaryDto[]> {
     return this.http.get<RouteSummaryDto[]>(this.apiUrl);
@@ -34,16 +32,18 @@ export class RouteService {
     return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
 
-  public downloadGpx(routeId: number): void {
+  public downloadGpx(routeId: number, routeName: string): void {
     this.http
       .get(`${this.apiUrl}/${routeId}/export/gpx`, { observe: 'response', responseType: 'blob' })
       .subscribe({
         next: (response) => {
-          const contentDisposition = response.headers.get('content-disposition');
-          let fileName = `trasa_${routeId}.gpx`;
-
-          const matches = /filename="?([^";]+)"?/.exec(contentDisposition!);
-          fileName = matches?.[1] ?? fileName;
+          const polishMap: { [key: string]: string } = {
+            'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
+            'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+          };
+          const asciiName = routeName.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, match => polishMap[match]);
+          const safeName = asciiName.replace(/[^a-zA-Z0-9-]/g, '_');
+          const fileName = `${safeName}.gpx`;
 
           const blobUrl = window.URL.createObjectURL(response.body!);
           const anchor = document.createElement('a');
@@ -64,5 +64,9 @@ export class RouteService {
 
   public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {
     return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`);
+  }
+
+  public updateRouteFolder(routeId: number, request: UpdateRouteFolderDto): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${routeId}/folder`, request);
   }
 }

@@ -2,6 +2,7 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { RouteStateService } from '../../services/route-state.service';
 import { RouteDraft, CreateRouteRequestDto } from '../../models/route.model';
+import { FolderStateService } from '../../services/folder-state.service';
 
 @Component({
   selector: 'app-save-route-modal',
@@ -13,9 +14,13 @@ import { RouteDraft, CreateRouteRequestDto } from '../../models/route.model';
 })
 export class SaveRouteModalComponent {
   private readonly routeStateService = inject(RouteStateService);
+  private readonly folderStateService = inject(FolderStateService);
+
 
   public isVisible = signal<boolean>(false);
   public isLoading = this.routeStateService.isSaving;
+  public folders = this.folderStateService.folders;
+  public selectedFolderId: number | null = null;
 
   public routeName: string = '';
   private routeDataToSave: RouteDraft | null = null;
@@ -30,6 +35,7 @@ export class SaveRouteModalComponent {
     this.isVisible.set(false);
     this.routeName = '';
     this.routeDataToSave = null;
+    this.selectedFolderId = null;
   }
 
   public saveRoute(): void {
@@ -50,7 +56,7 @@ export class SaveRouteModalComponent {
       elevationLoss: this.routeDataToSave.elevationLoss || 0,
       startPoint: this.routeDataToSave.startPoint || '',
       routeGeom: this.routeDataToSave.geometryWkt || '',
-      folderId: null,
+      folderId: this.selectedFolderId,
     };
 
     this.routeStateService.createRoute(dto, () => {

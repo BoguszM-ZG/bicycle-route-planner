@@ -9,12 +9,14 @@ export interface RouteDetailDto {
   startPoint: string;
   routeGeom: string;
   createdAt: string;
+  folderId?: number | null;
 }
 
 export interface RouteSummaryDto {
    id: number;
    name: string;
    distanceMeters: number;
+   folderId?: number | null;
 }
 
 export interface CreateRouteRequestDto {
@@ -68,4 +70,8 @@ export interface OrsGeoJsonResponse{
 export interface ElevationPointDto {
   distance: number;
   elevation: number;
+}
+
+export interface UpdateRouteFolderDto {
+  folderId: number | null;
 }

@@ -12,6 +12,15 @@
       class="route-name-input"
       />
 
+      <label for="folderSelect">Wybierz folder (opcjonalnie)</label>
+      <select id="folderSelect" [(ngModel)]="selectedFolderId" class="route-name-input" style="margin-bottom: 20px;">
+        <option [ngValue]="null">-- Brak folderu (zapisz luzem) --</option>
+
+        @for (folder of folders(); track folder.id) {
+          <option [ngValue]="folder.id">{{ folder.name }}</option>
+        }
+      </select>
+
       <div class="modal-actions">
         <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">Anuluj</button>
         <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading()">

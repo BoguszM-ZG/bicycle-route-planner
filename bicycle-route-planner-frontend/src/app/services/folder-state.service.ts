@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { FolderService } from './folder.service';
-import { CreateFolderRequestDto, FolderDto } from '../models/folder.model';
+import { CreateFolderRequestDto, FolderDto, RenameFolderRequestDto } from '../models/folder.model';
 
 @Injectable({
   providedIn: 'root',
@@ -43,15 +43,38 @@ export class FolderStateService {
       .createFolder(request)
       .pipe(finalize(() => this._isLoading.set(false)))
       .subscribe({
-
         next: (createdFolder: FolderDto) => {
           this._folders.update((currentFolders) => [...currentFolders, createdFolder]);
-
         },
         error: (err) => {
           console.error('Error occurred while creating folder.', err);
           this._error.set('Nie udało się utworzyć folderu.');
         },
       });
+  }
+
+  public deleteFolder(folderId: number): void {
+    this.folderService.deleteFolder(folderId).subscribe({
+      next: () => {
+        this._folders.update((folders) => folders.filter((f) => f.id !== folderId));
+
+      },
+      error: (err) => {
+        console.error('Error deleting folder', err);
+      },
+    });
+  }
+  public renameFolder(folderId: number, newName: string): void {
+    const request : RenameFolderRequestDto = { name: newName };
+    this.folderService.renameFolder(folderId, request).subscribe({
+      next: (updatedFolder) => {
+        this._folders.update((folders) =>
+          folders.map((f) => (f.id === folderId ? { ...f, name: updatedFolder.name } : f)),
+        );
+      },
+      error: (err) => {
+        console.error('Error renaming folder', err);
+      },
+    });
   }
 }

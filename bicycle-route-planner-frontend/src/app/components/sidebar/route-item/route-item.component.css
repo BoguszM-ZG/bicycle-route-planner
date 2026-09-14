@@ -111,6 +111,9 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-.download-icon {
-  margin-right: 8px;
+.route-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
 }

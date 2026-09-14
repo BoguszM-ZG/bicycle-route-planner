@@ -7,6 +7,15 @@ import { RouteStats } from '../models/route.model';
 })
 export class RouteCalculationService {
   public calculateRouteStats(coordinates: L.LatLng[]): RouteStats {
+    let lastKnownAlt: number | undefined = undefined;
+    for (const pt of coordinates) {
+      if (pt.alt !== undefined && !Number.isNaN(pt.alt) && pt.alt !== 0) {
+        lastKnownAlt = pt.alt;
+      } else if (lastKnownAlt !== undefined) {
+        pt.alt = lastKnownAlt;
+      }
+    }
+
     const elevation = this.calculateElevation(coordinates);
     const wkt = this.generateWkt(coordinates);
     return {

@@ -33,7 +33,7 @@ public class RouteService {
         List<Route> routes;
 
         if (folderId == null){
-            routes = routeRepository.findAllByUser_EmailAndFolderIsNullOrderByCreatedAtDesc(userEmail);
+            routes = routeRepository.findAllByUser_EmailOrderByCreatedAtDesc(userEmail);
         } else {
             routes = routeRepository.findAllByUser_EmailAndFolder_IdOrderByCreatedAtDesc(userEmail, folderId);
         }
@@ -105,7 +105,7 @@ public class RouteService {
             route.setFolder(null);
         } else {
             route.setFolder(folderRepository.findByIdAndUserEmail(request.folderId(), userEmail).orElseThrow(
-                    () -> new IllegalArgumentException("Folder not found or accesss denied")));
+                    () -> new IllegalArgumentException("Folder not found or access denied")));
         }
     }
 
@@ -158,7 +158,8 @@ public class RouteService {
         return new RouteSummaryDto(
                 route.getId(),
                 route.getName(),
-                route.getDistanceMeters()
+                route.getDistanceMeters(),
+                route.getFolder() != null ? route.getFolder().getId() : null
         );
     }
 
