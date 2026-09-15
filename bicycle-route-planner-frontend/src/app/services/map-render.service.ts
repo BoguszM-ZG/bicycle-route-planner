@@ -58,6 +58,36 @@ export class MapRenderService {
         style: { color: '#e74c3c', weight: 6, opacity: 0.9 },
       }).addTo(this.map);
 
+      if (geoJsonGeometry.type === 'LineString') {
+        const coords = geoJsonGeometry.coordinates as number[][];
+        if (coords.length > 0) {
+          const startCoords = coords[0];
+          const endCoords = coords[coords.length - 1];
+
+          if (!startCoords || !endCoords) return;
+
+          const startIcon = L.divIcon({
+            className: 'route-marker-circle route-marker-start',
+            html: 'A',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          const endIcon = L.divIcon({
+            className: 'route-marker-circle route-marker-end',
+            html: 'B',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          const startMarker = L.marker([startCoords[1], startCoords[0]], { icon: startIcon, title: 'Start' });
+          const endMarker = L.marker([endCoords[1], endCoords[0]], { icon: endIcon, title: 'Koniec' });
+
+          this.currentGeoJsonLayer.addLayer(startMarker);
+          this.currentGeoJsonLayer.addLayer(endMarker);
+        }
+      }
+
       this.map.fitBounds(this.currentGeoJsonLayer.getBounds(), { padding: [50, 50] });
     }
   }

@@ -1,4 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
 .leaflet-routing-container {
     display: none !important;
+}
+
+.route-marker-circle {
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  font-size: 0;
+}
+
+.route-marker-circle.route-marker-start {
+  background-color: #22c55e !important;
+}
+
+.route-marker-circle.route-marker-end {
+  background: conic-gradient(
+    #111 0deg 90deg,
+    #fff 90deg 180deg,
+    #111 180deg 270deg,
+    #fff 270deg 360deg
+  ) !important;
 }
