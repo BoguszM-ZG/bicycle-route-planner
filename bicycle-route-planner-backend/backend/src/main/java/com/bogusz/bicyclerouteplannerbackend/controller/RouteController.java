@@ -80,4 +80,14 @@ public class RouteController {
         routeService.updateRouteFolder(id, request, authentication.getName());
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<Void> renameRoute(
+            @PathVariable Long id,
+            @Valid @RequestBody RenameRouteRequestDto request,
+            Authentication authentication
+    ) {
+        routeService.renameRoute(id, request, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
 }

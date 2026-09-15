@@ -48,6 +48,10 @@ export interface RouteStats  {
   elevationLoss: number;
 }
 
+export interface RenameRouteRequestDto {
+  name: string;
+}
+
 export interface OrsGeoJsonFeature {
   geometry: {
     coordinates: number[][];

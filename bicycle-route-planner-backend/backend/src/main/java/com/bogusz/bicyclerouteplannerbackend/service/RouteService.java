@@ -109,6 +109,14 @@ public class RouteService {
         }
     }
 
+    @Transactional
+    public void renameRoute(Long routeId, RenameRouteRequestDto request, String userEmail) {
+        Route route = getValidRouteForUser(routeId, userEmail);
+        route.setName(request.name());
+    }
+
+
+
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371000;
         double latDistance = Math.toRadians(lat2 - lat1);

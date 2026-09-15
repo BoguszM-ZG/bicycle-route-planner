@@ -65,7 +65,8 @@
           (routeDeleted)="deleteRoute($event)"
           (exportGpx)="routeStateService.exportGpx($event)"
           [allFolders]="folders()"
-          (routeMoved)="routeStateService.moveRouteToFolder($event.routeId, $event.folderId)">
+          (routeMoved)="routeStateService.moveRouteToFolder($event.routeId, $event.folderId)"
+          (routeRenamed)="routeStateService.renameRoute($event.routeId, $event.newName)">
         </app-route-item>
       }
 

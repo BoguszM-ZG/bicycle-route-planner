@@ -4,8 +4,10 @@ import { Observable} from 'rxjs';
 import {
   CreateRouteRequestDto,
   ElevationPointDto,
+  RenameRouteRequestDto,
   RouteDetailDto,
-  RouteSummaryDto, UpdateRouteFolderDto,
+  RouteSummaryDto,
+  UpdateRouteFolderDto,
 } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
 
@@ -68,5 +70,9 @@ export class RouteService {
 
   public updateRouteFolder(routeId: number, request: UpdateRouteFolderDto): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${routeId}/folder`, request);
+  }
+
+  public renameRoute(routeId: number, request: RenameRouteRequestDto): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${routeId}/name`, request);
   }
 }
