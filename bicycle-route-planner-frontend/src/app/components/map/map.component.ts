@@ -31,6 +31,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
+  private userLocationMarker?: L.Marker;
 
   private readonly authService = inject(AuthService);
   private readonly mapRenderService = inject(MapRenderService);
@@ -64,5 +65,25 @@ export class MapComponent implements AfterViewInit {
     }
 
     this.saveRouteModal.open(draft);
+  }
+
+  public locateMe(): void {
+    if (!this.map) return;
+
+    this.map.locate({ setView: true, maxZoom: 15 });
+
+    this.map.once('locationfound', (e) => {
+      if (this.userLocationMarker) {
+        this.userLocationMarker.setLatLng(e.latlng);
+      } else {
+        this.userLocationMarker = L.marker(e.latlng).addTo(this.map).bindPopup('Tu jesteś!');
+      }
+      this.userLocationMarker.openPopup();
+    });
+    this.map.once('locationerror', (e) => {
+      console.error('Error downloading location:', e);
+      alert('Failed to retrieve location. Make sure you have granted location access in your browser.',
+      );
+    });
   }
 }
