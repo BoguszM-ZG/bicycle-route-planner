@@ -20,6 +20,7 @@
     "chart.js": "^4.5.1",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
+    "leaflet-geosearch": "^4.4.0",
     "leaflet-routing-machine": "^3.2.12",
     "ng2-charts": "^10.0.0",
     "rxjs": "~7.8.0",
