@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth.service';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MapRenderService } from '../../services/map-render.service';
 import { SaveRouteModalComponent } from '../save-route-modal/save-route-modal.component';
+import { SaveZoneModalComponent } from '../save-zone-modal/save-zone-modal.component';
 import { MapControlsComponent } from '../map-controls/map-controls.component';
 
 import { MapRoutingService } from '../../services/map-routing.service';
@@ -25,7 +26,7 @@ L.Marker.prototype.options.icon = defaultIcon;
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [SidebarComponent, SaveRouteModalComponent, MapControlsComponent, MapModePanelComponent, MapSearchComponent],
+  imports: [SidebarComponent, SaveRouteModalComponent, SaveZoneModalComponent, MapControlsComponent, MapModePanelComponent, MapSearchComponent],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,11 +41,18 @@ export class MapComponent implements AfterViewInit {
   private readonly mapDrawService = inject(MapDrawService);
 
   @ViewChild('saveRouteModal') saveRouteModal!: SaveRouteModalComponent;
+  @ViewChild('saveZoneModal') saveZoneModal!: SaveZoneModalComponent;
+
   ngAfterViewInit(): void {
     this.mapRenderService.initMap('map');
     this.map = this.mapRenderService.getMap()!;
     this.mapRoutingService.initRouting(this.map);
     this.mapDrawService.init(this.map);
+
+    this.mapDrawService.zoneDrawn$.subscribe((wktString) => {
+      this.saveZoneModal.open(wktString);
+      this.mapRoutingService.routingMode.set('direct');
+    });
   }
 
   public clearRoute(): void {

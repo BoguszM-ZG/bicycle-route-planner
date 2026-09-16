@@ -1,7 +1,8 @@
-import { Injectable, inject, effect } from "@angular/core";
+import { Injectable, inject, effect, NgZone, signal } from "@angular/core";
 import * as L from 'leaflet';
 import 'leaflet-draw';
 import * as wellknown from 'wellknown';
+import { Subject } from 'rxjs';
 import { AvoidanceZoneStateService } from "./avoidance-zone-state.service";
 import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
 
@@ -12,9 +13,13 @@ export class MapDrawService {
   private map!: L.Map;
 
   private readonly drawnItems: L.FeatureGroup = new L.FeatureGroup();
-  private drawControl!: L.Control.Draw;
 
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
+  private readonly ngZone = inject(NgZone);
+
+  public currentZoneDraft = signal<string | null>(null);
+  private tempDrawnLayer?: L.Layer;
+  private currentDrawer?: any;
 
   constructor() {
     effect(() => {
@@ -26,43 +31,56 @@ export class MapDrawService {
   public init(mapInstance: L.Map): void {
     this.map = mapInstance;
     this.map.addLayer(this.drawnItems);
-
-    this.drawControl = new L.Control.Draw({
-      draw: {
-        polygon: {
-          allowIntersection: false,
-          showArea: true,
-          shapeOptions: { color: 'red' },
-        },
-        polyline: false,
-        circle: false,
-        rectangle: false,
-        marker: false,
-        circlemarker: false,
-      },
-      edit: {
-        featureGroup: this.drawnItems,
-        edit: false,
-        remove: false,
-      },
-    });
-
-    this.map.addControl(this.drawControl);
     this.setupDrawEvents();
   }
 
+  public startDrawingPolygon(): void {
+    if (!this.map) return;
+    this.cancelDrawing();
+
+    const polygonOptions = {
+      allowIntersection: false,
+      showArea: true,
+      shapeOptions: { color: 'red' },
+    };
+
+    this.currentDrawer = new (L.Draw.Polygon as any)(this.map, polygonOptions);
+    this.currentDrawer.enable();
+  }
+
+  public cancelDrawing(): void {
+    if (this.currentDrawer) {
+      this.currentDrawer.disable();
+      this.currentDrawer = undefined;
+    }
+    if (this.tempDrawnLayer) {
+      if (this.map) this.map.removeLayer(this.tempDrawnLayer);
+      this.tempDrawnLayer = undefined;
+    }
+    this.currentZoneDraft.set(null);
+  }
+
+  public triggerSaveModal(): void {
+    const draft = this.currentZoneDraft();
+    if (draft) {
+      this.zoneDrawn$.next(draft);
+    }
+  }
+
+  public zoneDrawn$ = new Subject<string>();
+
   private setupDrawEvents(): void {
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
-      const layer = e.layer as L.Polygon;
-      const geoJson = layer.toGeoJSON();
+      this.ngZone.run(() => {
+        this.tempDrawnLayer = e.layer;
+        this.map.addLayer(this.tempDrawnLayer!);
 
-      const wktString = wellknown.stringify(geoJson.geometry as any);
+        const layer = e.layer as L.Polygon;
+        const geoJson = layer.toGeoJSON();
+        const wktString = wellknown.stringify(geoJson.geometry as any);
 
-      const zoneName = prompt('Podaj nazwę dla tej strefy omijalnej');
-
-      if (zoneName && zoneName.trim() !== '') {
-        this.avoidanceZoneStateService.saveZone(zoneName, wktString);
-      }
+        this.currentZoneDraft.set(wktString);
+      });
     });
   }
 
