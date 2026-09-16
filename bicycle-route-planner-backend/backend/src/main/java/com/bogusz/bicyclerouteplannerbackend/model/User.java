@@ -5,9 +5,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.jspecify.annotations.NonNull;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,15 +44,13 @@ public class User implements UserDetails {
 
     @Size(max = 50)
     @NotNull
-    @ColumnDefault("'ROLE_USER'")
     @Column(name = "role", nullable = false, length = 50)
-    private String role;
+    private String role ="ROLE_USER";
 
-    @ColumnDefault("true")
     @Column(name = "is_active")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
 

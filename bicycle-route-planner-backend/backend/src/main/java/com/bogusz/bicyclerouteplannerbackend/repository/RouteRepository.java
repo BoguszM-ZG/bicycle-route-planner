@@ -4,9 +4,10 @@ import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RouteRepository extends JpaRepository<Route, Long> {
-    Route findRouteById(Long id);
+    Optional<Route> findByIdAndUser_Email(Long id, String email);
     List<Route> findAllByUser_EmailOrderByCreatedAtDesc(String email);
     List<Route> findAllByUser_EmailAndFolder_IdOrderByCreatedAtDesc(String email, Long folderId);
 }

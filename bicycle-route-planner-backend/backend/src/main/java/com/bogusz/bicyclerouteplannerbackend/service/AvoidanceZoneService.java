@@ -3,6 +3,7 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.exception.AvoidanceZoneNotFoundException;
 import com.bogusz.bicyclerouteplannerbackend.model.AvoidanceZone;
 import com.bogusz.bicyclerouteplannerbackend.repository.AvoidanceZoneRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -38,33 +39,20 @@ public class AvoidanceZoneService {
 
     @Transactional
     public void deleteAvoidanceZone(Long avoidanceZoneId, String userEmail){
-        AvoidanceZone avoidanceZone = avoidanceZoneRepository.findAvoidanceZoneById(avoidanceZoneId);
-
-        if (avoidanceZone == null){
-            throw new IllegalArgumentException("Avoidance Zone not found with id: " + avoidanceZoneId);
-        }
-
-        if (!avoidanceZone.getUser().getEmail().equals(userEmail)){
-            throw new IllegalArgumentException("Access denied , you are not the owner of this avoidance zone");
-        }
-
+        AvoidanceZone avoidanceZone = getValidAvoidanceZoneForUser(avoidanceZoneId, userEmail);
         avoidanceZoneRepository.delete(avoidanceZone);
     }
 
     @Transactional
     public void toggleAvoidanceActiveStatus(Long avoidanceZoneId, String userEmail, boolean isActive){
-        AvoidanceZone avoidanceZone = avoidanceZoneRepository.findAvoidanceZoneById(avoidanceZoneId);
-
-        if (avoidanceZone == null){
-            throw new IllegalArgumentException("Avoidance Zone not found with id: " + avoidanceZoneId);
-        }
-
-        if (!avoidanceZone.getUser().getEmail().equals(userEmail)){
-            throw new IllegalArgumentException("Access denied , you are not the owner of this avoidance zone");
-        }
-
+        AvoidanceZone avoidanceZone = getValidAvoidanceZoneForUser(avoidanceZoneId, userEmail);
         avoidanceZone.setIsActive(isActive);
         avoidanceZoneRepository.save(avoidanceZone);
+    }
+
+    private AvoidanceZone getValidAvoidanceZoneForUser(Long avoidanceZoneId, String userEmail) {
+        return avoidanceZoneRepository.findByIdAndUser_Email(avoidanceZoneId, userEmail)
+                .orElseThrow(() -> new AvoidanceZoneNotFoundException("Avoidance Zone not found or access denied"));
     }
 
 

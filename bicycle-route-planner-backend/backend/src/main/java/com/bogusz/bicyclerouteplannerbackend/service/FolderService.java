@@ -38,7 +38,7 @@ public class FolderService {
 
         if (request.parentFolderId() != null) {
             Folder parent = folderRepository.findByIdAndUserEmail(request.parentFolderId(), userEmail)
-                    .orElseThrow(() -> new IllegalArgumentException("Parent folder not found"));
+                    .orElseThrow(() -> new com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException("Parent folder not found or access denied"));
             folder.setParentFolder(parent);
         }
 
@@ -63,7 +63,7 @@ public class FolderService {
 
     private Folder getValidFolderForUser(Long folderId, String userEmail) {
         return folderRepository.findByIdAndUserEmail(folderId, userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Folder not found or Access denied"));
+                .orElseThrow(() -> new com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException("Folder not found or access denied"));
     }
 
     private FolderDto folderToFolderDto(Folder folder) {

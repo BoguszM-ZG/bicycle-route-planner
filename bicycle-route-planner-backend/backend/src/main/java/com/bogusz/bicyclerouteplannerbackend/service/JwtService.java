@@ -12,27 +12,45 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class JwtService {
+
     private final JwtConfig jwtConfig;
 
     public String generateAccessToken(UserDetails userDetails) {
-        return generateToken(userDetails, jwtConfig.getAccessTokenExpirationMs());
+        return generateToken(Map.of(), userDetails, jwtConfig.getAccessTokenExpirationMs());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return generateToken(userDetails, jwtConfig.getRefreshTokenExpirationMs());
+        return generateToken(Map.of(), userDetails, jwtConfig.getRefreshTokenExpirationMs());
+    }
+
+    public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, long expirationMs) {
+        Instant now = Instant.now();
+        Instant expiration = now.plusMillis(expirationMs);
+
+        return Jwts.builder()
+                .claims(extraClaims)
+                .subject(userDetails.getUsername())
+                .id(UUID.randomUUID().toString())
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiration))
+                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .compact();
     }
 
     public String extractUsername(String token) {
         return extractAllClaims(token).getSubject();
     }
 
+
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()));
     }
 
     public long getAccessTokenExpirationMs() {
@@ -41,23 +59,6 @@ public class JwtService {
 
     public long getRefreshTokenExpirationMs() {
         return jwtConfig.getRefreshTokenExpirationMs();
-    }
-
-    private String generateToken(UserDetails userDetails, long expirationMs) {
-        Instant now = Instant.now();
-        Instant expiration = now.plusMillis(expirationMs);
-
-        return Jwts.builder()
-                .subject(userDetails.getUsername())
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(expiration))
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
-                .compact();
-    }
-
-    private boolean isTokenExpired(String token) {
-        Date expiration = extractAllClaims(token).getExpiration();
-        return expiration.before(new Date());
     }
 
     private Claims extractAllClaims(String token) {
