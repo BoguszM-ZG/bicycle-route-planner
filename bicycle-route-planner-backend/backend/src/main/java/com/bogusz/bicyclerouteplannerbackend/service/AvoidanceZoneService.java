@@ -4,16 +4,18 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.AvoidanceZoneNotFoundException;
+import com.bogusz.bicyclerouteplannerbackend.exception.InvalidGeometryException;
 import com.bogusz.bicyclerouteplannerbackend.model.AvoidanceZone;
 import com.bogusz.bicyclerouteplannerbackend.repository.AvoidanceZoneRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,12 +27,14 @@ public class AvoidanceZoneService {
     private final UserRepository userRepository;
     private final AvoidanceZoneRepository avoidanceZoneRepository;
 
+    @Transactional(readOnly = true)
     public List<AvoidanceZoneDto> getAvoidanceZonesForUser(String userEmail){
         return avoidanceZoneRepository.findByUserEmail(userEmail).stream()
                 .map(this::toAvoidanceZoneDto)
                 .toList();
     }
 
+    @Transactional
     public AvoidanceZoneDto saveAvoidanceZoneForUser(CreateAvoidanceZoneRequestDto request, String userEmail){
         AvoidanceZone avoidanceZone = createAvoidanceZoneRequestDtoToAvoidanceZone(request, userEmail);
         avoidanceZone = avoidanceZoneRepository.save(avoidanceZone);
@@ -47,7 +51,6 @@ public class AvoidanceZoneService {
     public void toggleAvoidanceActiveStatus(Long avoidanceZoneId, String userEmail, boolean isActive){
         AvoidanceZone avoidanceZone = getValidAvoidanceZoneForUser(avoidanceZoneId, userEmail);
         avoidanceZone.setIsActive(isActive);
-        avoidanceZoneRepository.save(avoidanceZone);
     }
 
     private AvoidanceZone getValidAvoidanceZoneForUser(Long avoidanceZoneId, String userEmail) {
@@ -62,7 +65,7 @@ public class AvoidanceZoneService {
         AvoidanceZone avoidanceZone = new AvoidanceZone();
 
         avoidanceZone.setUser(userRepository.findByEmail(userEmail).orElseThrow(
-                () -> new RuntimeException("User not found " + userEmail)));
+                () -> new UsernameNotFoundException("User not found " + userEmail)));
         avoidanceZone.setName(request.name());
         try {
             if (request.zoneGeom() != null) {
@@ -71,7 +74,7 @@ public class AvoidanceZoneService {
                 avoidanceZone.setZoneGeom((Polygon) geom);
             }
         } catch (ParseException e) {
-            throw new RuntimeException("Error parsing WKT geometry " + e.getMessage(), e);
+            throw new InvalidGeometryException("Error parsing WKT geometry " + e.getMessage());
         }
 
         avoidanceZone.setIsActive(true);

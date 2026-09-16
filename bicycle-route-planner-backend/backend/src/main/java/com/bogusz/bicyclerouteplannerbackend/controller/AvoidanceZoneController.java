@@ -15,7 +15,7 @@ import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
-@RequestMapping({"/api/avoidance-zones"})
+@RequestMapping("/api/avoidance-zones")
 @RequiredArgsConstructor
 public class AvoidanceZoneController {
 

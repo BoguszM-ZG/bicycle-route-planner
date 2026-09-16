@@ -3,12 +3,14 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
+import com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
@@ -21,6 +23,7 @@ public class FolderService {
     private final UserRepository userRepository;
 
 
+    @Transactional(readOnly = true)
     public List<FolderDto> getUserFolders(String userEmail) {
         List<Folder> allFolders = folderRepository.findAllByUser_Email(userEmail);
         return allFolders.stream()
@@ -28,9 +31,10 @@ public class FolderService {
                 .toList();
     }
 
+    @Transactional
     public FolderDto createFolder(CreateFolderRequestDto request, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         Folder folder = new Folder();
         folder.setName(request.name());
@@ -38,7 +42,7 @@ public class FolderService {
 
         if (request.parentFolderId() != null) {
             Folder parent = folderRepository.findByIdAndUserEmail(request.parentFolderId(), userEmail)
-                    .orElseThrow(() -> new com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException("Parent folder not found or access denied"));
+                    .orElseThrow(() -> new FolderNotFoundException("Parent folder not found or access denied"));
             folder.setParentFolder(parent);
         }
 
