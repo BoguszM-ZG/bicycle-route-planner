@@ -3,6 +3,7 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.AuthResponse;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.LoginRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
+import com.bogusz.bicyclerouteplannerbackend.mapper.UserMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     public AuthResponse register(RegisterRequest request) {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
@@ -44,7 +46,7 @@ public class AuthService {
                 jwtService.getAccessTokenExpirationMs(),
                 jwtService.getRefreshTokenExpirationMs(),
                 "Bearer",
-                userService.toDto(user)
+                userMapper.toDto(user)
         );
     }
 }

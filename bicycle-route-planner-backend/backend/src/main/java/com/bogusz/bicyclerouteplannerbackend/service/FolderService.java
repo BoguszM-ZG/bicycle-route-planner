@@ -4,6 +4,7 @@ import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
 import com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException;
+import com.bogusz.bicyclerouteplannerbackend.mapper.FolderMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
@@ -20,13 +21,14 @@ import java.util.List;
 public class FolderService {
     private final FolderRepository folderRepository;
     private final UserRepository userRepository;
+    private final FolderMapper folderMapper;
 
 
     @Transactional(readOnly = true)
     public List<FolderDto> getUserFolders(Long userId) {
         List<Folder> allFolders = folderRepository.findAllByUserId(userId);
         return allFolders.stream()
-                .map(this::folderToFolderDto)
+                .map(folderMapper::toDto)
                 .toList();
     }
 
@@ -44,7 +46,7 @@ public class FolderService {
             folder.setParentFolder(parent);
         }
 
-        return folderToFolderDto(folderRepository.save(folder));
+        return folderMapper.toDto(folderRepository.save(folder));
     }
 
     @Transactional
@@ -59,7 +61,7 @@ public class FolderService {
 
         folder.setName(request.name());
 
-        return folderToFolderDto(folder);
+        return folderMapper.toDto(folder);
     }
 
 
@@ -67,14 +69,6 @@ public class FolderService {
     private Folder getValidFolderForUser(Long folderId, Long userId) {
         return folderRepository.findByIdAndUserId(folderId, userId)
                 .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
-    }
-
-    private FolderDto folderToFolderDto(Folder folder) {
-        return new FolderDto(
-                folder.getId(),
-                folder.getName(),
-                folder.getParentFolder() != null ? folder.getParentFolder().getId() : null
-        );
     }
 
 }

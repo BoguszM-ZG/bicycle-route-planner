@@ -1,6 +1,5 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.user.UserDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.UserAlreadyExistsException;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -37,16 +36,6 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found for email: " + email));
     }
 
-    public UserDto toDto(User user) {
-        return new UserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getRole(),
-                user.getIsActive(),
-                user.getCreatedAt()
-        );
-    }
 
     @Override
     @NonNull
