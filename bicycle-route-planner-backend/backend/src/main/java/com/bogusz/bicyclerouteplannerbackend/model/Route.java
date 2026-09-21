@@ -45,9 +45,9 @@ public class Route {
     @Column(name = "name", nullable = false, length = 150)
     private String name;
 
-    @Size(max = 50)
+    @Enumerated(EnumType.STRING)
     @Column(name = "route_type", length = 50)
-    private String routeType;
+    private RouteType routeType;
 
     @Column(name = "target_distance")
     private Double targetDistance;

@@ -3,12 +3,15 @@ package com.bogusz.bicyclerouteplannerbackend.dto.route;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 
+import com.bogusz.bicyclerouteplannerbackend.model.RouteType;
+import jakarta.validation.constraints.NotNull;
+
 public record CreateRouteRequestDto(
         @NotBlank(message = "Name of the route is required")
         String name,
 
-        @NotBlank(message = "Type of the route is required")
-        String routeType,
+        @NotNull(message = "Type of the route is required")
+        RouteType routeType,
 
         @PositiveOrZero(message = "Distance must be positive")
         Double targetDistance,
