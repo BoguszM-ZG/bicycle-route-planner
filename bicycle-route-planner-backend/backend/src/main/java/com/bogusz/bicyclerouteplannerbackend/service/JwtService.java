@@ -1,6 +1,7 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.config.JwtConfig;
+import com.bogusz.bicyclerouteplannerbackend.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,11 +24,20 @@ public class JwtService {
     private final JwtConfig jwtConfig;
 
     public String generateAccessToken(UserDetails userDetails) {
-        return generateToken(Map.of(), userDetails, jwtConfig.getAccessTokenExpirationMs());
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof User user) {
+            extraClaims.put("userId", user.getId());
+            extraClaims.put("role", user.getRole());
+        }
+        return generateToken(extraClaims, userDetails, jwtConfig.getAccessTokenExpirationMs());
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
-        return generateToken(Map.of(), userDetails, jwtConfig.getRefreshTokenExpirationMs());
+        Map<String, Object> extraClaims = new HashMap<>();
+        if (userDetails instanceof User user) {
+            extraClaims.put("userId", user.getId());
+        }
+        return generateToken(extraClaims, userDetails, jwtConfig.getRefreshTokenExpirationMs());
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, long expirationMs) {
@@ -48,9 +59,8 @@ public class JwtService {
     }
 
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()));
+    public boolean isTokenValid(String token) {
+        return extractAllClaims(token).getExpiration().toInstant().isAfter(Instant.now());
     }
 
     public long getAccessTokenExpirationMs() {
@@ -75,5 +85,13 @@ public class JwtService {
             throw new IllegalStateException("JWT secret must be at least 32 characters long");
         }
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public Long extractUserId(String token) {
+        return extractAllClaims(token).get("userId", Long.class);
+    }
+
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
     }
 }

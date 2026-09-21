@@ -10,7 +10,6 @@ import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
@@ -24,24 +23,23 @@ public class FolderService {
 
 
     @Transactional(readOnly = true)
-    public List<FolderDto> getUserFolders(String userEmail) {
-        List<Folder> allFolders = folderRepository.findAllByUser_Email(userEmail);
+    public List<FolderDto> getUserFolders(Long userId) {
+        List<Folder> allFolders = folderRepository.findAllByUserId(userId);
         return allFolders.stream()
                 .map(this::folderToFolderDto)
                 .toList();
     }
 
     @Transactional
-    public FolderDto createFolder(CreateFolderRequestDto request, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public FolderDto createFolder(CreateFolderRequestDto request, Long userId) {
+        User user = userRepository.getReferenceById(userId);
 
         Folder folder = new Folder();
         folder.setName(request.name());
         folder.setUser(user);
 
         if (request.parentFolderId() != null) {
-            Folder parent = folderRepository.findByIdAndUserEmail(request.parentFolderId(), userEmail)
+            Folder parent = folderRepository.findByIdAndUserId(request.parentFolderId(), userId)
                     .orElseThrow(() -> new FolderNotFoundException("Parent folder not found or access denied"));
             folder.setParentFolder(parent);
         }
@@ -50,14 +48,14 @@ public class FolderService {
     }
 
     @Transactional
-    public void deleteFolder(Long folderId, String userEmail) {
-        Folder folder = getValidFolderForUser(folderId, userEmail);
+    public void deleteFolder(Long folderId, Long userId) {
+        Folder folder = getValidFolderForUser(folderId, userId);
         folderRepository.delete(folder);
     }
 
     @Transactional
-    public FolderDto renameFolder(Long folderId, RenameFolderRequest request, String userEmail){
-        Folder folder = getValidFolderForUser(folderId, userEmail);
+    public FolderDto renameFolder(Long folderId, RenameFolderRequest request, Long userId){
+        Folder folder = getValidFolderForUser(folderId, userId);
 
         folder.setName(request.name());
 
@@ -65,9 +63,10 @@ public class FolderService {
     }
 
 
-    private Folder getValidFolderForUser(Long folderId, String userEmail) {
-        return folderRepository.findByIdAndUserEmail(folderId, userEmail)
-                .orElseThrow(() -> new com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException("Folder not found or access denied"));
+
+    private Folder getValidFolderForUser(Long folderId, Long userId) {
+        return folderRepository.findByIdAndUserId(folderId, userId)
+                .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
     }
 
     private FolderDto folderToFolderDto(Folder folder) {

@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
@@ -8,7 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,30 +23,30 @@ public class FolderController {
 
 
     @GetMapping
-    ResponseEntity<List<FolderDto>> getUserFolders(Authentication authentication) {
-        List<FolderDto> folders = folderService.getUserFolders(authentication.getName());
+    public ResponseEntity<List<FolderDto>> getUserFolders(@AuthenticationPrincipal UserPrincipal principal) {
+        List<FolderDto> folders = folderService.getUserFolders(principal.id());
         return ResponseEntity.ok(folders);
     }
 
     @PostMapping
-    ResponseEntity<FolderDto> createFolder(
-            @Valid @RequestBody CreateFolderRequestDto request, Authentication authentication){
-        FolderDto savedFolder = folderService.createFolder(request, authentication.getName());
+    public ResponseEntity<FolderDto> createFolder(
+            @Valid @RequestBody CreateFolderRequestDto request, @AuthenticationPrincipal UserPrincipal principal){
+        FolderDto savedFolder = folderService.createFolder(request, principal.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedFolder);
     }
 
     @DeleteMapping("/{folderId}")
-    ResponseEntity<Void> deleteFolder(@PathVariable Long folderId, Authentication authentication) {
-        folderService.deleteFolder(folderId, authentication.getName());
+    public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId, @AuthenticationPrincipal UserPrincipal principal) {
+        folderService.deleteFolder(folderId, principal.id());
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{folderId}")
-    ResponseEntity<FolderDto> renameFolder(
+    public ResponseEntity<FolderDto> renameFolder(
             @PathVariable Long folderId,
             @Valid @RequestBody RenameFolderRequest request,
-            Authentication authentication) {
-        FolderDto updatedFolder = folderService.renameFolder(folderId, request, authentication.getName());
+            @AuthenticationPrincipal UserPrincipal principal) {
+        FolderDto updatedFolder = folderService.renameFolder(folderId, request, principal.id());
         return ResponseEntity.ok(updatedFolder);
     }
 

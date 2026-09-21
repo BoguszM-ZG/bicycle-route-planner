@@ -7,6 +7,6 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface AvoidanceZoneRepository extends JpaRepository<AvoidanceZone, Long> {
-    Collection<AvoidanceZone> findByUserEmail(String userEmail);
-    Optional<AvoidanceZone> findByIdAndUser_Email(Long id, String userEmail);
+    Collection<AvoidanceZone> findByUserId(Long userId);
+    Optional<AvoidanceZone> findByIdAndUserId(Long id, Long userId);
 }
