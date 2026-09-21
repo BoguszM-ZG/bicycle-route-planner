@@ -28,11 +28,9 @@ export class OrsService {
       instructions: false,
       options: {
         round_trip: {
-          length: distanceMeters,
-          points: 3,
-          seed: Math.floor(Math.random() * 100)
+          length: distanceMeters
         },
-        avoid_polygons: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
+        ...(avoidPolygons && { avoid_polygons: avoidPolygons })
       }
     };
 

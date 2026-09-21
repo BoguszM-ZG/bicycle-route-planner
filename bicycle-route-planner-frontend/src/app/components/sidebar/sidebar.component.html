@@ -1,77 +1,87 @@
 <div class="sidebar-container">
- <div class="sidebar-header">
-    <h2>Twój profil</h2>
-
-
-    @if (currentUser()) {
-      <p class="user-email">
-        Zalogowano jako: <strong>{{ currentUser()?.fullName}}</strong>
-      </p>
-    }
-
-    <button class="logout-button" (click)="logout()">Wyloguj</button>
+  <div class="profile-section">
+    <div class="profile-info">
+      <h2>Twój profil</h2>
+      @if (currentUser()) {
+        <p class="user-email">
+          Zalogowano jako: <strong>{{ currentUser()?.fullName }}</strong>
+        </p>
+      }
+      <a class="logout-link" (click)="logout()">Wyloguj</a>
+    </div>
+    <div class="profile-avatar">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+      </svg>
+    </div>
   </div>
 
-  <div class="sidebar-content">
-    <h3>Zapisane Trasy</h3>
+  <div class="panel-section">
+    <h3>Panel Zapisu</h3>
 
-    <div class="folder-actions">
-      @if (!isCreatingFolder()) {
-        <button class="create-folder-btn" (click)="toggleCreateFolder()">
-          + Nowy Folder
-        </button>
-      } @else {
-        <div class="create-folder-form">
-          <label for="newFolderInput" class="sr-only">Nazwa nowego folderu</label>
-          <input
-            id="newFolderInput"
-            class="folder-input"
-            type="text"
-            [formControl]="newFolderName"
-            placeholder="Nazwa folderu..."
-            (keyup.enter)="submitNewFolder()"
-            (keyup.escape)="toggleCreateFolder()"
-          >
-          <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" title="Zatwierdź">✔️</button>
-          <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" title="Anuluj">❌</button>
-        </div>
-      }
+    <div class="segmented-control">
+      <button class="segment-btn" [class.active]="activeTab() === 'routes'" (click)="activeTab.set('routes')">Trasy</button>
+      <button class="segment-btn" [class.active]="activeTab() === 'zones'" (click)="activeTab.set('zones')">Strefy</button>
     </div>
 
-    @if (isLoadingRoutes()) {
-      <div class="loading-state">
-        <span>Pobieranie tras...</span>
-      </div>
-    }
+    <div class="sidebar-content">
+      @if (activeTab() === 'routes') {
+        <div class="folder-actions">
+          @if (!isCreatingFolder()) {
+            <button class="create-folder-btn" (click)="toggleCreateFolder()">
+              + Nowy Folder
+            </button>
+          } @else {
+            <div class="create-folder-form">
+              <label for="newFolderInput" class="sr-only">Nazwa nowego folderu</label>
+              <input
+                id="newFolderInput"
+                class="folder-input"
+                type="text"
+                [formControl]="newFolderName"
+                placeholder="Nazwa folderu..."
+                (keyup.enter)="submitNewFolder()"
+                (keyup.escape)="toggleCreateFolder()"
+              >
+              <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" title="Zatwierdź">✔️</button>
+              <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" title="Anuluj">❌</button>
+            </div>
+          }
+        </div>
 
+        @if (isLoadingRoutes()) {
+          <div class="loading-state">
+            <span>Pobieranie tras...</span>
+          </div>
+        }
 
-    @if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
-      <div class="empty-state">
-        Nie masz jeszcze żadnych zapisanych tras ani folderów. Dodaj trasę, aby ją zobaczyć tutaj.
-      </div>
-    }
+        @if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
+          <div class="empty-state">
+            Nie masz jeszcze żadnych zapisanych tras ani folderów. Dodaj trasę, aby ją zobaczyć tutaj.
+          </div>
+        }
 
-    @if (!isLoadingRoutes() && (rootRoutes().length > 0 || rootFolders().length > 0)) {
+        @if (!isLoadingRoutes() && (rootRoutes().length > 0 || rootFolders().length > 0)) {
+          @for (folder of rootFolders(); track folder.id) {
+            <app-folder-item [folderId]="folder.id"></app-folder-item>
+          }
 
-      @for (folder of rootFolders(); track folder.id) {
-        <app-folder-item [folderId]="folder.id"></app-folder-item>
+          @for (route of rootRoutes(); track route.id) {
+            <app-route-item
+              [route]="route"
+              [isSelected]="route.id === selectedRouteId()"
+              (routeSelected)="selectRoute($event)"
+              (routeDeleted)="deleteRoute($event)"
+              (exportGpx)="routeStateService.exportGpx($event)"
+              [allFolders]="folders()"
+              (routeMoved)="routeStateService.moveRouteToFolder($event.routeId, $event.folderId)"
+              (routeRenamed)="routeStateService.renameRoute($event.routeId, $event.newName)">
+            </app-route-item>
+          }
+        }
+      } @else {
+        <app-avoidance-zone-panel></app-avoidance-zone-panel>
       }
-
-      @for (route of rootRoutes(); track route.id) {
-        <app-route-item
-          [route]="route"
-          [isSelected] = "route.id === selectedRouteId()"
-          (routeSelected)="selectRoute($event)"
-          (routeDeleted)="deleteRoute($event)"
-          (exportGpx)="routeStateService.exportGpx($event)"
-          [allFolders]="folders()"
-          (routeMoved)="routeStateService.moveRouteToFolder($event.routeId, $event.folderId)"
-          (routeRenamed)="routeStateService.renameRoute($event.routeId, $event.newName)">
-        </app-route-item>
-      }
-
-
-    }
+    </div>
   </div>
-  <app-avoidance-zone-panel></app-avoidance-zone-panel>
 </div>

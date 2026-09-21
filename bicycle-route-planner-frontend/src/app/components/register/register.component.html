@@ -1,8 +1,8 @@
 <div class="register-container">
   <div class="register-card">
     <div class="register-header">
-      <h2>Create an Account</h2>
-      <p>Join the Bicycle Route Planner community today.</p>
+      <h2>Utwórz konto</h2>
+      <p>Dołącz do społeczności rowerzystów już dziś.</p>
     </div>
 
     @if (errorMessage()) {
@@ -13,59 +13,59 @@
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
       <div class="form-group">
-        <label for="fullName">Full Name</label>
+        <label for="fullName">Imię i nazwisko</label>
         <input
           id="fullName"
           type="text"
           formControlName="fullName"
-          placeholder="e.g. John Doe"
+          placeholder="np. Jan Kowalski"
           [class.invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
         />
       </div>
 
       <div class="form-group">
-        <label for="email">Email Address <span class="required">*</span></label>
+        <label for="email">Adres E-mail <span class="required">*</span></label>
         <input
           id="email"
           type="email"
           formControlName="email"
-          placeholder="you@example.com"
+          placeholder="jan@kowalski.pl"
           [class.invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
         />
         @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
           <div class="error-text">
-            Please enter a valid email address.
+            Proszę wprowadzić poprawny adres e-mail.
           </div>
         }
       </div>
 
       <div class="form-group">
-        <label for="password">Password <span class="required">*</span></label>
+        <label for="password">Hasło <span class="required">*</span></label>
         <input
           id="password"
           type="password"
           formControlName="password"
-          placeholder="Minimum 8 characters"
+          placeholder="Minimum 8 znaków"
           [class.invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
         />
         @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
           <div class="error-text">
-            Password must be at least 8 characters long.
+            Hasło musi składać się z co najmniej 8 znaków.
           </div>
         }
       </div>
 
       <button type="submit" class="submit-btn" [disabled]="isLoading() || registerForm.invalid">
         @if(!isLoading()) {
-          <span >Sign Up</span>
+          <span>Zarejestruj się</span>
         } @else {
-        <span class="loader"></span>
-      }
-        </button>
+          <span class="loader"></span>
+        }
+      </button>
     </form>
 
     <div class="register-footer">
-      Already have an account? <a href="/login">Log in here</a>
+      Masz już konto? <a href="/login">Zaloguj się tutaj</a>
     </div>
   </div>
 </div>

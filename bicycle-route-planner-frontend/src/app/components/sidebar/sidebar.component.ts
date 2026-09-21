@@ -47,6 +47,7 @@ export class SidebarComponent implements OnInit {
   });
 
   public isCreatingFolder = signal<boolean>(false);
+  public activeTab = signal<'routes' | 'zones'>('routes');
 
   public newFolderName = new FormControl('', {
     validators: [Validators.required, Validators.maxLength(50)],

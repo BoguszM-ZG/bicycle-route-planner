@@ -122,7 +122,7 @@ export class MapRoutingService {
                 L.latLng(coord[1], coord[0], coord[2])
               );
               const summary = feature.properties?.summary;
-              this.updateRouteData(routeCoordinates, summary?.distance ?? 0);
+              this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'LOOP', distanceMeters);
 
               if (this.roundTripLayer) {
                 map.removeLayer(this.roundTripLayer);
@@ -172,7 +172,7 @@ export class MapRoutingService {
         L.latLng(coord[1], coord[0], coord[2]),
       );
 
-      this.updateRouteData(routeCoordinates, summary?.distance ?? 0);
+      this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'POINT_TO_POINT');
 
       callback.call(context, null, [
         {
@@ -191,17 +191,18 @@ export class MapRoutingService {
     this.ngZone.run(() => callback.call(context, err));
   }
 
-  private updateRouteData(coordinates: L.LatLng[], totalDistance: number): void {
+  private updateRouteData(coordinates: L.LatLng[], totalDistance: number, routeType: string, targetDistance: number = 0): void {
     const stats = this.routeCalculationService.calculateRouteStats(coordinates);
 
     this.currentRouteDraft.set({
       name: '',
-      routeType: 'cycling',
+      routeType: routeType,
       geometryWkt: stats.geometryWkt,
       startPoint: stats.startPoint,
       elevationGain: stats.elevationGain,
       elevationLoss: stats.elevationLoss,
       distanceMeters: totalDistance,
+      targetDistance: targetDistance
     });
   }
 

@@ -1,8 +1,8 @@
 <div class="login-container">
   <div class="login-card">
     <div class="login-header">
-      <h2>Welcome Back</h2>
-      <p>Log in to your Bicycle Route Planner account.</p>
+      <h2>Witaj ponownie</h2>
+      <p>Zaloguj się do swojego konta.</p>
     </div>
 
     @if (errorMessage()){
@@ -13,41 +13,41 @@
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
-        <label for="email">Email Address <span class="required">*</span></label>
+        <label for="email">Adres E-mail <span class="required">*</span></label>
         <input
           id="email"
           type="email"
           formControlName="email"
-          placeholder="you@example.com"
+          placeholder="jan@kowalski.pl"
           [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
         />
 
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <div class="error-text">
-            Please enter a valid email address.
+            Proszę wprowadzić poprawny adres e-mail.
           </div>
         }
       </div>
 
       <div class="form-group">
-        <label for="password">Password <span class="required">*</span></label>
+        <label for="password">Hasło <span class="required">*</span></label>
         <input
           id="password"
           type="password"
           formControlName="password"
-          placeholder="Enter your password"
+          placeholder="Wpisz swoje hasło"
           [class.invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
         />
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
           <div class="error-text">
-            Password is required.
+            Hasło jest wymagane.
           </div>
         }
       </div>
 
       <button type="submit" class="submit-btn" [disabled]="isLoading() || loginForm.invalid">
         @if (!isLoading()){
-          <span>Log In</span>
+          <span>Zaloguj się</span>
         } @else {
           <span class="loader"></span>
         }
@@ -55,7 +55,7 @@
     </form>
 
     <div class="login-footer">
-      Don't have an account? <a href="/register">Sign up here</a>
+      Nie masz jeszcze konta? <a href="/register">Zarejestruj się tutaj</a>
     </div>
   </div>
 </div>

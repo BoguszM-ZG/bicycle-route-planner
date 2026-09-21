@@ -34,6 +34,7 @@ export interface CreateRouteRequestDto {
 export interface RouteDraft {
   geometryWkt?: string;
   distanceMeters?: number;
+  targetDistance?: number;
   elevationGain?: number;
   elevationLoss?: number;
   name?: string;

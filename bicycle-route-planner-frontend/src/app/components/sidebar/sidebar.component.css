@@ -1,62 +1,119 @@
-
 .sidebar-container {
-  width: 340px;
+  width: 360px;
   height: 96vh;
   position: absolute;
   left: 2vh;
   top: 2vh;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
-
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  gap: 16px;
   font-family: 'Inter', 'Roboto', sans-serif;
   color: #1f2937;
 }
 
-.sidebar-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+.profile-section {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
 }
 
-h2, h3 {
-  margin: 0 0 10px 0;
+.profile-info h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #111827;
 }
 
-.user-email {
-  margin: 0 0 15px 0;
-  font-size: 0.9rem;
+.profile-info .user-email {
+  margin: 0 0 10px 0;
+  font-size: 0.85rem;
   color: #4b5563;
 }
 
-
-.logout-btn {
-  width: 100%;
-  padding: 10px 15px;
-  background-color: rgba(239, 68, 68, 0.85);
-  color: white;
-  border: none;
-  border-radius: 8px;
+.logout-link {
+  font-size: 0.9rem;
   font-weight: 600;
+  color: #374151;
+  text-decoration: underline;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: color 0.2s;
 }
 
-.logout-btn:hover {
-  background-color: rgba(220, 38, 38, 1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+.logout-link:hover {
+  color: #000;
 }
 
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  background-color: #475569;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+}
+
+.profile-avatar svg {
+  width: 32px;
+  height: 32px;
+}
+
+.panel-section {
+  flex-grow: 1;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.segmented-control {
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.segment-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.segment-btn.active {
+  background: white;
+  color: #111827;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
 
 .sidebar-content {
   flex-grow: 1;
@@ -71,56 +128,24 @@ h2, h3 {
   border-radius: 4px;
 }
 
-.loading-state, .empty-state {
-  text-align: center;
-  margin-top: 30px;
-  font-size: 0.95rem;
-  color: #4b5563;
-  font-style: italic;
-}
-
-
-.route-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.route-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  background: rgba(255, 255, 255, 0.4);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.route-item:hover {
-  background: rgba(255, 255, 255, 0.7);
-  transform: translateX(3px);
-}
-
-.route-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.route-distance {
-  background: #3b82f6;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
-}
-
-
 .folder-actions {
   margin-bottom: 15px;
+}
+
+.create-folder-btn {
+  width: 100%;
+  padding: 10px;
+  background: rgba(255,255,255,0.5);
+  border: 1px dashed #9ca3af;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.create-folder-btn:hover {
+  background: rgba(255,255,255,0.8);
+  border-color: #6b7280;
 }
 
 .create-folder-form {
@@ -134,6 +159,20 @@ h2, h3 {
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.loading-state, .empty-state {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 0.95rem;
+  color: #4b5563;
+  font-style: italic;
 }
 
 .sr-only {

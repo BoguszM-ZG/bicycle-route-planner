@@ -30,7 +30,7 @@ export class MapRenderService {
       this.map = undefined;
     }
 
-    this.map = L.map(elementId).setView([52.069, 19.47], 6);
+    this.map = L.map(elementId, { zoomControl: false }).setView([52.069, 19.47], 6);
     L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '@ OpenStreetMap',
@@ -66,25 +66,36 @@ export class MapRenderService {
 
           if (!startCoords || !endCoords) return;
 
-          const startIcon = L.divIcon({
-            className: 'route-marker-circle route-marker-start',
-            html: 'A',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
+          if (routeState.routeType === 'LOOP') {
+            const loopIcon = L.divIcon({
+              className: 'route-marker-loop',
+              html: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
+              iconSize: [28, 28],
+              iconAnchor: [14, 14]
+            });
+            const loopMarker = L.marker([startCoords[1], startCoords[0]], { icon: loopIcon, title: 'Start/Koniec (Pętla)' });
+            this.currentGeoJsonLayer.addLayer(loopMarker);
+          } else {
+            const startIcon = L.divIcon({
+              className: 'route-marker-circle route-marker-start',
+              html: 'A',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
 
-          const endIcon = L.divIcon({
-            className: 'route-marker-circle route-marker-end',
-            html: 'B',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-          });
+            const endIcon = L.divIcon({
+              className: 'route-marker-circle route-marker-end',
+              html: 'B',
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
+            });
 
-          const startMarker = L.marker([startCoords[1], startCoords[0]], { icon: startIcon, title: 'Start' });
-          const endMarker = L.marker([endCoords[1], endCoords[0]], { icon: endIcon, title: 'Koniec' });
+            const startMarker = L.marker([startCoords[1], startCoords[0]], { icon: startIcon, title: 'Start' });
+            const endMarker = L.marker([endCoords[1], endCoords[0]], { icon: endIcon, title: 'Koniec' });
 
-          this.currentGeoJsonLayer.addLayer(startMarker);
-          this.currentGeoJsonLayer.addLayer(endMarker);
+            this.currentGeoJsonLayer.addLayer(startMarker);
+            this.currentGeoJsonLayer.addLayer(endMarker);
+          }
         }
       }
 
