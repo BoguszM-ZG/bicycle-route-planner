@@ -11,11 +11,6 @@ export class OrsService {
   private readonly http = inject(HttpClient);
 
   public getRouteGeoJson(coords: number[][], avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: environment.orsApiKey,
-    });
-
     const body = {
       coordinates: coords,
       elevation: true,
@@ -23,21 +18,10 @@ export class OrsService {
       options: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
     };
 
-    if (avoidPolygons) {
-      body.options = {
-        avoid_polygons: avoidPolygons,
-      };
-    }
-
-    return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
+    return this.http.post<OrsGeoJsonResponse>(`${environment.apiUrl}/routing/directions`, body);
   }
 
-
   public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: environment.orsApiKey,
-    });
     const body = {
       coordinates: [startCoord],
       elevation: true,
@@ -52,12 +36,7 @@ export class OrsService {
       }
     };
 
-    if (avoidPolygons) {
-      body.options.avoid_polygons = avoidPolygons;
-    }
-
-    return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
-
+    return this.http.post<OrsGeoJsonResponse>(`${environment.apiUrl}/routing/directions`, body);
   }
 
 }

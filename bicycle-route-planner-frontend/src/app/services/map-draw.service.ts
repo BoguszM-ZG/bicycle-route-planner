@@ -40,7 +40,7 @@ export class MapDrawService {
 
     const polygonOptions = {
       allowIntersection: false,
-      showArea: true,
+      showArea: false,
       shapeOptions: { color: 'red' },
     };
 
