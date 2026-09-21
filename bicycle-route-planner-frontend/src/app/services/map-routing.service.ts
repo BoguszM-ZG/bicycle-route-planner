@@ -1,4 +1,4 @@
-import { Injectable, NgZone, inject, signal } from '@angular/core';
+import { Injectable, NgZone, inject, signal, computed } from '@angular/core';
 import  * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
@@ -22,8 +22,9 @@ export class MapRoutingService {
   private map?: L.Map;
 
   public currentRouteDraft = signal<RouteDraft | null>(null);
-  public routingMode = signal<'direct' | 'roundTrip'>('direct');
+  public routingMode = signal<'direct' | 'roundTrip' | 'avoidanceZone'>('direct');
   public roundTripDistanceMeters = signal<number>(20000);
+  public roundTripDistanceKm = computed(() => this.roundTripDistanceMeters() / 1000);
 
 
   public initRouting(map: L.Map): void {
@@ -81,6 +82,10 @@ export class MapRoutingService {
 
     map.on('click', (e: any) => {
       if (isDrawingMode) return;
+
+      if (this.routingMode() === 'avoidanceZone') {
+        return;
+      }
 
       if (this.routingMode() === 'roundTrip') {
         this.generateRoundTrip(e.latlng, this.roundTripDistanceMeters(), map);

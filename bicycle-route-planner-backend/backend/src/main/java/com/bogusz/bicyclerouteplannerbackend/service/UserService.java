@@ -12,8 +12,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
-import java.time.Instant;
-
 @RequiredArgsConstructor
 @Service
 public class UserService implements UserDetailsService {
@@ -31,7 +29,6 @@ public class UserService implements UserDetailsService {
         user.setFullName(fullName);
         user.setRole("ROLE_USER");
         user.setIsActive(Boolean.TRUE);
-        user.setCreatedAt(Instant.now());
         return userRepository.save(user);
     }
 

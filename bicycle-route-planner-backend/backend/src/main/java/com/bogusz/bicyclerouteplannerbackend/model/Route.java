@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.locationtech.jts.geom.LineString;
@@ -21,6 +22,7 @@ import java.time.Instant;
 @Table(name = "routes")
 @AllArgsConstructor
 @NoArgsConstructor
+@DynamicUpdate
 public class Route {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

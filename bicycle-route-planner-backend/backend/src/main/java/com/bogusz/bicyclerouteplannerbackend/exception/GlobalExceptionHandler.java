@@ -45,6 +45,51 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(InvalidGeometryException.class)
+    public ProblemDetail handleInvalidGeometryException(InvalidGeometryException ex){
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Invalid Geometry Parsing Error");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(RouteNotFoundException.class)
+    public ProblemDetail handleRouteNotFoundException(RouteNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Route Not Found");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(FolderNotFoundException.class)
+    public ProblemDetail handleFolderNotFoundException(FolderNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Folder Not Found");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AvoidanceZoneNotFoundException.class)
+    public ProblemDetail handleAvoidanceZoneNotFoundException(AvoidanceZoneNotFoundException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Avoidance Zone Not Found");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ProblemDetail handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -118,6 +163,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(ExternalRoutingException.class)
+    public ProblemDetail handleExternalRoutingException(ExternalRoutingException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("External API Error");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ProblemDetail handleRuntimeException(RuntimeException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -125,6 +181,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ex.getMessage()
         );
         problemDetail.setTitle("Runtime Error");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(GpxExportException.class)
+    public ProblemDetail handleGpxExportException(GpxExportException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("GPX Export Error");
         problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
         return problemDetail;
     }

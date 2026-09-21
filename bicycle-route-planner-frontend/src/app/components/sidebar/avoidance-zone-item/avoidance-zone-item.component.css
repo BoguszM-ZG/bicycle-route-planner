@@ -2,71 +2,110 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  padding: 10px 15px;
-  margin-bottom: 8px;
-
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border: 1px solid #e0e0e0;
-
-  transition: opacity 0.3s ease, background-color 0.3s ease;
+  padding: 12px 14px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
 }
 
+.zone-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transform: translateY(-1px);
+}
 
 .zone-card.inactive {
-  opacity: 0.6;
-  background-color: #f9f9f9;
+  background: #f8fafc;
+  opacity: 0.7;
 }
-
 
 .zone-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-.zone-info strong {
-  font-size: 0.95rem;
-  color: #333;
-}
-
-
-.badge {
-  font-size: 0.7rem;
-  background-color: #ff9800;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 12px;
-  width: fit-content;
-  font-weight: bold;
-}
-
-
-.zone-actions {
+.zone-name-row {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
+.zone-icon {
+  color: #ef4444;
+}
+
+.zone-card.inactive .zone-icon {
+  color: #94a3b8;
+}
+
+.zone-name-row strong {
+  font-size: 0.9rem;
+  color: #334155;
+  font-weight: 600;
+}
+
+.zone-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+}
+input:checked + .slider {
+  background-color: #22c55e;
+}
+input:checked + .slider:before {
+  transform: translateX(16px);
+}
+.slider.round {
+  border-radius: 20px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
 
 .icon-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  color: #94a3b8;
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
-  transition: transform 0.2s, background-color 0.2s;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
-
 
 .icon-btn:hover {
-  background-color: #f0f0f0;
-  transform: scale(1.1);
-}
-
-
-.delete-btn:hover {
-  background-color: #ffebee;
+  background: #fee2e2;
+  color: #ef4444;
 }

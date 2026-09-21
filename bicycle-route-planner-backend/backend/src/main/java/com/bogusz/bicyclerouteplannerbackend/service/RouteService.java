@@ -2,14 +2,18 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
+import com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException;
+import com.bogusz.bicyclerouteplannerbackend.exception.InvalidGeometryException;
+import com.bogusz.bicyclerouteplannerbackend.exception.RouteNotFoundException;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
 import org.springframework.stereotype.Service;
@@ -29,60 +33,53 @@ public class RouteService {
     private final FolderRepository folderRepository;
 
 
-    public List<RouteSummaryDto> getRoutesForUser(String userEmail, Long folderId) {
-        List<Route> routes;
-
+    @Transactional(readOnly = true)
+    public List<RouteSummaryDto> getRoutesForUser(Long userId, Long folderId) {
         if (folderId == null){
-            routes = routeRepository.findAllByUser_EmailOrderByCreatedAtDesc(userEmail);
+            return routeRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
         } else {
-            routes = routeRepository.findAllByUser_EmailAndFolder_IdOrderByCreatedAtDesc(userEmail, folderId);
+            return routeRepository.findAllByUserIdAndFolderIdOrderByCreatedAtDesc(userId, folderId);
         }
-
-        return routes.stream()
-                .map(this::toRouteSummaryDto)
-                .toList();
     }
 
-    public RouteDetailDto getRouteDetail(Long routeId, String userEmail) {
-        Route route = getValidRouteForUser(routeId, userEmail);
+    @Transactional(readOnly = true)
+    public RouteDetailDto getRouteDetail(Long routeId, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
         return toRouteDetailDto(route);
     }
 
-
-
-    public RouteDetailDto saveRouteForUser(CreateRouteRequestDto createRouteRequestDto, String userEmail) {
-        Route route = createRouteRequestDtoToRoute(createRouteRequestDto, userEmail);
+    @Transactional
+    public RouteDetailDto saveRouteForUser(CreateRouteRequestDto createRouteRequestDto, Long userId) {
+        Route route = createRouteRequestDtoToRoute(createRouteRequestDto, userId);
         route = routeRepository.save(route);
         return toRouteDetailDto(route);
     }
 
     @Transactional
-    public void deleteRouteForUser(Long routeId, String userEmail) {
-        Route route = getValidRouteForUser(routeId, userEmail);
+    public void deleteRouteForUser(Long routeId, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
         routeRepository.delete(route);
     }
 
-    public GpxExportDto exportRouteToGpx(Long routeId, String userEmail) {
-        Route route = getValidRouteForUser(routeId, userEmail);
+    @Transactional(readOnly = true)
+    public GpxExportDto exportRouteToGpx(Long routeId, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
         byte[] gpxData = gpxExportService.generateGpxFile(route);
         return new GpxExportDto(gpxData, route.getName());
     }
 
 
-    public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, String userEmail){
-        Route route = getValidRouteForUser(routeId, userEmail);
+    @Transactional(readOnly = true)
+    public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, Long userId){
+        Route route = getValidRouteForUser(routeId, userId);
         Coordinate[] coordinates = route.getRouteGeom().getCoordinates();
         List<ElevationPointDto> elevationProfile = new ArrayList<>();
         double totalDistance = 0.0;
 
-        for(int i = 0; i < coordinates.length; i++){
+        for (int i = 0; i < coordinates.length; i++) {
             Coordinate current = coordinates[i];
 
-            if (Double.isNaN(current.getZ())){
-                continue;
-            }
-
-            if(i > 0){
+            if (i > 0) {
                 Coordinate previous = coordinates[i - 1];
                 double distanceMeters = calculateHaversineDistance(
                         previous.getY(), previous.getX(),
@@ -90,24 +87,33 @@ public class RouteService {
                 );
                 totalDistance += distanceMeters;
             }
-            elevationProfile.add(new ElevationPointDto(totalDistance, current.getZ()));
-
+            if (!Double.isNaN(current.getZ())) {
+                elevationProfile.add(new ElevationPointDto(totalDistance, current.getZ()));
+            }
         }
 
         return elevationProfile;
     }
 
     @Transactional
-    public void updateRouteFolder(Long routeId, UpdateRouteFolderDto request, String userEmail) {
-        Route route = getValidRouteForUser(routeId, userEmail);
+    public void updateRouteFolder(Long routeId, UpdateRouteFolderDto request, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
 
         if (request.folderId() == null) {
             route.setFolder(null);
         } else {
-            route.setFolder(folderRepository.findByIdAndUserEmail(request.folderId(), userEmail).orElseThrow(
-                    () -> new IllegalArgumentException("Folder not found or access denied")));
+            route.setFolder(folderRepository.findByIdAndUserId(request.folderId(), userId).orElseThrow(
+                    () -> new FolderNotFoundException("Folder not found or access denied")));
         }
     }
+
+    @Transactional
+    public void renameRoute(Long routeId, RenameRouteRequestDto request, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
+        route.setName(request.name());
+    }
+
+
 
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371000;
@@ -121,22 +127,15 @@ public class RouteService {
     }
 
 
-    private Route getValidRouteForUser(Long routeId, String userEmail){
-        Route route = routeRepository.findRouteById(routeId);
 
-        if (route == null) {
-            throw new IllegalArgumentException("Route not found with id: " + routeId);
-        }
-
-        if (route.getUser() == null || !route.getUser().getEmail().equals(userEmail)) {
-            throw new IllegalArgumentException("Access denied, you are not the owner of this route");
-        }
-        return route;
+    private Route getValidRouteForUser(Long routeId, Long userId){
+        return routeRepository.findByIdAndUserId(routeId, userId)
+                .orElseThrow(() -> new RouteNotFoundException("Route not found or access denied"));
     }
 
 
     private RouteDetailDto toRouteDetailDto(Route route) {
-        WKTWriter wtkWriter3D = new WKTWriter(3);
+        WKTWriter wktWriter3D = new WKTWriter(3);
 
         return RouteDetailDto.builder()
                 .id(route.getId())
@@ -146,29 +145,19 @@ public class RouteService {
                 .distanceMeters(route.getDistanceMeters())
                 .elevationGain(route.getElevationGain())
                 .elevationLoss(route.getElevationLoss())
-                .startPoint(route.getStartPoint() != null ? wtkWriter3D.write(route.getStartPoint()) : null)
-                .routeGeom(route.getRouteGeom() != null ? wtkWriter3D.write(route.getRouteGeom()) : null)
+                .startPoint(route.getStartPoint() != null ? wktWriter3D.write(route.getStartPoint()) : null)
+                .routeGeom(route.getRouteGeom() != null ? wktWriter3D.write(route.getRouteGeom()) : null)
                 .createdAt(route.getCreatedAt())
                 .folderId(route.getFolder() != null ? route.getFolder().getId() : null)
                 .build();
     }
 
 
-    private RouteSummaryDto toRouteSummaryDto(Route route) {
-        return new RouteSummaryDto(
-                route.getId(),
-                route.getName(),
-                route.getDistanceMeters(),
-                route.getFolder() != null ? route.getFolder().getId() : null
-        );
-    }
-
-    private Route createRouteRequestDtoToRoute(CreateRouteRequestDto createRouteRequestDto, String userEmail) {
+    private Route createRouteRequestDtoToRoute(CreateRouteRequestDto createRouteRequestDto, Long userId) {
         WKTReader wktReader = new WKTReader();
         Route route = new Route();
 
-        route.setUser(userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found: " + userEmail)));
+        route.setUser(userRepository.getReferenceById(userId));
         route.setName(createRouteRequestDto.name());
         route.setRouteType(createRouteRequestDto.routeType());
         route.setTargetDistance(createRouteRequestDto.targetDistance());
@@ -188,13 +177,13 @@ public class RouteService {
                 routeGeom.setSRID(4326);
                 route.setRouteGeom((LineString) routeGeom);
             }
-        } catch (org.locationtech.jts.io.ParseException e) {
-            throw new RuntimeException("Error parsing WKT geometry: " + e.getMessage(), e);
+        } catch (ParseException e) {
+            throw new InvalidGeometryException("Error parsing WKT geometry: " + e.getMessage());
         }
 
         if (createRouteRequestDto.folderId() != null) {
-            Folder folder = folderRepository.findByIdAndUserEmail(createRouteRequestDto.folderId(), userEmail)
-                    .orElseThrow(() -> new IllegalArgumentException("Folder not found or access denied"));
+            Folder folder = folderRepository.findByIdAndUserId(createRouteRequestDto.folderId(), userId)
+                    .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
             route.setFolder(folder);
         }
 

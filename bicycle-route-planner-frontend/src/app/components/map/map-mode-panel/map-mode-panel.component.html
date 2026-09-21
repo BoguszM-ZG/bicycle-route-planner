@@ -13,25 +13,58 @@
     [class.active]="mapRoutingService.routingMode() === 'roundTrip'">
       🔄 Pętla (Auto)
     </button>
-
   </div>
 
   @if (mapRoutingService.routingMode() === 'roundTrip') {
-
-    <div class="slider-container">
-      <label for="distance">
-        Odległość (km): <strong>{{ mapRoutingService.roundTripDistanceMeters() / 1000 }} km </strong>
+    <div class="slider-container with-margin">
+      <label for="distance-slider">
+        Odległość (km):
+        <strong>{{ mapRoutingService.roundTripDistanceKm() }} km</strong>
       </label>
-    <input
-      type="range"
-      id="distance"
-      (input)="onDistanceChange($event)"
-      min="5"
-      max="150"
-      step="5"
-    [value]="mapRoutingService.roundTripDistanceMeters() / 1000">
+      <input
+        id="distance-slider"
+        type="range"
+        min="5"
+        max="100"
+        step="1"
+        [value]="mapRoutingService.roundTripDistanceKm()"
+        (input)="onDistanceChange($event)"
+      />
       <small>Wybierz długość trasy i wybierz na mapie punkt startowy</small>
     </div>
   }
+
+  <div class="avoidance-zone-actions">
+    <button
+      class="btn-draw-zone"
+      (click)="setMode('avoidanceZone')"
+      [class.active]="mapRoutingService.routingMode() === 'avoidanceZone'"
+    >
+      🚫 Rysuj Strefę Omijania
+    </button>
+
+    @if (mapRoutingService.routingMode() === 'avoidanceZone') {
+      <div class="zone-actions">
+        <button 
+          class="btn-save-zone"
+          [disabled]="!mapDrawService.currentZoneDraft()"
+          (click)="saveZone()">
+          Zapisz
+        </button>
+        <button 
+          class="btn-cancel-zone"
+          (click)="cancelZone()">
+          Anuluj
+        </button>
+      </div>
+      <small class="zone-hint">
+        @if (!mapDrawService.currentZoneDraft()) {
+          Naklikaj wielokąt i zamknij figurę.
+        } @else {
+          Figura zamknięta. Możesz zapisać.
+        }
+      </small>
+    }
+  </div>
 
 </div>

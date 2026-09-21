@@ -1,0 +1,24 @@
+@if (isVisible()) {
+  <div class="modal-backdrop">
+    <div class="modal-glass">
+      <h2>Zapisz Strefę Omijania</h2>
+      <label for="zoneNameInput">Podaj nazwę dla tej strefy omijalnej</label>
+
+      <input
+        id="zoneNameInput"
+        type="text"
+        [formControl]="zoneNameControl"
+        placeholder="Np. Strefa budowy 2"
+        class="route-name-input"
+        [class.invalid]="zoneNameControl.invalid && zoneNameControl.touched"
+      />
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">Anuluj</button>
+        <button class="btn-save" (click)="saveZone()" [disabled]="isLoading() || zoneNameControl.invalid">
+          {{ isLoading() ? 'Zapisywanie...' : 'Zapisz' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -6,16 +6,21 @@ import { Component, output, ChangeDetectionStrategy } from '@angular/core';
   imports: [],
   templateUrl: './map-controls.component.html',
   styleUrl: './map-controls.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapControlsComponent {
   save = output<void>();
   clear = output<void>();
+  locate = output<void>();
 
   public onSaveClick(): void {
     this.save.emit();
   }
   public onClearClick(): void {
     this.clear.emit();
+  }
+
+  public onLocateClick(): void {
+    this.locate.emit();
   }
 }

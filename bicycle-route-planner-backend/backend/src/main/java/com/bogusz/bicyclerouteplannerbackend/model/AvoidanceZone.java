@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.locationtech.jts.geom.Polygon;
@@ -34,9 +33,8 @@ public class AvoidanceZone {
     @Column(name = "zone_geom",nullable = false, columnDefinition = "geometry(Polygon, 4326)")
     private Polygon zoneGeom;
 
-    @ColumnDefault("true")
     @Column(name = "is_active")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
 
 }

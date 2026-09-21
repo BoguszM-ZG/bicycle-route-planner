@@ -1,12 +1,15 @@
 <app-sidebar></app-sidebar>
 <app-save-route-modal #saveRouteModal></app-save-route-modal>
+<app-save-zone-modal #saveZoneModal></app-save-zone-modal>
 
 
 <app-map-controls
   (save)="saveRoute()"
-  (clear)="clearRoute()">
+  (clear)="clearRoute()"
+  (locate)="locateMe()">
 </app-map-controls>
 <app-map-mode-panel></app-map-mode-panel>
+<app-map-search></app-map-search>
 
 <div id="map"></div>
 

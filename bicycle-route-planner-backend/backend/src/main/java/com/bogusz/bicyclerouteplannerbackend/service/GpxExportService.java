@@ -1,13 +1,14 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
+import com.bogusz.bicyclerouteplannerbackend.exception.GpxExportException;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import io.jenetics.jpx.GPX;
 import io.jenetics.jpx.Track;
 import io.jenetics.jpx.TrackSegment;
 import io.jenetics.jpx.WayPoint;
+import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.geom.Coordinate;
 import org.springframework.stereotype.Service;
-
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Service
 public class GpxExportService {
 
@@ -28,7 +30,7 @@ public class GpxExportService {
                             .lat(coord.getY())
                             .lon(coord.getX());
 
-                    if(!Double.isNaN(coord.getZ())){
+                    if (!Double.isNaN(coord.getZ())) {
                         pointBuilder.ele(coord.getZ());
                     }
                     return pointBuilder.build();
@@ -46,19 +48,24 @@ public class GpxExportService {
                         .build())
                 .build();
 
+        Path tempFilePath = null;
         try {
-            Path tempFilePath = Files.createTempFile("route_", ".gpx");
+            tempFilePath = Files.createTempFile("route_", ".gpx");
 
             GPX.write(gpx, tempFilePath);
 
-            byte[] fileBytes = Files.readAllBytes(tempFilePath);
+            return Files.readAllBytes(tempFilePath);
 
-            Files.delete(tempFilePath);
-
-            return fileBytes;
         } catch (IOException e) {
-            throw new RuntimeException("Error during GPX file generation", e);
+            throw new GpxExportException("Error during GPX file generation");
+        } finally {
+            if (tempFilePath != null) {
+                try {
+                    Files.deleteIfExists(tempFilePath);
+                } catch (IOException e) {
+                    log.error("Error while deleting temporary file: {}", tempFilePath, e);
+                }
+            }
         }
-
     }
 }

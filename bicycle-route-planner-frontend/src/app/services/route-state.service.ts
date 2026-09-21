@@ -105,7 +105,7 @@ export class RouteStateService {
   }
 
   public exportGpx(routeId: number): void {
-    const route = this._routes().find(r => r.id === routeId);
+    const route = this._routes().find((r) => r.id === routeId);
     const routeName = route ? route.name : `trasa_${routeId}`;
     this.routeService.downloadGpx(routeId, routeName);
   }
@@ -125,8 +125,22 @@ export class RouteStateService {
   }
 
   public handleFolderDeleted(folderId: number): void {
-    this._routes.update(routes =>
-      routes.map(r => r.folderId === folderId ? { ...r, folderId: null } : r)
+    this._routes.update((routes) =>
+      routes.map((r) => (r.folderId === folderId ? { ...r, folderId: null } : r)),
     );
+  }
+
+  public renameRoute(routeId: number, newName: string): void {
+    this.routeService.renameRoute(routeId, { name: newName }).subscribe({
+      next: () => {
+        this._routes.update((routes) =>
+          routes.map((r) => (r.id === routeId ? { ...r, name: newName } : r)),
+        );
+      },
+      error: (err) => {
+        console.error('Error renaming route', err);
+        this._error.set('Failed to rename route.');
+      },
+    });
   }
 }

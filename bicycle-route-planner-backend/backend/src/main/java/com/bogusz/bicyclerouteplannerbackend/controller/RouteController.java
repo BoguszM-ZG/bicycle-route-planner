@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
 import com.bogusz.bicyclerouteplannerbackend.service.RouteService;
@@ -9,7 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,35 +26,38 @@ public class RouteController {
     @GetMapping
     public ResponseEntity<List<RouteSummaryDto>> getAllRoutes(
             @RequestParam(value = "folderId", required = false) Long folderId,
-            Authentication authentication) {
-        List<RouteSummaryDto> routes = routeService.getRoutesForUser(authentication.getName(), folderId);
+            @AuthenticationPrincipal UserPrincipal principal) {
+        List<RouteSummaryDto> routes = routeService.getRoutesForUser(principal.id(), folderId);
         return ResponseEntity.ok(routes);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RouteDetailDto> getRouteDetail(@PathVariable Long id, Authentication authentication){
-        RouteDetailDto routeDetail = routeService.getRouteDetail(id, authentication.getName());
+    public ResponseEntity<RouteDetailDto> getRouteDetail(@PathVariable Long id,
+                                                         @AuthenticationPrincipal UserPrincipal principal){
+        RouteDetailDto routeDetail = routeService.getRouteDetail(id, principal.id());
         return ResponseEntity.ok(routeDetail);
     }
 
     @PostMapping
     public ResponseEntity<RouteDetailDto> saveRoute( @Valid @RequestBody CreateRouteRequestDto createRouteRequestDto,
-                                                    Authentication authentication) {
-        RouteDetailDto savedRoute = routeService.saveRouteForUser(createRouteRequestDto, authentication.getName());
+                                                    @AuthenticationPrincipal UserPrincipal principal) {
+        RouteDetailDto savedRoute = routeService.saveRouteForUser(createRouteRequestDto, principal.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedRoute);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRoute(@PathVariable Long id, Authentication authentication){
-        routeService.deleteRouteForUser(id, authentication.getName());
+    public ResponseEntity<Void> deleteRoute(@PathVariable Long id,
+                                            @AuthenticationPrincipal UserPrincipal principal){
+        routeService.deleteRouteForUser(id, principal.id());
 
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/export/gpx")
-    public ResponseEntity<byte[]> exportRouteToGpx(@PathVariable Long id, Authentication authentication){
+    public ResponseEntity<byte[]> exportRouteToGpx(@PathVariable Long id,
+                                                   @AuthenticationPrincipal UserPrincipal principal){
 
-        GpxExportDto exportData = routeService.exportRouteToGpx(id, authentication.getName());
+        GpxExportDto exportData = routeService.exportRouteToGpx(id, principal.id());
 
         String safeFileName = exportData.routeName().replaceAll("[^a-zA-Z0-9\\-ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]", "_") + ".gpx";
 
@@ -66,18 +70,29 @@ public class RouteController {
     }
 
     @GetMapping("/{id}/elevation")
-    public ResponseEntity<List<ElevationPointDto>> getElevationPoints(@PathVariable Long id, Authentication authentication){
-        List<ElevationPointDto> elevationPoints = routeService.getElevationPointsForRoute(id, authentication.getName());
+    public ResponseEntity<List<ElevationPointDto>> getElevationPoints(@PathVariable Long id,
+                                                   @AuthenticationPrincipal UserPrincipal principal){
+        List<ElevationPointDto> elevationPoints = routeService.getElevationPointsForRoute(id, principal.id());
         return ResponseEntity.ok(elevationPoints);
     }
 
     @PatchMapping("/{id}/folder")
     public ResponseEntity<Void> updateRouteFolder(
             @PathVariable Long id,
-            @RequestBody UpdateRouteFolderDto request,
-            Authentication authentication
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody UpdateRouteFolderDto request
     ) {
-        routeService.updateRouteFolder(id, request, authentication.getName());
+        routeService.updateRouteFolder(id, request, principal.id());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<Void> renameRoute(
+            @PathVariable Long id,
+            @Valid @RequestBody RenameRouteRequestDto request,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        routeService.renameRoute(id, request, principal.id());
         return ResponseEntity.noContent().build();
     }
 }

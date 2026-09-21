@@ -3,11 +3,12 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
+import com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,24 +22,25 @@ public class FolderService {
     private final UserRepository userRepository;
 
 
-    public List<FolderDto> getUserFolders(String userEmail) {
-        List<Folder> allFolders = folderRepository.findAllByUser_Email(userEmail);
+    @Transactional(readOnly = true)
+    public List<FolderDto> getUserFolders(Long userId) {
+        List<Folder> allFolders = folderRepository.findAllByUserId(userId);
         return allFolders.stream()
                 .map(this::folderToFolderDto)
                 .toList();
     }
 
-    public FolderDto createFolder(CreateFolderRequestDto request, String userEmail) {
-        User user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    @Transactional
+    public FolderDto createFolder(CreateFolderRequestDto request, Long userId) {
+        User user = userRepository.getReferenceById(userId);
 
         Folder folder = new Folder();
         folder.setName(request.name());
         folder.setUser(user);
 
         if (request.parentFolderId() != null) {
-            Folder parent = folderRepository.findByIdAndUserEmail(request.parentFolderId(), userEmail)
-                    .orElseThrow(() -> new IllegalArgumentException("Parent folder not found"));
+            Folder parent = folderRepository.findByIdAndUserId(request.parentFolderId(), userId)
+                    .orElseThrow(() -> new FolderNotFoundException("Parent folder not found or access denied"));
             folder.setParentFolder(parent);
         }
 
@@ -46,14 +48,14 @@ public class FolderService {
     }
 
     @Transactional
-    public void deleteFolder(Long folderId, String userEmail) {
-        Folder folder = getValidFolderForUser(folderId, userEmail);
+    public void deleteFolder(Long folderId, Long userId) {
+        Folder folder = getValidFolderForUser(folderId, userId);
         folderRepository.delete(folder);
     }
 
     @Transactional
-    public FolderDto renameFolder(Long folderId, RenameFolderRequest request, String userEmail){
-        Folder folder = getValidFolderForUser(folderId, userEmail);
+    public FolderDto renameFolder(Long folderId, RenameFolderRequest request, Long userId){
+        Folder folder = getValidFolderForUser(folderId, userId);
 
         folder.setName(request.name());
 
@@ -61,9 +63,10 @@ public class FolderService {
     }
 
 
-    private Folder getValidFolderForUser(Long folderId, String userEmail) {
-        return folderRepository.findByIdAndUserEmail(folderId, userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Folder not found or Access denied"));
+
+    private Folder getValidFolderForUser(Long folderId, Long userId) {
+        return folderRepository.findByIdAndUserId(folderId, userId)
+                .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
     }
 
     private FolderDto folderToFolderDto(Folder folder) {
