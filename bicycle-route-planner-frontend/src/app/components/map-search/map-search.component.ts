@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { MapRenderService } from '../../services/map-render.service';
 import * as L from 'leaflet';
+import { environment } from '../../../environments/environment';
 
 const PL_VOIVODESHIPS: Record<string, string> = {
   'Lubusz': 'lubuskie',
@@ -60,17 +61,15 @@ export class MapSearchComponent {
         filter((query) => query.length >= 3),
         switchMap((query) => {
           const map = this.mapRenderService.getMap();
-          let locationParams = '';
+          let url = `${environment.apiUrl}/geocoding/search?q=${encodeURIComponent(query)}`;
           if (map) {
             const center = map.getCenter();
-            locationParams = `&lat=${center.lat}&lon=${center.lng}`;
+            url += `&lat=${center.lat}&lon=${center.lng}`;
           }
-
-          const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5${locationParams}`;
 
           return this.http.get<any>(url).pipe(
             catchError((err) => {
-              console.error('Błąd Geocodingu Photon:', err);
+              console.error('Błąd Geocodingu (Backend Proxy):', err);
               return of({ features: [] });
             }),
           );
@@ -139,5 +138,12 @@ export class MapSearchComponent {
     });
 
     this.marker = L.marker([result.y, result.x], { icon }).addTo(map);
+    this.marker.on('click', () => {
+      if (this.marker) {
+        this.marker.remove();
+        this.marker = undefined;
+        this.searchControl.setValue('', { emitEvent: false });
+      }
+    });
   }
 }

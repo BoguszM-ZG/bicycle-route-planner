@@ -86,8 +86,15 @@ export class MapComponent implements AfterViewInit {
         this.userLocationMarker.setLatLng(e.latlng);
       } else {
         this.userLocationMarker = L.marker(e.latlng).addTo(this.map).bindPopup('Tu jesteś!');
+        
+        this.userLocationMarker.on('click', () => {
+          if (this.userLocationMarker) {
+            this.userLocationMarker.remove();
+            this.userLocationMarker = undefined;
+          }
+        });
       }
-      this.userLocationMarker.openPopup();
+      this.userLocationMarker?.openPopup();
     });
     this.map.once('locationerror', (e) => {
       console.error('Error downloading location:', e);
