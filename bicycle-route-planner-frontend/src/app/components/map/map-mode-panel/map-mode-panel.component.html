@@ -5,20 +5,20 @@
     <button
       (click)="setMode('direct')"
     [class.active]="mapRoutingService.routingMode() === 'direct'">
-      📍 Trasa Punktowa
+      📍 {{ 'MAP_MODE_PANEL.DIRECT' | translate }}
     </button>
 
     <button
       (click)="setMode('roundTrip')"
     [class.active]="mapRoutingService.routingMode() === 'roundTrip'">
-      🔄 Pętla (Auto)
+      🔄 {{ 'MAP_MODE_PANEL.ROUND_TRIP' | translate }}
     </button>
   </div>
 
   @if (mapRoutingService.routingMode() === 'roundTrip') {
     <div class="slider-container with-margin">
       <label for="distance-slider">
-        Odległość (km):
+        {{ 'MAP_MODE_PANEL.DISTANCE' | translate }}
         <strong>{{ mapRoutingService.roundTripDistanceKm() }} km</strong>
       </label>
       <input
@@ -30,7 +30,7 @@
         [value]="mapRoutingService.roundTripDistanceKm()"
         (input)="onDistanceChange($event)"
       />
-      <small>Wybierz długość trasy i wybierz na mapie punkt startowy</small>
+      <small>{{ 'MAP_MODE_PANEL.ROUND_TRIP_HINT' | translate }}</small>
     </div>
   }
 
@@ -40,7 +40,7 @@
       (click)="setMode('avoidanceZone')"
       [class.active]="mapRoutingService.routingMode() === 'avoidanceZone'"
     >
-      🚫 Rysuj Strefę Omijania
+      🚫 {{ 'MAP_MODE_PANEL.DRAW_ZONE' | translate }}
     </button>
 
     @if (mapRoutingService.routingMode() === 'avoidanceZone') {
@@ -49,19 +49,19 @@
           class="btn-save-zone"
           [disabled]="!mapDrawService.currentZoneDraft()"
           (click)="saveZone()">
-          Zapisz
+          {{ 'MAP_MODE_PANEL.SAVE' | translate }}
         </button>
         <button 
           class="btn-cancel-zone"
           (click)="cancelZone()">
-          Anuluj
+          {{ 'MAP_MODE_PANEL.CANCEL' | translate }}
         </button>
       </div>
       <small class="zone-hint">
         @if (!mapDrawService.currentZoneDraft()) {
-          Naklikaj wielokąt i zamknij figurę.
+          {{ 'MAP_MODE_PANEL.ZONE_HINT_DRAW' | translate }}
         } @else {
-          Figura zamknięta. Możesz zapisać.
+          {{ 'MAP_MODE_PANEL.ZONE_HINT_DONE' | translate }}
         }
       </small>
     }

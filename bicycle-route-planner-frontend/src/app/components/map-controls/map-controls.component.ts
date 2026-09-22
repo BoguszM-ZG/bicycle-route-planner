@@ -1,9 +1,11 @@
 import { Component, output, ChangeDetectionStrategy } from '@angular/core';
 
+import { TranslatePipe } from '@ngx-translate/core';
+
 @Component({
   selector: 'app-map-controls',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './map-controls.component.html',
   styleUrl: './map-controls.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

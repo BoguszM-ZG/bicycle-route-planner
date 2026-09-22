@@ -2,9 +2,12 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { MapRoutingService } from '../../../services/map-routing.service';
 import { MapDrawService } from '../../../services/map-draw.service';
 
+import { TranslatePipe } from '@ngx-translate/core';
+
 @Component({
   selector: 'app-map-mode-panel',
-  imports: [],
+  standalone: true,
+  imports: [TranslatePipe],
   templateUrl: './map-mode-panel.component.html',
   styleUrl: './map-mode-panel.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

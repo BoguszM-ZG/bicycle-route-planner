@@ -5,16 +5,18 @@ import {
   input,
   effect,
   signal,
+  untracked,
 } from '@angular/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { RouteService } from '../../../services/route.service';
 import { ElevationPointDto } from '../../../models/route.model';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-elevation-chart',
   standalone: true,
-  imports: [BaseChartDirective],
+  imports: [BaseChartDirective, TranslatePipe],
   templateUrl: './elevation-chart.component.html',
   styleUrl: './elevation-chart.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,6 +25,7 @@ export class ElevationChartComponent {
   public routeId = input.required<number>();
 
   private readonly routeService = inject(RouteService);
+  private readonly translate = inject(TranslateService);
 
   public chartData = signal<ChartConfiguration<'scatter'>['data'] | null>(null);
   public isLoading = signal<boolean>(true);
@@ -38,12 +41,12 @@ export class ElevationChartComponent {
     scales: {
       x: {
         type: 'linear',
-        title: { display: true, text: 'Dystans (km)', color: '#aaa' },
+        title: { display: true, text: '', color: '#aaa' },
         ticks: { color: '#aaa', autoSkip: false },
         grid: { display: false },
       },
       y: {
-        title: { display: true, text: 'Wysokość (m n.p.m)', color: '#aaa' },
+        title: { display: true, text: '', color: '#aaa' },
         ticks: { color: '#aaa' },
       },
     },
@@ -56,14 +59,47 @@ export class ElevationChartComponent {
   constructor() {
     effect(() => {
       const id = this.routeId();
-      if (id) {
-        this.loadChartData(id);
+      untracked(() => {
+        if (id) {
+          this.loadChartData(id);
+        }
+      });
+    });
+
+    this.translate.onLangChange.subscribe(() => {
+      this.updateChartLabels();
+    });
+  }
+
+  private updateChartLabels(): void {
+    const currentOptions = this.chartOptions();
+    this.chartOptions.set({
+      ...currentOptions,
+      scales: {
+        ...currentOptions.scales,
+        x: {
+          ...currentOptions.scales!['x']!,
+          title: {
+            ...currentOptions.scales!['x']!.title,
+            display: true,
+            text: this.translate.instant('SIDEBAR.CHART_DISTANCE_KM')
+          }
+        },
+        y: {
+          ...currentOptions.scales!['y']!,
+          title: {
+            ...currentOptions.scales!['y']!.title,
+            display: true,
+            text: this.translate.instant('SIDEBAR.CHART_ELEVATION_M')
+          }
+        }
       }
     });
   }
 
   private loadChartData(id: number): void {
     this.isLoading.set(true);
+    this.updateChartLabels();
 
     this.routeService.getElevationProfile(id).subscribe({
       next: (points: ElevationPointDto[]) => {

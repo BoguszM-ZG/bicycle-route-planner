@@ -3,12 +3,13 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FolderStateService } from '../../../services/folder-state.service';
 import { RouteStateService } from '../../../services/route-state.service';
 import { RouteItemComponent } from '../route-item/route-item.component';
+import { TranslatePipe } from '@ngx-translate/core';
 
 
 @Component({
   standalone: true,
   selector: 'app-folder-item',
-  imports: [RouteItemComponent, ReactiveFormsModule],
+  imports: [RouteItemComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './folder-item.component.html',
   styleUrl: './folder-item.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

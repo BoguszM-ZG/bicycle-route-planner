@@ -1,13 +1,15 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouteStateService } from '../../services/route-state.service';
+import { NotificationService } from '../../services/notification.service';
 import { RouteDraft, CreateRouteRequestDto } from '../../models/route.model';
 import { FolderStateService } from '../../services/folder-state.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-save-route-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './save-route-modal.component.html',
   styleUrl: './save-route-modal.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -15,7 +17,8 @@ import { FolderStateService } from '../../services/folder-state.service';
 export class SaveRouteModalComponent {
   private readonly routeStateService = inject(RouteStateService);
   private readonly folderStateService = inject(FolderStateService);
-
+  private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   public isVisible = signal<boolean>(false);
   public isLoading = this.routeStateService.isSaving;
@@ -40,7 +43,7 @@ export class SaveRouteModalComponent {
 
   public saveRoute(): void {
     if (this.routeName.trim() === '') {
-      alert('Proszę wpisać nazwę trasy');
+      this.notificationService.warning(this.translate.instant('MODALS.EMPTY_ROUTE_NAME'));
       return;
     }
     if (!this.routeDataToSave || this.isLoading()) {
@@ -60,7 +63,7 @@ export class SaveRouteModalComponent {
     };
 
     this.routeStateService.createRoute(dto, () => {
-      alert('Trasa została zapisana pomyślnie!');
+      this.notificationService.success(this.translate.instant('MODALS.ROUTE_SAVED'));
       this.close();
     });
   }

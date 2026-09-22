@@ -2,33 +2,33 @@
 
   <div class="route-item-header">
     @if (!isConfirmingDelete() && !isMoving() && !isRenaming()) {
-      <button class="route-info-btn" (click)="onSelect()" title="Zobacz trasę na mapie">
+      <button class="route-info-btn" (click)="onSelect()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate">
         <span class="route-name">{{ route().name }}</span>
         <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
       </button>
 
       <div class="route-actions">
 
-        <button class="icon-btn edit-icon" (click)="toggleRename($event)" title="Zmień nazwę">
+        <button class="icon-btn edit-icon" (click)="toggleRename($event)" [title]="'SIDEBAR.ROUTE_ITEM_RENAME' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
         </button>
 
-        <button class="icon-btn move-icon" (click)="toggleMove($event)" title="Przenieś trasę">
+        <button class="icon-btn move-icon" (click)="toggleMove($event)" [title]="'SIDEBAR.ROUTE_ITEM_MOVE' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3-3M2 12h20M12 2v20"/>
           </svg>
         </button>
 
-        <button class="icon-btn download-icon" (click)="onExportGpx($event)" title="Pobierz plik GPX">
+        <button class="icon-btn download-icon" (click)="onExportGpx($event)" [title]="'SIDEBAR.ROUTE_ITEM_DOWNLOAD_GPX' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
         </button>
 
-        <button class="icon-btn delete-icon" (click)="promptDelete($event)" title="Usuń trasę">
+        <button class="icon-btn delete-icon" (click)="promptDelete($event)" [title]="'SIDEBAR.ROUTE_ITEM_DELETE' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
@@ -37,22 +37,22 @@
 
     } @else if (isConfirmingDelete()) {
       <div class="delete-confirmation">
-        <span class="warning-text">Czy na pewno chcesz usunąć trasę?</span>
+        <span class="warning-text">{{ 'SIDEBAR.ROUTE_ITEM_CONFIRM_DELETE' | translate }}</span>
         <div class="action-buttons">
-          <button class="confirm-btn cancel" (click)="cancelDelete($event)">Nie</button>
-          <button class="confirm-btn danger" (click)="confirmDelete($event)">Tak</button>
+          <button class="confirm-btn cancel" (click)="cancelDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_NO' | translate }}</button>
+          <button class="confirm-btn danger" (click)="confirmDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_YES' | translate }}</button>
         </div>
       </div>
     } @else if (isMoving()) {
       <div class="move-confirmation" style="display:flex; gap: 5px; width: 100%; align-items: center;">
-        <label for="moveFolderSelect" style="display: none;">Wybierz docelowy folder</label>
+        <label for="moveFolderSelect" style="display: none;">{{ 'SIDEBAR.ROUTE_ITEM_MOVE_TARGET' | translate }}</label>
         <select
           id="moveFolderSelect"
           #folderSelect
           (click)="$event.stopPropagation()"
           (keydown)="$event.stopPropagation()"
           style="flex:1; padding: 3px;">
-          <option value="null">-- Brak folderu --</option>
+          <option value="null">{{ 'SIDEBAR.ROUTE_ITEM_NO_FOLDER' | translate }}</option>
           @for (f of allFolders(); track f.id) {
             <option [value]="f.id" [selected]="f.id === route().folderId">{{ f.name }}</option>
           }
@@ -62,7 +62,7 @@
       </div>
     } @else if (isRenaming()) {
     <div style="display:flex; flex: 1; align-items: center; gap: 4px;">
-      <label [for]="'route-rename-' + route().id" style="display:none">Nowa nazwa trasy</label>
+      <label [for]="'route-rename-' + route().id" style="display:none">{{ 'SIDEBAR.ROUTE_ITEM_NEW_NAME' | translate }}</label>
       <input
         [id]="'route-rename-' + route().id"
         type="text"

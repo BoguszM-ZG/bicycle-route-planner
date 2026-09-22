@@ -1,10 +1,12 @@
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { AvoidanceZoneDto} from '../../../models/avoidance-zone.model';
 
+import { TranslatePipe } from '@ngx-translate/core';
+
 @Component({
   selector: 'app-avoidance-zone-item',
   standalone: true,
-  imports: [],
+  imports: [TranslatePipe],
   templateUrl: './avoidance-zone-item.component.html',
   styleUrl: './avoidance-zone-item.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

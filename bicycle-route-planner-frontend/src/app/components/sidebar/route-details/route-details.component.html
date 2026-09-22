@@ -1,12 +1,12 @@
 @if (routeDetail(); as detail) {
 <div class="details-container">
   <div class="detail-row">
-    <span class="detail-label">Data utworzenia</span>
+    <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_CREATED' | translate }}</span>
     <span class="detail-value">{{ detail.createdAt | date:'mediumDate'}}</span>
   </div>
 
   <div class="detail-row">
-    <span class="detail-label">Dystans</span>
+    <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_DISTANCE' | translate }}</span>
     <span class="detail-value"> {{( detail.distanceMeters / 1000 ) | number:'1.2-2' }} km</span>
   </div>
 
@@ -14,19 +14,19 @@
     <div class="stat-box gain">
       <span class="stat-icon">⬆️</span>
       <span class="stat-value">{{ detail.elevationGain | number:'1.0-0' }} m</span>
-      <span class="stat-title">Podjazdy</span>
+      <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_GAIN' | translate }}</span>
     </div>
 
     <div class="stat-box loss">
       <span class="stat-icon">⬇️</span>
       <span class="stat-value"> {{ detail.elevationLoss | number:'1.0-0' }} m</span>
-      <span class="stat-title">Zjazdy</span>
+      <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_LOSS' | translate }}</span>
     </div>
 
   </div>
 
   <div class="elevation-section">
-    <h3>Profil Przewyższeń</h3>
+    <h3>{{ 'SIDEBAR.ROUTE_DETAILS_CHART_TITLE' | translate }}</h3>
     <app-elevation-chart [routeId]="detail.id!"></app-elevation-chart>
   </div>
 

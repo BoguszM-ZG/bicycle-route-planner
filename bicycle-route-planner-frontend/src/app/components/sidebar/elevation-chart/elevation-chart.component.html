@@ -1,5 +1,5 @@
 @if (isLoading()) {
-  <div class="loading">Ładowanie wykresu przewyższeń...</div>
+  <div class="loading">{{ 'SIDEBAR.CHART_LOADING' | translate }}</div>
 } @else if (chartData()) {
   <div class="chart-container">
     <canvas baseChart

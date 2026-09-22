@@ -1,3 +1,4 @@
+import { TranslatePipe } from '@ngx-translate/core';
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { MapRenderService } from '../../services/map-render.service';
 import * as L from 'leaflet';
 import { environment } from '../../../environments/environment';
+import { MAP_CONSTANTS } from '../../constants/map.constants';
 
 const PL_VOIVODESHIPS: Record<string, string> = {
   'Lubusz': 'lubuskie',
@@ -30,7 +32,7 @@ const PL_VOIVODESHIPS: Record<string, string> = {
 @Component({
   selector: 'app-map-search',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './map-search.component.html',
   styleUrl: './map-search.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,14 +132,7 @@ export class MapSearchComponent {
       this.marker.remove();
     }
 
-    const icon = L.divIcon({
-      className: 'search-pin',
-      html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3" fill="white"></circle></svg>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-    });
-
-    this.marker = L.marker([result.y, result.x], { icon }).addTo(map);
+    this.marker = L.marker([result.y, result.x], { icon: MAP_CONSTANTS.SEARCH_PIN }).addTo(map);
     this.marker.on('click', () => {
       if (this.marker) {
         this.marker.remove();

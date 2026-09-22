@@ -14,11 +14,12 @@ import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zo
 import { FolderStateService } from '../../services/folder-state.service';
 import { FolderItemComponent } from './folder-item/folder-item.component';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouteItemComponent, AvoidanceZonePanelComponent, FolderItemComponent, ReactiveFormsModule],
+  imports: [RouteItemComponent, AvoidanceZonePanelComponent, FolderItemComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

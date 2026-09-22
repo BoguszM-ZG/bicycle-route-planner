@@ -1,53 +1,53 @@
 <div class="login-container">
   <div class="login-card">
     <div class="login-header">
-      <h2>Witaj ponownie</h2>
-      <p>Zaloguj się do swojego konta.</p>
+      <h2>{{ 'AUTH.LOGIN_TITLE' | translate }}</h2>
+      <p>{{ 'AUTH.LOGIN_SUBTITLE' | translate }}</p>
     </div>
 
     @if (errorMessage()){
       <div class="error-alert">
-        {{ errorMessage() }}
+        {{ errorMessage() | translate }}
       </div>
     }
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
-        <label for="email">Adres E-mail <span class="required">*</span></label>
+        <label for="email">{{ 'AUTH.EMAIL_LABEL' | translate }} <span class="required">*</span></label>
         <input
           id="email"
           type="email"
           formControlName="email"
-          placeholder="jan@kowalski.pl"
+          [placeholder]="'AUTH.EMAIL_PLACEHOLDER' | translate"
           [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
         />
 
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <div class="error-text">
-            Proszę wprowadzić poprawny adres e-mail.
+            {{ 'AUTH.EMAIL_REQUIRED' | translate }}
           </div>
         }
       </div>
 
       <div class="form-group">
-        <label for="password">Hasło <span class="required">*</span></label>
+        <label for="password">{{ 'AUTH.PASSWORD_LABEL' | translate }} <span class="required">*</span></label>
         <input
           id="password"
           type="password"
           formControlName="password"
-          placeholder="Wpisz swoje hasło"
+          [placeholder]="'AUTH.PASSWORD_PLACEHOLDER' | translate"
           [class.invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
         />
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
           <div class="error-text">
-            Hasło jest wymagane.
+            {{ 'AUTH.PASSWORD_REQUIRED' | translate }}
           </div>
         }
       </div>
 
       <button type="submit" class="submit-btn" [disabled]="isLoading() || loginForm.invalid">
         @if (!isLoading()){
-          <span>Zaloguj się</span>
+          <span>{{ 'AUTH.LOGIN_BUTTON' | translate }}</span>
         } @else {
           <span class="loader"></span>
         }
@@ -55,7 +55,7 @@
     </form>
 
     <div class="login-footer">
-      Nie masz jeszcze konta? <a href="/register">Zarejestruj się tutaj</a>
+      {{ 'AUTH.NO_ACCOUNT' | translate }} <a href="/register">{{ 'AUTH.REGISTER_LINK' | translate }}</a>
     </div>
   </div>
 </div>

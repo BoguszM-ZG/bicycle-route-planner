@@ -4,11 +4,12 @@ import { RouteSummaryDto } from '../../../models/route.model';
 import { RouteDetailsComponent} from '../route-details/route-details.component';
 import { FolderDto } from '../../../models/folder.model';
 import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-route-item',
   standalone: true,
-  imports: [DecimalPipe, RouteDetailsComponent, ReactiveFormsModule],
+  imports: [DecimalPipe, RouteDetailsComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './route-item.component.html',
   styleUrl: './route-item.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

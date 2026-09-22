@@ -2,11 +2,12 @@ import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/cor
 import { AvoidanceZoneItemComponent } from '../avoidance-zone-item/avoidance-zone-item.component';
 import { AvoidanceZoneStateService } from '../../../services/avoidance-zone-state.service';
 import { AvoidanceZoneDto } from '../../../models/avoidance-zone.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-avoidance-zone-panel',
   standalone: true,
-  imports: [AvoidanceZoneItemComponent],
+  imports: [AvoidanceZoneItemComponent, TranslatePipe],
   templateUrl: './avoidance-zone-panel.component.html',
   styleUrl: './avoidance-zone-panel.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush

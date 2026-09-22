@@ -1,13 +1,13 @@
 <div class="sidebar-container">
   <div class="profile-section">
     <div class="profile-info">
-      <h2>Twój profil</h2>
+      <h2>{{ 'SIDEBAR.PROFILE_TITLE' | translate }}</h2>
       @if (currentUser()) {
         <p class="user-email">
-          Zalogowano jako: <strong>{{ currentUser()?.fullName }}</strong>
+          {{ 'SIDEBAR.LOGGED_IN_AS' | translate }} <strong>{{ currentUser()?.fullName }}</strong>
         </p>
       }
-      <a class="logout-link" (click)="logout()">Wyloguj</a>
+      <a class="logout-link" (click)="logout()">{{ 'SIDEBAR.LOGOUT' | translate }}</a>
     </div>
     <div class="profile-avatar">
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -17,11 +17,11 @@
   </div>
 
   <div class="panel-section">
-    <h3>Panel Zapisu</h3>
+    <h3>{{ 'SIDEBAR.PANEL_TITLE' | translate }}</h3>
 
     <div class="segmented-control">
-      <button class="segment-btn" [class.active]="activeTab() === 'routes'" (click)="activeTab.set('routes')">Trasy</button>
-      <button class="segment-btn" [class.active]="activeTab() === 'zones'" (click)="activeTab.set('zones')">Strefy</button>
+      <button class="segment-btn" [class.active]="activeTab() === 'routes'" (click)="activeTab.set('routes')">{{ 'SIDEBAR.TAB_ROUTES' | translate }}</button>
+      <button class="segment-btn" [class.active]="activeTab() === 'zones'" (click)="activeTab.set('zones')">{{ 'SIDEBAR.TAB_ZONES' | translate }}</button>
     </div>
 
     <div class="sidebar-content">
@@ -29,7 +29,7 @@
         <div class="folder-actions">
           @if (!isCreatingFolder()) {
             <button class="create-folder-btn" (click)="toggleCreateFolder()">
-              + Nowy Folder
+              {{ 'SIDEBAR.NEW_FOLDER' | translate }}
             </button>
           } @else {
             <div class="create-folder-form">
@@ -39,25 +39,25 @@
                 class="folder-input"
                 type="text"
                 [formControl]="newFolderName"
-                placeholder="Nazwa folderu..."
+                [placeholder]="'SIDEBAR.FOLDER_NAME_PLACEHOLDER' | translate"
                 (keyup.enter)="submitNewFolder()"
                 (keyup.escape)="toggleCreateFolder()"
               >
-              <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" title="Zatwierdź">✔️</button>
-              <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" title="Anuluj">❌</button>
+              <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" [title]="'SIDEBAR.CONFIRM' | translate">✔️</button>
+              <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" [title]="'SIDEBAR.CANCEL' | translate">❌</button>
             </div>
           }
         </div>
 
         @if (isLoadingRoutes()) {
           <div class="loading-state">
-            <span>Pobieranie tras...</span>
+            <span>{{ 'SIDEBAR.LOADING_ROUTES' | translate }}</span>
           </div>
         }
 
         @if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
           <div class="empty-state">
-            Nie masz jeszcze żadnych zapisanych tras ani folderów. Dodaj trasę, aby ją zobaczyć tutaj.
+            {{ 'SIDEBAR.EMPTY_STATE' | translate }}
           </div>
         }
 

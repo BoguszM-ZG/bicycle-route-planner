@@ -3,7 +3,7 @@
 
     @if (isRenaming()) {
       <span class="folder-icon" style="padding-left: 8px;">{{ isExpanded() ? '📂' : '📁' }}</span>
-      <label [for]="'rename-' + folderId()" style="display:none">Nowa nazwa folderu</label>
+      <label [for]="'rename-' + folderId()" style="display:none">{{ 'SIDEBAR.FOLDER_ITEM_NEW_NAME' | translate }}</label>
       <input
         [id]="'rename-' + folderId()"
         type="text"
@@ -17,22 +17,22 @@
 
     } @else if (isConfirmingDelete()) {
       <span class="folder-icon" style="padding-left: 8px;">{{ isExpanded() ? '📂' : '📁' }}</span>
-      <span class="warning-text" style="flex: 1; font-size: 0.8rem; margin-left: 8px;">Usunąć folder?</span>
-      <button class="confirm-btn danger" (click)="confirmDelete($event)">Tak</button>
-      <button class="confirm-btn cancel" (click)="cancelDelete($event)">Nie</button>
+      <span class="warning-text" style="flex: 1; font-size: 0.8rem; margin-left: 8px;">{{ 'SIDEBAR.FOLDER_ITEM_CONFIRM_DELETE' | translate }}</span>
+      <button class="confirm-btn danger" (click)="confirmDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_YES' | translate }}</button>
+      <button class="confirm-btn cancel" (click)="cancelDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_NO' | translate }}</button>
 
     } @else {
       <!-- Prawdziwy przycisk do rozwijania -->
-      <button class="folder-expand-btn" (click)="toggleExpanded()" title="Rozwiń/Zwiń">
+      <button class="folder-expand-btn" (click)="toggleExpanded()" [title]="'SIDEBAR.FOLDER_ITEM_TOGGLE' | translate">
         <span class="folder-icon">{{ isExpanded() ? '📂' : '📁' }}</span>
         <span class="folder-name">{{ folderData()?.name }}</span>
       </button>
 
       <div class="route-actions" style="margin-left: auto;">
-        <button class="icon-btn move-icon" (click)="toggleRename($event)" title="Zmień nazwę">
+        <button class="icon-btn move-icon" (click)="toggleRename($event)" [title]="'SIDEBAR.FOLDER_ITEM_RENAME' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <button class="icon-btn delete-icon" (click)="promptDelete($event)" title="Usuń folder">
+        <button class="icon-btn delete-icon" (click)="promptDelete($event)" [title]="'SIDEBAR.FOLDER_ITEM_DELETE' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         </button>
       </div>

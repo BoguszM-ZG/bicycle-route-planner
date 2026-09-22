@@ -1,20 +1,20 @@
 @if (isVisible()) {
   <div class="modal-backdrop">
     <div class="modal-glass">
-      <h2>Zapisz Trasę</h2>
-      <label for="routeNameInput">Podaj nazwę dla swojej nowej trasy rowerowej</label>
+      <h2>{{ 'MODALS.SAVE_ROUTE_TITLE' | translate }}</h2>
+      <label for="routeNameInput">{{ 'MODALS.SAVE_ROUTE_LABEL' | translate }}</label>
 
       <input
       id="routeNameInput"
       type="text"
       [(ngModel)]="routeName"
-      placeholder="Np. Wieczorna pętla wokół jeziora"
+      [placeholder]="'MODALS.SAVE_ROUTE_PLACEHOLDER' | translate"
       class="route-name-input"
       />
 
-      <label for="folderSelect">Wybierz folder (opcjonalnie)</label>
+      <label for="folderSelect">{{ 'MODALS.FOLDER_SELECT_LABEL' | translate }}</label>
       <select id="folderSelect" [(ngModel)]="selectedFolderId" class="route-name-input" style="margin-bottom: 20px;">
-        <option [ngValue]="null">-- Brak folderu (zapisz luzem) --</option>
+        <option [ngValue]="null">{{ 'MODALS.NO_FOLDER' | translate }}</option>
 
         @for (folder of folders(); track folder.id) {
           <option [ngValue]="folder.id">{{ folder.name }}</option>
@@ -22,9 +22,9 @@
       </select>
 
       <div class="modal-actions">
-        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">Anuluj</button>
+        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">{{ 'MODALS.CANCEL' | translate }}</button>
         <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading()">
-          {{ isLoading() ? 'Zapisywanie...' : 'Zapisz' }}
+          {{ isLoading() ? ('MODALS.SAVING' | translate) : ('MODALS.SAVE' | translate) }}
         </button>
       </div>
 
