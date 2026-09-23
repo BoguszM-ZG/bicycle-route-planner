@@ -16,6 +16,8 @@ import { MAP_CONSTANTS } from '../../constants/map.constants';
 
 L.Marker.prototype.options.icon = MAP_CONSTANTS.DEFAULT_ICON;
 
+import { LoggerService } from '../../services/logger.service';
+
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -38,8 +40,10 @@ export class MapComponent implements AfterViewInit {
 
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
 
   ngAfterViewInit(): void {
+    this.logger.info('Leaflet map successfully initialized');
     this.mapRenderService.initMap('map');
     this.map = this.mapRenderService.getMap()!;
     this.mapRoutingService.initRouting(this.map);
@@ -60,6 +64,7 @@ export class MapComponent implements AfterViewInit {
     const draft = this.mapRoutingService.currentRouteDraft();
 
     if (!draft?.geometryWkt) {
+      this.logger.warn('User tried to save a route, but no route is drawn');
       this.notificationService.warning(this.translate.instant('MAP.DRAW_ROUTE_FIRST'));
       return;
     }
@@ -93,7 +98,7 @@ export class MapComponent implements AfterViewInit {
       this.userLocationMarker?.openPopup();
     });
     this.map.once('locationerror', (e) => {
-      console.error('Error downloading location:', e);
+      this.logger.warn('GPS location access denied or failed:', e);
       this.notificationService.error(this.translate.instant('MAP.LOCATION_ERROR'));
     });
   }

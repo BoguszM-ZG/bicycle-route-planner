@@ -2,12 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { AvoidanceZoneDto, CreateAvoidanceZoneRequestDto } from '../models/avoidance-zone.model';
 import { AvoidanceZoneService } from './avoidance-zone.service';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AvoidanceZoneStateService {
   private readonly apiService = inject(AvoidanceZoneService);
+  private readonly logger = inject(LoggerService);
 
 
   private readonly _zones = signal<AvoidanceZoneDto[]>([]);
@@ -29,7 +31,7 @@ export class AvoidanceZoneStateService {
       .subscribe({
         next: (fetchedZones) => this._zones.set(fetchedZones),
         error: (err) => {
-          console.error('Error fetching zones', err);
+          this.logger.error('Error fetching zones', err);
           this._error.set('Failed to load avoidance zones.');
         }
       });
@@ -48,7 +50,7 @@ export class AvoidanceZoneStateService {
           this._zones.update((currentZones) => [...currentZones, savedZone]);
         },
         error: (err) => {
-          console.error('Error saving zone', err);
+          this.logger.error('Error saving zone', err);
           this._error.set('Failed to save the avoidance zone.');
         }
       });
@@ -65,7 +67,7 @@ export class AvoidanceZoneStateService {
           this._zones.update((currentZones) => currentZones.filter((z) => z.id !== id));
         },
         error: (err) => {
-          console.error('Error deleting zone', err);
+          this.logger.error('Error deleting zone', err);
           this._error.set('Failed to delete the avoidance zone.');
         }
       });
@@ -87,7 +89,7 @@ export class AvoidanceZoneStateService {
           );
         },
         error: (err) => {
-          console.error('Error toggling zone status', err);
+          this.logger.error('Error toggling zone status', err);
           this._error.set('Failed to toggle zone status.');
         }
       });

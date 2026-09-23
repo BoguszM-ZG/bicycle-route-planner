@@ -1,4 +1,5 @@
 import { TranslatePipe } from '@ngx-translate/core';
+import { LoggerService } from '../../services/logger.service';
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -44,6 +45,7 @@ export class MapSearchComponent {
 
   private readonly http = inject(HttpClient);
   private readonly mapRenderService = inject(MapRenderService);
+  private readonly logger = inject(LoggerService);
   private marker?: L.Marker;
 
   constructor() {
@@ -71,7 +73,7 @@ export class MapSearchComponent {
 
           return this.http.get<any>(url).pipe(
             catchError((err) => {
-              console.error('Błąd Geocodingu (Backend Proxy):', err);
+              this.logger.error('Błąd Geocodingu (Backend Proxy):', err);
               return of({ features: [] });
             }),
           );

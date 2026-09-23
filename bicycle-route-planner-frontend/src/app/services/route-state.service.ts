@@ -3,11 +3,14 @@ import { finalize } from 'rxjs/operators';
 import { RouteDetailDto, RouteSummaryDto, CreateRouteRequestDto } from '../models/route.model';
 import { RouteService } from './route.service';
 
+import { LoggerService } from './logger.service';
+
 @Injectable({
   providedIn: 'root',
 })
 export class RouteStateService {
   private readonly routeService = inject(RouteService);
+  private readonly logger = inject(LoggerService);
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
   private readonly _selectedRoute = signal<RouteDetailDto | null>(null);
@@ -33,7 +36,7 @@ export class RouteStateService {
       .subscribe({
         next: (routes) => this._routes.set(routes),
         error: (err) => {
-          console.error('Error fetching routes', err);
+          this.logger.error('Error fetching routes', err);
           this._error.set('Failed to fetch routes list.');
         },
       });
@@ -53,7 +56,7 @@ export class RouteStateService {
       .subscribe({
         next: (routeDetails) => this._selectedRoute.set(routeDetails),
         error: (err) => {
-          console.error('Error fetching route details', err);
+          this.logger.error('Error fetching route details', err);
           this._error.set('Failed to fetch route details.');
         },
       });
@@ -67,12 +70,13 @@ export class RouteStateService {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
+        this.logger.info('Route successfully deleted', routeId);
         if (this._selectedRoute()?.id === routeId) {
           this._selectedRoute.set(null);
         }
       },
       error: (err) => {
-        console.error('Error deleting route', err);
+        this.logger.error('Error deleting route', err);
         this._error.set('Failed to delete route.');
       },
     });
@@ -96,9 +100,10 @@ export class RouteStateService {
           this._routes.update((routes) => [summary, ...routes]);
 
           if (onSuccess) onSuccess();
+          this.logger.info('Route successfully saved', newRouteDetails.name);
         },
         error: (err) => {
-          console.error('Error saving route', err);
+          this.logger.error('Error saving route', err);
           this._error.set('Failed to save route.');
         },
       });
@@ -118,7 +123,7 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        console.error('Error moving route', err);
+        this.logger.error('Error moving route', err);
         this._error.set('Failed to move route.');
       },
     });
@@ -138,7 +143,7 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        console.error('Error renaming route', err);
+        this.logger.error('Error renaming route', err);
         this._error.set('Failed to rename route.');
       },
     });

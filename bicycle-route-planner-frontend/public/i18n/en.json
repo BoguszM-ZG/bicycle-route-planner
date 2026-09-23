@@ -118,5 +118,8 @@
     "REGISTER_BUTTON": "Register",
     "HAVE_ACCOUNT": "Already have an account?",
     "LOGIN_LINK": "Log in here"
+  },
+  "ERRORS": {
+    "GLOBAL_UNKNOWN_ERROR": "An unexpected application error occurred. We apologize for the inconvenience."
   }
 }

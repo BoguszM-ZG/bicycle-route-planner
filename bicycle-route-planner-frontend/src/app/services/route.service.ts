@@ -11,6 +11,7 @@ import {
 } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
 import { NotificationService } from './notification.service';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,7 @@ export class RouteService {
   private readonly apiUrl = `${environment.apiUrl}/routes`;
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly logger = inject(LoggerService);
 
   getRoutes(): Observable<RouteSummaryDto[]> {
     return this.http.get<RouteSummaryDto[]>(this.apiUrl);
@@ -60,7 +62,7 @@ export class RouteService {
           window.URL.revokeObjectURL(blobUrl);
         },
         error: (err) => {
-          console.error('Error during downloading GPX file:', err);
+          this.logger.error('Error during downloading GPX file:', err);
           this.notificationService.error('Nie udało się pobrać pliku GPX');
         },
       });

@@ -2,12 +2,14 @@ import { Injectable, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { FolderService } from './folder.service';
 import { CreateFolderRequestDto, FolderDto, RenameFolderRequestDto } from '../models/folder.model';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FolderStateService {
   private readonly folderService = inject(FolderService);
+  private readonly logger = inject(LoggerService);
 
   private readonly _folders = signal<FolderDto[]>([]);
   private readonly _isLoading = signal<boolean>(false);
@@ -29,7 +31,7 @@ export class FolderStateService {
           this._folders.set(fetchedFolders);
         },
         error: (err) => {
-          console.error('Error occurred while fetching folders.', err);
+          this.logger.error('Error occurred while fetching folders.', err);
           this._error.set('Nie udało się pobrać folderów. Spróbuj ponownie później.');
         },
       });
@@ -47,7 +49,7 @@ export class FolderStateService {
           this._folders.update((currentFolders) => [...currentFolders, createdFolder]);
         },
         error: (err) => {
-          console.error('Error occurred while creating folder.', err);
+          this.logger.error('Error occurred while creating folder.', err);
           this._error.set('Nie udało się utworzyć folderu.');
         },
       });
@@ -60,7 +62,7 @@ export class FolderStateService {
 
       },
       error: (err) => {
-        console.error('Error deleting folder', err);
+        this.logger.error('Error deleting folder', err);
       },
     });
   }
@@ -73,7 +75,7 @@ export class FolderStateService {
         );
       },
       error: (err) => {
-        console.error('Error renaming folder', err);
+        this.logger.error('Error renaming folder', err);
       },
     });
   }

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, finalize } from 'rxjs';
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
 import { environment } from '../../environments/environment.development';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +13,7 @@ import { environment } from '../../environments/environment.development';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly logger = inject(LoggerService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
@@ -58,6 +60,7 @@ export class AuthService {
 
   public logout(): void {
     this._currentUser.set(null);
+    this.logger.info('User logged out');
     this._error.set(null);
 
     if (isPlatformBrowser(this.platformId)) {
@@ -93,6 +96,7 @@ export class AuthService {
 
   private handleAuthSuccess(response: AuthResponse): void {
     this._currentUser.set(response.user);
+    this.logger.info('User successfully authenticated', response.user.email);
 
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('accessToken', response.accessToken);
@@ -102,7 +106,7 @@ export class AuthService {
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {
-    console.error('Auth error:', error);
+    this.logger.error('Auth error:', error);
 
     const errorMsg =
       error.error?.message || 'Invalid authentication credentials. Please try again.';

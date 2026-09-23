@@ -8,6 +8,8 @@ import * as wellknown from 'wellknown';
 import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 import { MAP_CONSTANTS } from '../constants/map.constants';
 
+import { LoggerService } from './logger.service';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -16,6 +18,7 @@ export class MapRoutingService {
   private readonly orsService = inject(OrsService);
   private readonly routeCalculationService = inject(RouteCalculationService);
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
+  private readonly logger = inject(LoggerService);
 
   private routingControl?: L.Routing.Control;
   private  roundTripLayer?: L.Polyline;
@@ -60,12 +63,13 @@ export class MapRoutingService {
       show: false,
     }).addTo(map);
 
-    this.routingControl.on('routingerror', (e: any) => console.error('Route error', e));
+    this.routingControl.on('routingerror', (e: any) => this.logger.error('Route error', e));
   }
 
   private fetchRoute(waypoints: any[], callback: any, context: any): void {
     const coords = waypoints.map((w: any) => [w.latLng.lng, w.latLng.lat]);
     const avoidPolygonsGeoJson = this.getAvoidanceZones();
+    this.logger.debug('Fetching route from ORS with waypoints:', coords);
 
     this.orsService.getRouteGeoJson(coords, avoidPolygonsGeoJson).subscribe({
       next: (data) => this.handleRouteSuccess(data, waypoints, callback, context),
@@ -93,6 +97,7 @@ export class MapRoutingService {
     
     if (this.routingControl) {
       const waypoints = this.routingControl.getWaypoints().filter((w: any) => w.latLng);
+      this.logger.debug('Adding new waypoint at:', e.latlng);
       waypoints.push(L.Routing.waypoint(e.latlng));
       this.routingControl.setWaypoints(waypoints);
     }
@@ -103,6 +108,7 @@ export class MapRoutingService {
 
   public generateRoundTrip(startPoint: L.LatLng, distanceMeters: number, map: L.Map): void {
 
+        this.logger.debug('Generating round trip from ORS. Start:', startPoint, 'Distance:', distanceMeters);
         const coords = [[startPoint.lng, startPoint.lat]];
 
 
@@ -114,7 +120,7 @@ export class MapRoutingService {
           .subscribe({
             next: (data) => {
               if (data.error || !data.features || data.features.length === 0) {
-                console.error('Brak danych o trasie');
+                this.logger.error('Brak danych o trasie');
                 return;
               }
               const feature = data.features[0];

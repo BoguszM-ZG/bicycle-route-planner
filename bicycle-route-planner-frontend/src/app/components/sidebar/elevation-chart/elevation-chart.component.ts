@@ -12,6 +12,7 @@ import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { RouteService } from '../../../services/route.service';
 import { ElevationPointDto } from '../../../models/route.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LoggerService } from '../../../services/logger.service';
 
 @Component({
   selector: 'app-elevation-chart',
@@ -26,6 +27,7 @@ export class ElevationChartComponent {
 
   private readonly routeService = inject(RouteService);
   private readonly translate = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
 
   public chartData = signal<ChartConfiguration<'scatter'>['data'] | null>(null);
   public isLoading = signal<boolean>(true);
@@ -103,6 +105,7 @@ export class ElevationChartComponent {
 
     this.routeService.getElevationProfile(id).subscribe({
       next: (points: ElevationPointDto[]) => {
+        this.logger.debug('Received elevation profile. Data points count:', points.length);
         const step = Math.max(1, Math.ceil(points.length / 200));
 
         const dataPoints = points
@@ -140,7 +143,7 @@ export class ElevationChartComponent {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Error loading elevation profile:', err);
+        this.logger.error('Error loading elevation profile:', err);
         this.isLoading.set(false);
       },
     });

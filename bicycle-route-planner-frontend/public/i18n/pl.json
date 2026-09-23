@@ -117,5 +117,8 @@
     "REGISTER_BUTTON": "Zarejestruj się",
     "HAVE_ACCOUNT": "Masz już konto?",
     "LOGIN_LINK": "Zaloguj się tutaj"
+  },
+  "ERRORS": {
+    "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia."
   }
 }
