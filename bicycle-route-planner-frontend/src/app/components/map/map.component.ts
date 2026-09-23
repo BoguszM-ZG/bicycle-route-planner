@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, inject, ViewChild, ChangeDetectionStrategy} from '@angular/core';
 import * as L from 'leaflet';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -21,7 +21,14 @@ import { LoggerService } from '../../services/logger.service';
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [SidebarComponent, SaveRouteModalComponent, SaveZoneModalComponent, MapControlsComponent, MapModePanelComponent, MapSearchComponent],
+  imports: [
+    SidebarComponent,
+    SaveRouteModalComponent,
+    SaveZoneModalComponent,
+    MapControlsComponent,
+    MapModePanelComponent,
+    MapSearchComponent,
+  ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,7 +93,9 @@ export class MapComponent implements AfterViewInit {
       if (this.userLocationMarker) {
         this.userLocationMarker.setLatLng(e.latlng);
       } else {
-        this.userLocationMarker = L.marker(e.latlng).addTo(this.map).bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
+        this.userLocationMarker = L.marker(e.latlng)
+          .addTo(this.map)
+          .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
 
         this.userLocationMarker.on('click', () => {
           if (this.userLocationMarker) {

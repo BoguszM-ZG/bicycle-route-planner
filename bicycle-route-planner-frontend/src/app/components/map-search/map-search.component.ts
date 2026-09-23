@@ -56,7 +56,7 @@ export class MapSearchComponent {
 
           return this.http.get<any>(url).pipe(
             catchError((err) => {
-              this.logger.error('Błąd Geocodingu (Backend Proxy):', err);
+              this.logger.error('Error in Geocoding (Backend Proxy):', err);
               return of({ features: [] });
             }),
           );

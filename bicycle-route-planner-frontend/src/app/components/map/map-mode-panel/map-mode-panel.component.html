@@ -1,19 +1,23 @@
 <div class="mode-panel">
 
-  <div class="button-group">
-
+  <fieldset class="button-group">
+    <legend class="sr-only">{{ 'MAP_MODE_PANEL.MODE_SELECTION_GROUP' | translate }}</legend>
     <button
+      type="button"
       (click)="setMode('direct')"
-    [class.active]="mapRoutingService.routingMode() === 'direct'">
-      📍 {{ 'MAP_MODE_PANEL.DIRECT' | translate }}
+      [class.active]="mapRoutingService.routingMode() === 'direct'"
+      [attr.aria-pressed]="mapRoutingService.routingMode() === 'direct'">
+      <span aria-hidden="true">📍</span> {{ 'MAP_MODE_PANEL.DIRECT' | translate }}
     </button>
 
     <button
+      type="button"
       (click)="setMode('roundTrip')"
-    [class.active]="mapRoutingService.routingMode() === 'roundTrip'">
-      🔄 {{ 'MAP_MODE_PANEL.ROUND_TRIP' | translate }}
+      [class.active]="mapRoutingService.routingMode() === 'roundTrip'"
+      [attr.aria-pressed]="mapRoutingService.routingMode() === 'roundTrip'">
+      <span aria-hidden="true">🔄</span> {{ 'MAP_MODE_PANEL.ROUND_TRIP' | translate }}
     </button>
-  </div>
+  </fieldset>
 
   @if (mapRoutingService.routingMode() === 'roundTrip') {
     <div class="slider-container with-margin">
@@ -29,35 +33,40 @@
         step="1"
         [value]="mapRoutingService.roundTripDistanceKm()"
         (input)="onDistanceChange($event)"
+        aria-describedby="distance-hint"
       />
-      <small>{{ 'MAP_MODE_PANEL.ROUND_TRIP_HINT' | translate }}</small>
+      <small id="distance-hint">{{ 'MAP_MODE_PANEL.ROUND_TRIP_HINT' | translate }}</small>
     </div>
   }
 
   <div class="avoidance-zone-actions">
     <button
+      type="button"
       class="btn-draw-zone"
       (click)="setMode('avoidanceZone')"
       [class.active]="mapRoutingService.routingMode() === 'avoidanceZone'"
+      [attr.aria-pressed]="mapRoutingService.routingMode() === 'avoidanceZone'"
     >
-      🚫 {{ 'MAP_MODE_PANEL.DRAW_ZONE' | translate }}
+      <span aria-hidden="true">🚫</span> {{ 'MAP_MODE_PANEL.DRAW_ZONE' | translate }}
     </button>
 
     @if (mapRoutingService.routingMode() === 'avoidanceZone') {
       <div class="zone-actions">
-        <button 
+        <button
+          type="button"
           class="btn-save-zone"
           [disabled]="!mapDrawService.currentZoneDraft()"
           (click)="saveZone()">
           {{ 'MAP_MODE_PANEL.SAVE' | translate }}
         </button>
-        <button 
+        <button
+          type="button"
           class="btn-cancel-zone"
           (click)="cancelZone()">
           {{ 'MAP_MODE_PANEL.CANCEL' | translate }}
         </button>
       </div>
-      <small class="zone-hint">
+      <small class="zone-hint" aria-live="polite">
         @if (!mapDrawService.currentZoneDraft()) {
           {{ 'MAP_MODE_PANEL.ZONE_HINT_DRAW' | translate }}
         } @else {
