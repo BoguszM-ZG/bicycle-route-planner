@@ -47,7 +47,7 @@ button:hover {
 }
 
 button.active {
-  background: #3498db;
+  background: #1e669e;
   color: white;
   box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
 }
@@ -104,7 +104,7 @@ small {
 }
 
 .btn-draw-zone.active {
-  background: #ef4444;
+  background: #dc2626;
   color: white;
   box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
 }
@@ -116,7 +116,7 @@ small {
 
 .btn-save-zone {
   flex: 1;
-  background: #22c55e;
+  background: #15803d;
   color: white;
   border: none;
   font-size: 0.85rem;

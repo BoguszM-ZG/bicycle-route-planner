@@ -1,23 +1,31 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+﻿import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.getAccessToken();
 
-  if (req.url.includes('openrouteservice.org')) {
-    return next(req);
-  }
 
+
+  let authReq = req;
   if (token) {
-    const clonedReq = req.clone({
+    authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return next(clonedReq);
   }
 
-  return next(req);
+
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        authService.logout();
+      }
+
+      return throwError(() => error);
+    })
+  );
 };

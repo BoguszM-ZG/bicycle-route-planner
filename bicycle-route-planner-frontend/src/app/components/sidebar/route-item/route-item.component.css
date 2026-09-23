@@ -58,8 +58,8 @@
 }
 
 .icon-btn.delete-icon:hover {
-  color: #ef4444;
   background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 
@@ -100,7 +100,7 @@
 }
 
 .confirm-btn.danger {
-  background-color: #ef4444;
+  background-color: #dc2626;
   color: white;
 }
 .confirm-btn.danger:hover {
