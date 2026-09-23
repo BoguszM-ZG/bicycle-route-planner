@@ -1,7 +1,6 @@
 import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, finalize } from 'rxjs';
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
 import { environment } from '../../environments/environment.development';
@@ -12,7 +11,6 @@ import { LoggerService } from './logger.service';
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
   private readonly logger = inject(LoggerService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
@@ -69,7 +67,7 @@ export class AuthService {
       localStorage.removeItem('currentUser');
     }
 
-    void this.router.navigate(['/login']);
+    window.location.href = '/login';
   }
 
 
