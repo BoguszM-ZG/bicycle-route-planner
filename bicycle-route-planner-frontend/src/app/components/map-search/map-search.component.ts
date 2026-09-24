@@ -1,17 +1,16 @@
-import { TranslatePipe } from '@ngx-translate/core';
-import { LoggerService } from '../../services/logger.service';
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, filter, tap, map as rxMap } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { MapRenderService } from '../../services/map-render.service';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, filter, tap, map as rxMap, } from 'rxjs/operators';
+import { of } from 'rxjs';
 import * as L from 'leaflet';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { GeoFeature, GeoResponse, SearchResult } from '../../models/map-search.model';
+import { LoggerService } from '../../services/logger.service';
+import { MapRenderService } from '../../services/map-render.service';
 import { environment } from '../../../environments/environment';
 import { MAP_CONSTANTS } from '../../constants/map.constants';
-
-import { PL_VOIVODESHIPS } from '../../constants/geocoding.constants';
 
 @Component({
   selector: 'app-map-search',
@@ -23,15 +22,23 @@ import { PL_VOIVODESHIPS } from '../../constants/geocoding.constants';
 })
 export class MapSearchComponent {
   public searchControl = new FormControl<string>('', { nonNullable: true });
-  public results = signal<any[]>([]);
+  public results = signal<SearchResult[]>([]);
   public isSearching = signal(false);
 
   private readonly http = inject(HttpClient);
   private readonly mapRenderService = inject(MapRenderService);
   private readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
   private marker?: L.Marker;
+  private readonly translate = inject(TranslateService);
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.marker) {
+        this.marker.remove();
+      }
+    });
+
     this.searchControl.valueChanges
       .pipe(
         debounceTime(350),
@@ -54,31 +61,38 @@ export class MapSearchComponent {
             url += `&lat=${center.lat}&lon=${center.lng}`;
           }
 
-          return this.http.get<any>(url).pipe(
+          return this.http.get<GeoResponse>(url).pipe(
             catchError((err) => {
               this.logger.error('Error in Geocoding (Backend Proxy):', err);
-              return of({ features: [] });
+              return of({ features: [] } as GeoResponse);
             }),
           );
         }),
-        rxMap((response) => {
+        rxMap((response: GeoResponse) => {
           const features = response.features || [];
 
-          const mappedResults = features.map((f: any) => {
+          const mappedResults: SearchResult[] = features.map((f: GeoFeature) => {
             const props = f.properties;
             const coords = f.geometry.coordinates;
 
-            const mainName = props.name || props.street || props.city || 'Nieznane miejsce';
+            const mainName = props.name || props.street || props.city || this.translate.instant('MAP_SEARCH.UNKNOWN_LOCATION');
+            const details: string[] = [];
 
-            const details = [];
             if (props.city && props.city !== mainName) details.push(props.city);
 
             if (props.state) {
               let stateName = props.state;
+
               if (stateName.includes('Voivodeship')) {
                 const engState = stateName.replace(' Voivodeship', '').trim();
-                const translated = PL_VOIVODESHIPS[engState] || engState.toLowerCase();
-                stateName = `woj. ${translated}`;
+
+                const translationKey = `VOIVODESHIPS.${engState.toUpperCase().replace(/[\s-]+/g, '_')}`;
+
+                const translatedState = this.translate.instant(translationKey);
+
+                if (translatedState !== translationKey) {
+                  stateName = translatedState;
+                }
               }
               details.push(stateName);
             }
@@ -93,8 +107,8 @@ export class MapSearchComponent {
           });
 
           return mappedResults.filter(
-            (val: any, idx: number, arr: any[]) =>
-              idx === arr.findIndex((t: any) => t.label === val.label),
+            (val: SearchResult, idx: number, arr: SearchResult[]) =>
+              idx === arr.findIndex((t: SearchResult) => t.label === val.label),
           );
         }),
         tap(() => this.isSearching.set(false)),
@@ -104,7 +118,7 @@ export class MapSearchComponent {
       });
   }
 
-  public selectResult(result: any) {
+  public selectResult(result: SearchResult): void {
     const map = this.mapRenderService.getMap();
     if (!map) return;
 
@@ -118,7 +132,8 @@ export class MapSearchComponent {
     }
 
     this.marker = L.marker([result.y, result.x], { icon: MAP_CONSTANTS.SEARCH_PIN }).addTo(map);
-    this.marker.on('click', () => {
+
+    this.marker.once('click', () => {
       if (this.marker) {
         this.marker.remove();
         this.marker = undefined;

@@ -53,7 +53,8 @@
     "CLEAR_ROUTE": "Clear",
     "SEARCH_PLACEHOLDER": "Search city, address...",
     "SEARCH_LABEL": "Search address",
-    "CLEAR_SEARCH": "Clear"
+    "CLEAR_SEARCH": "Clear",
+    "UNKNOWN_PLACE": "Unknown place"
   },
   "SIDEBAR": {
     "PROFILE_TITLE": "Your Profile",
@@ -120,6 +121,25 @@
     "LOGIN_LINK": "Log in here"
   },
   "ERRORS": {
-    "GLOBAL_UNKNOWN_ERROR": "An unexpected application error occurred. We apologize for the inconvenience."
+    "GLOBAL_UNKNOWN_ERROR": "An unexpected application error occurred. We apologize for the inconvenience.",
+    "DOWNLOAD_GPX_ERROR": "Failed to download GPX file. Please try again later."
+  },
+  "VOIVODESHIPS": {
+    "LUBUSZ": "Lubusz Province",
+    "GREATER_POLAND": "Greater Poland Province",
+    "LESSER_POLAND": "Lesser Poland Province",
+    "LOWER_SILESIAN": "Lower Silesian Province",
+    "KUYAVIAN_POMERANIAN": "Kuyavian-Pomeranian Province",
+    "LUBLIN": "Lublin Province",
+    "ŁÓDŹ": "Łódź Province",
+    "MAZOVIA": "Mazovia Province",
+    "OPOLE": "Opole Province",
+    "PODLASKIE": "Podlaskie Province",
+    "POMERANIAN": "Pomeranian Province",
+    "SILESIAN": "Silesian Province",
+    "SUBCARPATHIAN": "Subcarpathian Province",
+    "ŚWIĘTOKRZYSKIE": "Świętokrzyskie Province",
+    "WARMIAN_MASURIAN": "Warmian-Masurian Province",
+    "WEST_POMERANIAN": "West Pomeranian Province"
   }
 }

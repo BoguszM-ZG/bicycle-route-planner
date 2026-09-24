@@ -1,4 +1,4 @@
-import { Injectable, NgZone, inject, signal, computed } from '@angular/core';
+import { Injectable, NgZone, inject, signal, computed, effect } from '@angular/core';
 import  * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
@@ -9,6 +9,7 @@ import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 import { MAP_CONSTANTS } from '../constants/map.constants';
 
 import { LoggerService } from './logger.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,9 +20,10 @@ export class MapRoutingService {
   private readonly routeCalculationService = inject(RouteCalculationService);
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
   private readonly logger = inject(LoggerService);
+  private readonly authService = inject(AuthService);
 
   private routingControl?: L.Routing.Control;
-  private  roundTripLayer?: L.Polyline;
+  private roundTripLayer?: L.Polyline;
   private roundTripMarker?: L.Marker;
   private map?: L.Map;
 
@@ -30,10 +32,19 @@ export class MapRoutingService {
   public roundTripDistanceMeters = signal<number>(20000);
   public roundTripDistanceKm = computed(() => this.roundTripDistanceMeters() / 1000);
 
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.logger.debug('User logged out, clearing MapRoutingService');
+        this.clearRoute();
+      }
+    });
+  }
 
   public initRouting(map: L.Map): void {
     this.map = map;
-    
+
     this.setupRoutingControl(map);
     this.setupMapEventListeners(map);
   }
@@ -79,8 +90,8 @@ export class MapRoutingService {
 
   private setupMapEventListeners(map: L.Map): void {
     let isDrawingMode = false;
-    map.on('draw:drawstart', () => isDrawingMode = true);
-    map.on('draw:drawstop', () => isDrawingMode = false);
+    map.on('draw:drawstart', () => (isDrawingMode = true));
+    map.on('draw:drawstop', () => (isDrawingMode = false));
 
     map.on('click', (e: any) => this.handleMapClick(e, map, isDrawingMode));
   }
@@ -93,8 +104,8 @@ export class MapRoutingService {
     if (this.routingMode() === 'roundTrip') {
       this.generateRoundTrip(e.latlng, this.roundTripDistanceMeters(), map);
       return;
-    } 
-    
+    }
+
     if (this.routingControl) {
       const waypoints = this.routingControl.getWaypoints().filter((w: any) => w.latLng);
       this.logger.debug('Adding new waypoint at:', e.latlng);
@@ -103,56 +114,53 @@ export class MapRoutingService {
     }
   }
 
-
-
-
   public generateRoundTrip(startPoint: L.LatLng, distanceMeters: number, map: L.Map): void {
+    this.logger.debug(
+      'Generating round trip from ORS. Start:',
+      startPoint,
+      'Distance:',
+      distanceMeters,
+    );
+    const coords = [[startPoint.lng, startPoint.lat]];
 
-        this.logger.debug('Generating round trip from ORS. Start:', startPoint, 'Distance:', distanceMeters);
-        const coords = [[startPoint.lng, startPoint.lat]];
+    const avoidPolygonsGeoJson = this.getAvoidanceZones() || undefined;
 
+    this.orsService.getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson).subscribe({
+      next: (data) => {
+        if (data.error || !data.features || data.features.length === 0) {
+          this.logger.error('Brak danych o trasie');
+          return;
+        }
+        const feature = data.features[0];
+        const routeCoordinates = feature.geometry.coordinates.map((coord: number[]) =>
+          L.latLng(coord[1], coord[0], coord[2]),
+        );
+        const summary = feature.properties?.summary;
+        this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'LOOP', distanceMeters);
 
+        if (this.roundTripLayer) {
+          map.removeLayer(this.roundTripLayer);
+          this.roundTripLayer = undefined;
+        }
+        if (this.roundTripMarker) {
+          map.removeLayer(this.roundTripMarker);
+          this.roundTripMarker = undefined;
+        }
 
-        const avoidPolygonsGeoJson = this.getAvoidanceZones() || undefined;
+        this.roundTripLayer = L.polyline(routeCoordinates, MAP_CONSTANTS.STYLES.LOOP_ROUTE).addTo(
+          map,
+        );
 
-        this.orsService
-          .getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson)
-          .subscribe({
-            next: (data) => {
-              if (data.error || !data.features || data.features.length === 0) {
-                this.logger.error('Brak danych o trasie');
-                return;
-              }
-              const feature = data.features[0];
-              const routeCoordinates = feature.geometry.coordinates.map((coord: number[]) =>
-                L.latLng(coord[1], coord[0], coord[2])
-              );
-              const summary = feature.properties?.summary;
-              this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'LOOP', distanceMeters);
-
-              if (this.roundTripLayer) {
-                map.removeLayer(this.roundTripLayer);
-                this.roundTripLayer = undefined;
-              }
-              if (this.roundTripMarker) {
-                map.removeLayer(this.roundTripMarker);
-                this.roundTripMarker = undefined;
-              }
-
-              this.roundTripLayer = L.polyline(routeCoordinates, MAP_CONSTANTS.STYLES.LOOP_ROUTE).addTo(map);
-
-              this.roundTripMarker = L.marker(startPoint).addTo(map);
-
-            },
-          });
-
+        this.roundTripMarker = L.marker(startPoint).addTo(map);
+      },
+    });
   }
 
-  private getAvoidanceZones(): any{
+  private getAvoidanceZones(): any {
     const allZones = this.avoidanceZoneStateService.zones();
-    const activeZones = allZones.filter(zone => zone.isActive);
+    const activeZones = allZones.filter((zone) => zone.isActive);
 
-    if (activeZones.length === 0){
+    if (activeZones.length === 0) {
       return undefined;
     }
 
@@ -162,9 +170,12 @@ export class MapRoutingService {
     };
   }
 
-
-
-  private handleRouteSuccess(data: OrsGeoJsonResponse, waypoints: any[], callback: any, context: any): void {
+  private handleRouteSuccess(
+    data: OrsGeoJsonResponse,
+    waypoints: any[],
+    callback: any,
+    context: any,
+  ): void {
     this.ngZone.run(() => {
       if (data.error || !data.features || data.features.length === 0) {
         callback.call(context, { status: -1, message: data.error?.message || 'Brak wyników.' });
@@ -197,7 +208,12 @@ export class MapRoutingService {
     this.ngZone.run(() => callback.call(context, err));
   }
 
-  private updateRouteData(coordinates: L.LatLng[], totalDistance: number, routeType: string, targetDistance: number = 0): void {
+  private updateRouteData(
+    coordinates: L.LatLng[],
+    totalDistance: number,
+    routeType: string,
+    targetDistance: number = 0,
+  ): void {
     const stats = this.routeCalculationService.calculateRouteStats(coordinates);
 
     this.currentRouteDraft.set({
@@ -208,13 +224,13 @@ export class MapRoutingService {
       elevationGain: stats.elevationGain,
       elevationLoss: stats.elevationLoss,
       distanceMeters: totalDistance,
-      targetDistance: targetDistance
+      targetDistance: targetDistance,
     });
   }
 
   public clearRoute(): void {
     this.routingControl?.setWaypoints([]);
-    if(this.map){
+    if (this.map) {
       if (this.roundTripLayer) {
         this.map.removeLayer(this.roundTripLayer);
         this.roundTripLayer = undefined;

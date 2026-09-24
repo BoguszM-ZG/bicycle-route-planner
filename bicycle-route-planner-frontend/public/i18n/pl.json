@@ -52,7 +52,8 @@
     "CLEAR_ROUTE": "Wyczyść",
     "SEARCH_PLACEHOLDER": "Szukaj miasta, adresu...",
     "SEARCH_LABEL": "Szukaj adresu",
-    "CLEAR_SEARCH": "Wyczyść"
+    "CLEAR_SEARCH": "Wyczyść",
+    "UNKNOWN_PLACE": "Nieznane miejsce"
   },
   "SIDEBAR": {
     "PROFILE_TITLE": "Twój profil",
@@ -119,6 +120,25 @@
     "LOGIN_LINK": "Zaloguj się tutaj"
   },
   "ERRORS": {
-    "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia."
+    "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia.",
+    "DOWNLOAD_GPX_ERROR": "Nie udało się pobrać pliku GPX. Spróbuj ponownie później."
+  },
+  "VOIVODESHIPS": {
+    "LUBUSZ": "woj. lubuskie",
+    "GREATER_POLAND": "woj. wielkopolskie",
+    "LESSER_POLAND": "woj. małopolskie",
+    "LOWER_SILESIAN": "woj. dolnośląskie",
+    "KUYAVIAN_POMERANIAN": "woj. kujawsko-pomorskie",
+    "LUBLIN": "woj. lubelskie",
+    "ŁÓDŹ": "woj. łódzkie",
+    "MAZOVIA": "woj. mazowieckie",
+    "OPOLE": "woj. opolskie",
+    "PODLASKIE": "woj. podlaskie",
+    "POMERANIAN": "woj. pomorskie",
+    "SILESIAN": "woj. śląskie",
+    "SUBCARPATHIAN": "woj. podkarpackie",
+    "ŚWIĘTOKRZYSKIE": "woj. świętokrzyskie",
+    "WARMIAN_MASURIAN": "woj. warmińsko-mazurskie",
+    "WEST_POMERANIAN": "woj. zachodniopomorskie"
   }
 }

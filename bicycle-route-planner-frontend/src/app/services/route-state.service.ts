@@ -1,9 +1,12 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { RouteDetailDto, RouteSummaryDto, CreateRouteRequestDto } from '../models/route.model';
 import { RouteService } from './route.service';
 
 import { LoggerService } from './logger.service';
+import { AuthService } from './auth.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +14,9 @@ import { LoggerService } from './logger.service';
 export class RouteStateService {
   private readonly routeService = inject(RouteService);
   private readonly logger = inject(LoggerService);
+  private readonly authService = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  private readonly notificationService = inject(NotificationService);
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
   private readonly _selectedRoute = signal<RouteDetailDto | null>(null);
@@ -25,6 +31,24 @@ export class RouteStateService {
   public readonly isLoadingList = this._isLoadingList.asReadonly();
   public readonly isSaving = this._isSaving.asReadonly();
   public readonly error = this._error.asReadonly();
+
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.logger.debug('User logged out, clearing RouteStateService');
+        this.clearState();
+      }
+    });
+  }
+
+  private clearState(): void {
+    this._routes.set([]);
+    this._selectedRoute.set(null);
+    this._isLoadingList.set(false);
+    this._isSaving.set(false);
+    this._error.set(null);
+  }
 
   public fetchRoutes(): void {
     this._isLoadingList.set(true);
@@ -51,15 +75,13 @@ export class RouteStateService {
     this._error.set(null);
     this._selectedRoute.set(null);
 
-    this.routeService
-      .getRouteDetails(routeId)
-      .subscribe({
-        next: (routeDetails) => this._selectedRoute.set(routeDetails),
-        error: (err) => {
-          this.logger.error('Error fetching route details', err);
-          this._error.set('Failed to fetch route details.');
-        },
-      });
+    this.routeService.getRouteDetails(routeId).subscribe({
+      next: (routeDetails) => this._selectedRoute.set(routeDetails),
+      error: (err) => {
+        this.logger.error('Error fetching route details', err);
+        this._error.set('Failed to fetch route details.');
+      },
+    });
   }
 
   public clearSelectedRoute(): void {
@@ -112,7 +134,15 @@ export class RouteStateService {
   public exportGpx(routeId: number): void {
     const route = this._routes().find((r) => r.id === routeId);
     const routeName = route ? route.name : `trasa_${routeId}`;
-    this.routeService.downloadGpx(routeId, routeName);
+
+    this.routeService.downloadGpx(routeId, routeName).subscribe({
+      next: () => {
+        this.logger.debug('GPX download initiated successfully');
+      },
+      error: () => {
+        this.notificationService.error(this.translate.instant('ERROR.DOWNLOAD_GPX_ERROR'));
+      },
+    });
   }
 
   public moveRouteToFolder(routeId: number, folderId: number | null): void {

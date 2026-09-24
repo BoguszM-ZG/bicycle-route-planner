@@ -8,29 +8,27 @@ import { ClientLogRequestDto } from '../models/telemetry.model';
   providedIn: 'root',
 })
 export class LoggerService {
-
   private readonly logLevel: LogLevel = environment.logLevel;
 
   private readonly injector = inject(Injector);
 
-  public debug(msg: string, ...optionalParams: any[]): void {
+  public debug(msg: string, ...optionalParams: unknown[]): void {
     this.logWith(LogLevel.DEBUG, msg, optionalParams);
   }
 
-  public info(msg: string, ...optionalParams: any[]): void {
+  public info(msg: string, ...optionalParams: unknown[]): void {
     this.logWith(LogLevel.INFO, msg, optionalParams);
   }
 
-  public warn(msg: string, ...optionalParams: any[]): void {
+  public warn(msg: string, ...optionalParams: unknown[]): void {
     this.logWith(LogLevel.WARN, msg, optionalParams);
   }
 
-  public error(msg: string, ...optionalParams: any[]): void {
+  public error(msg: string, ...optionalParams: unknown[]): void {
     this.logWith(LogLevel.ERROR, msg, optionalParams);
   }
 
-
-  private logWith(level: LogLevel, msg: string, optionalParams: any[]): void {
+  private logWith(level: LogLevel, msg: string, optionalParams: unknown[]): void {
     if (level >= this.logLevel) {
       const timestamp = new Date().toISOString();
 
@@ -58,12 +56,11 @@ export class LoggerService {
     }
   }
 
-
   private sendToServer(
     levelName: string,
     msg: string,
     timestamp: string,
-    optionalParams: any[],
+    optionalParams: unknown[],
   ): void {
     try {
       const http = this.injector.get(HttpClient);
@@ -72,12 +69,11 @@ export class LoggerService {
 
       if (optionalParams.length > 0) {
         try {
-          parsedDetails = JSON.stringify(optionalParams);
+          parsedDetails = this.safeStringify(optionalParams);
         } catch {
           parsedDetails = String(optionalParams);
         }
       }
-
 
       const logRequest: ClientLogRequestDto = {
         level: levelName as keyof typeof LogLevel,
@@ -93,5 +89,21 @@ export class LoggerService {
     } catch (e) {
       console.error('Error in LoggerService:', e);
     }
+  }
+
+  private safeStringify(data: unknown): string {
+    const cache = new Set();
+    return JSON.stringify(data, (_key, value) => {
+      if (value instanceof Error) {
+        return { name: value.name, message: value.message, stack: value.stack };
+      }
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) {
+          return '[Circular Reference]';
+        }
+        cache.add(value);
+      }
+      return value;
+    });
   }
 }

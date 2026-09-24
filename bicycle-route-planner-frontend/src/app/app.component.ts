@@ -18,7 +18,7 @@ export class AppComponent {
   private readonly translate = inject(TranslateService);
 
   constructor() {
-    this.translate.setFallbackLang('pl');
-    this.translate.use('pl');
+    this.translate.setFallbackLang('en');
+    this.translate.use('en');
   }
 }

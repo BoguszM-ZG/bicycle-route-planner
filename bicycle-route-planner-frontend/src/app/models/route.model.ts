@@ -80,3 +80,8 @@ export interface ElevationPointDto {
 export interface UpdateRouteFolderDto {
   folderId: number | null;
 }
+
+export interface AvoidPolygonsGeoJson {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
+}

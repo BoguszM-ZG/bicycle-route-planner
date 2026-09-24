@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
 import { RouteStats } from '../models/route.model';
 
@@ -6,28 +6,42 @@ import { RouteStats } from '../models/route.model';
   providedIn: 'root',
 })
 export class RouteCalculationService {
-  public calculateRouteStats(coordinates: L.LatLng[]): RouteStats {
-    let lastKnownAlt: number | undefined = undefined;
-    for (const pt of coordinates) {
-      if (pt.alt !== undefined && !Number.isNaN(pt.alt) && pt.alt !== 0) {
-        lastKnownAlt = pt.alt;
-      } else if (lastKnownAlt !== undefined) {
-        pt.alt = lastKnownAlt;
-      }
+  public calculateRouteStats(coordinates: readonly L.LatLng[]): RouteStats {
+    if (!coordinates || coordinates.length === 0) {
+      return this.getEmptyStats();
     }
 
-    const elevation = this.calculateElevation(coordinates);
-    const wkt = this.generateWkt(coordinates);
+    const normalizedCoords = this.normalizeAltitudes(coordinates);
+
+    const elevation = this.calculateElevation(normalizedCoords);
+    const wkt = this.generateWkt(normalizedCoords);
+
     return {
       geometryWkt: wkt.geometryWkt,
       startPoint: wkt.startPoint,
       elevationGain: elevation.gain,
-      elevationLoss: elevation.loss
+      elevationLoss: elevation.loss,
     };
   }
 
+  private normalizeAltitudes(coordinates: readonly L.LatLng[]): L.LatLng[] {
+    let lastKnownAlt = 0;
 
-  private calculateElevation(coordinates: L.LatLng[]): { gain: number; loss: number } {
+    return coordinates.map((pt) => {
+      let currentAlt = pt.alt;
+
+      if (currentAlt !== undefined && !Number.isNaN(currentAlt) && currentAlt !== 0) {
+        lastKnownAlt = currentAlt;
+      } else {
+        currentAlt = lastKnownAlt;
+      }
+
+
+      return L.latLng(pt.lat, pt.lng, currentAlt);
+    });
+  }
+
+  private calculateElevation(coordinates: readonly L.LatLng[]): { gain: number; loss: number } {
     let gain = 0;
     let loss = 0;
 
@@ -47,23 +61,28 @@ export class RouteCalculationService {
     return { gain, loss };
   }
 
-  private generateWkt(coordinates: L.LatLng[]): {geometryWkt: string, startPoint: string} {
-    const wktPoints = coordinates.map(
-      pt => `${pt.lng} ${pt.lat} ${pt.alt ?? 0}`
-    ).join(', ');
+  private generateWkt(coordinates: readonly L.LatLng[]): {
+    geometryWkt: string;
+    startPoint: string;
+  } {
+    const wktPoints = coordinates.map((pt) => `${pt.lng} ${pt.lat} ${pt.alt ?? 0}`).join(', ');
 
-    let startPoint = '';
 
-    if(coordinates.length > 0) {
-      const start = coordinates[0];
-      startPoint = `POINT(${start.lng.toFixed(5)} ${start.lat.toFixed(5)})`
-    }
+    const start = coordinates[0];
+    const startPoint = `POINT(${start.lng.toFixed(5)} ${start.lat.toFixed(5)})`;
 
     return {
       geometryWkt: `LINESTRING Z(${wktPoints})`,
-      startPoint
+      startPoint,
     };
   }
 
-
+  private getEmptyStats(): RouteStats {
+    return {
+      geometryWkt: 'LINESTRING Z()',
+      startPoint: '',
+      elevationGain: 0,
+      elevationLoss: 0,
+    };
+  }
 }

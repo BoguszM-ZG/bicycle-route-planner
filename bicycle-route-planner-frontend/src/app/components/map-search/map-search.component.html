@@ -1,6 +1,6 @@
 <div class="search-container">
   <div class="input-wrapper">
-    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg aria-hidden="true" focusable="false" class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="11" cy="11" r="8"></circle>
       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
     </svg>
@@ -15,20 +15,21 @@
     >
 
     @if (isSearching()) {
-      <div class="spinner"></div>
+      <div class="spinner" aria-hidden="true"></div>
+      <span class="sr-only">{{ 'MAP_CONTROLS.SEARCHING' | translate }}</span>
     } @else if (searchControl.value) {
-      <button class="clear-btn" (click)="searchControl.setValue('')" [title]="'MAP_CONTROLS.CLEAR_SEARCH' | translate">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      <button type="button" class="clear-btn" (click)="searchControl.setValue('')" [title]="'MAP_CONTROLS.CLEAR_SEARCH' | translate">
+        <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     }
   </div>
 
   @if (results().length > 0) {
     <ul class="results-list">
-      @for (result of results(); track result.x + result.y) {
+      @for (result of results(); track result.label) {
         <li class="result-item">
           <button type="button" class="result-button" (click)="selectResult(result)">
-            <svg class="item-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg aria-hidden="true" focusable="false" class="item-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>

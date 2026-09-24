@@ -28,11 +28,13 @@ export class MapRenderService {
 
   public initMap(elementId: string): void {
     if (this.map) {
-      this.map.remove();
-      this.map = undefined;
+      this.destroyMap();
     }
 
-    this.map = L.map(elementId, { zoomControl: false }).setView(MAP_CONSTANTS.DEFAULT_CENTER, MAP_CONSTANTS.DEFAULT_ZOOM);
+    this.map = L.map(elementId, { zoomControl: false }).setView(
+      MAP_CONSTANTS.DEFAULT_CENTER,
+      MAP_CONSTANTS.DEFAULT_ZOOM,
+    );
     L.tileLayer(MAP_CONSTANTS.TILE_LAYER.URL, {
       maxZoom: MAP_CONSTANTS.TILE_LAYER.MAX_ZOOM,
       attribution: MAP_CONSTANTS.TILE_LAYER.ATTRIBUTION,
@@ -41,6 +43,14 @@ export class MapRenderService {
     const currentRoute = this.routeStateService.selectedRoute();
     if (currentRoute) {
       this.renderSavedRoute(currentRoute);
+    }
+  }
+
+  public destroyMap(): void {
+    if (this.map) {
+      this.clearRenderedRoute();
+      this.map.remove();
+      this.map = undefined;
     }
   }
 
@@ -77,19 +87,19 @@ export class MapRenderService {
     if (!startCoords || !endCoords) return;
 
     if (routeType === 'LOOP') {
-      const loopMarker = L.marker([startCoords[1], startCoords[0]], { 
-        icon: MAP_CONSTANTS.MARKERS.LOOP_ICON, 
-        title: 'Start/End (Loop)' 
+      const loopMarker = L.marker([startCoords[1], startCoords[0]], {
+        icon: MAP_CONSTANTS.MARKERS.LOOP_ICON,
+        title: 'Start/End (Loop)',
       });
       this.currentGeoJsonLayer?.addLayer(loopMarker);
     } else {
-      const startMarker = L.marker([startCoords[1], startCoords[0]], { 
-        icon: MAP_CONSTANTS.MARKERS.START_ICON, 
-        title: 'Start' 
+      const startMarker = L.marker([startCoords[1], startCoords[0]], {
+        icon: MAP_CONSTANTS.MARKERS.START_ICON,
+        title: 'Start',
       });
-      const endMarker = L.marker([endCoords[1], endCoords[0]], { 
-        icon: MAP_CONSTANTS.MARKERS.END_ICON, 
-        title: 'End' 
+      const endMarker = L.marker([endCoords[1], endCoords[0]], {
+        icon: MAP_CONSTANTS.MARKERS.END_ICON,
+        title: 'End',
       });
 
       this.currentGeoJsonLayer?.addLayer(startMarker);
@@ -98,7 +108,7 @@ export class MapRenderService {
   }
 
   public clearRenderedRoute(): void {
-    if(this.currentGeoJsonLayer && this.map) {
+    if (this.currentGeoJsonLayer && this.map) {
       this.map.removeLayer(this.currentGeoJsonLayer);
       this.currentGeoJsonLayer = undefined;
     }

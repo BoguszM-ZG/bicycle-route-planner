@@ -1,16 +1,17 @@
 import { Injectable, inject}  from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment.development';
-import {OrsGeoJsonResponse} from '../models/route.model';
+import { environment } from '../../environments/environment';
+import { AvoidPolygonsGeoJson, OrsGeoJsonResponse } from '../models/route.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OrsService {
   private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/routing/directions`;
 
-  public getRouteGeoJson(coords: number[][], avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
+  public getRouteGeoJson(coords: number[][], avoidPolygons?: AvoidPolygonsGeoJson): Observable<OrsGeoJsonResponse> {
     const body = {
       coordinates: coords,
       elevation: true,
@@ -18,10 +19,10 @@ export class OrsService {
       options: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
     };
 
-    return this.http.post<OrsGeoJsonResponse>(`${environment.apiUrl}/routing/directions`, body);
+    return this.http.post<OrsGeoJsonResponse>(this.apiUrl, body);
   }
 
-  public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
+  public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: AvoidPolygonsGeoJson): Observable<OrsGeoJsonResponse> {
     const body = {
       coordinates: [startCoord],
       elevation: true,
@@ -34,7 +35,7 @@ export class OrsService {
       }
     };
 
-    return this.http.post<OrsGeoJsonResponse>(`${environment.apiUrl}/routing/directions`, body);
+    return this.http.post<OrsGeoJsonResponse>(this.apiUrl, body);
   }
 
 }
