@@ -4,6 +4,7 @@ import { FolderStateService } from '../../../services/folder-state.service';
 import { RouteStateService } from '../../../services/route-state.service';
 import { RouteItemComponent } from '../route-item/route-item.component';
 import { TranslatePipe } from '@ngx-translate/core';
+import { RouteSummaryDto } from '../../../models/route.model';
 
 
 @Component({
@@ -17,13 +18,16 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class FolderItemComponent {
   public folderId = input.required<number>();
   private readonly folderStateService = inject(FolderStateService);
-  public readonly routeStateService = inject(RouteStateService);
+  private readonly routeStateService = inject(RouteStateService);
   public isExpanded = signal<boolean>(false);
   public allFolders = this.folderStateService.folders;
 
   public isRenaming = signal<boolean>(false);
   public isConfirmingDelete = signal<boolean>(false);
-  public renameControl = new FormControl('', [Validators.required, Validators.maxLength(50)]);
+  public renameControl = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(50)],
+  });
 
   public toggleExpanded(): void {
     if (this.isRenaming() || this.isConfirmingDelete()) return;
@@ -42,7 +46,6 @@ export class FolderItemComponent {
 
   public confirmDelete(event: Event): void {
     event.stopPropagation();
-
 
     this.routeStateService.handleFolderDeleted(this.folderId());
 
@@ -76,4 +79,29 @@ export class FolderItemComponent {
   public folderRoutes = computed(() => {
     return this.routeStateService.routes().filter((r) => r.folderId === this.folderId());
   });
+  public selectedRouteId = computed(() => {
+    return this.routeStateService.selectedRoute()?.id;
+  });
+
+  public onRouteSelected(route: RouteSummaryDto): void {
+    if (route.id !== undefined) {
+      this.routeStateService.selectRoute(route.id);
+    }
+  }
+
+  public onRouteDeleted(routeId: number): void {
+    this.routeStateService.deleteRoute(routeId);
+  }
+
+  public onRouteExported(routeId: number): void {
+    this.routeStateService.exportGpx(routeId);
+  }
+
+  public onRouteMoved(event: { routeId: number; folderId: number | null }): void {
+    this.routeStateService.moveRouteToFolder(event.routeId, event.folderId);
+  }
+
+  public onRouteRenamed(event: { routeId: number; newName: string }): void {
+    this.routeStateService.renameRoute(event.routeId, event.newName);
+  }
 }

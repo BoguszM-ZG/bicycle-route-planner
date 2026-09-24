@@ -14,7 +14,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 })
 export class AvoidanceZonePanelComponent implements OnInit {
 
-  public readonly zoneStateService = inject(AvoidanceZoneStateService);
+  private readonly zoneStateService = inject(AvoidanceZoneStateService);
 
   public zones = this.zoneStateService.zones;
   public isLoading = this.zoneStateService.isLoading;

@@ -12,13 +12,13 @@
 
   <div class="detail-row stats-row">
     <div class="stat-box gain">
-      <span class="stat-icon">⬆️</span>
+      <span class="stat-icon" aria-hidden="true">⬆️</span>
       <span class="stat-value">{{ detail.elevationGain | number:'1.0-0' }} m</span>
       <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_GAIN' | translate }}</span>
     </div>
 
     <div class="stat-box loss">
-      <span class="stat-icon">⬇️</span>
+      <span class="stat-icon" aria-hidden="true">⬇️</span>
       <span class="stat-value"> {{ detail.elevationLoss | number:'1.0-0' }} m</span>
       <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_LOSS' | translate }}</span>
     </div>

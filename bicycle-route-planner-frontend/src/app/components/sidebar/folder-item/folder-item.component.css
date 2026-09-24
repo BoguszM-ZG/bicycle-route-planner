@@ -58,3 +58,27 @@
   padding-top: 8px;
   padding-bottom: 4px;
 }
+
+.padded-icon {
+  padding-left: 8px;
+}
+
+.hidden-label {
+  display: none;
+}
+
+.rename-input {
+  flex: 1;
+  padding: 2px 4px;
+  margin: 0 5px 0 8px;
+}
+
+.delete-warning {
+  flex: 1;
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.right-aligned {
+  margin-left: auto;
+}

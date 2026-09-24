@@ -94,23 +94,34 @@ export class AvoidanceZoneStateService {
   public toggleActive(zone: AvoidanceZoneDto): void {
     if (!zone.id) return;
 
-    this._isLoading.set(true);
+    // 1. Zero ekranów ładowania! (Usuwamy _isLoading)
     this._error.set(null);
     const newStatus = !zone.isActive;
 
-    this.apiService
-      .toggleAvoidanceZoneActiveStatus(zone.id, newStatus)
-      .pipe(finalize(() => this._isLoading.set(false)))
-      .subscribe({
-        next: () => {
-          this._zones.update((currentZones) =>
-            currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: newStatus } : z)),
-          );
-        },
-        error: (err) => {
-          this.logger.error('Error toggling zone status', err);
-          this._error.set('Failed to toggle zone status.');
-        },
-      });
+    // 2. Optymistyczna Aktualizacja: Natychmiast zmieniamy stan w UI
+    // Switch na ekranie przestawia się płynnie, w 0 milisekund.
+    this._zones.update((currentZones) =>
+      currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: newStatus } : z)),
+    );
+
+    // 3. Strzał do bazy leci cichutko w tle
+    this.apiService.toggleAvoidanceZoneActiveStatus(zone.id, newStatus).subscribe({
+      next: () => {
+        // Sukces? Świetnie, nie musimy robić nic, bo UI zaktualizowaliśmy już wyżej!
+      },
+      error: (err) => {
+        this.logger.error('Error toggling zone status', err);
+
+        // 4. Błąd sieci? Revert (Cofamy zmianę na ekranie)
+        this._zones.update((currentZones) =>
+          currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: zone.isActive } : z)),
+        );
+
+        // Tu najlepiej sprawdziłby się Twój ToastComponent / NotificationService,
+        // zamiast głównego errora blokującego ekran:
+        // this.notificationService.error('Nie udało się zmienić statusu strefy.');
+        this._error.set('Failed to toggle zone status.');
+      },
+    });
   }
 }

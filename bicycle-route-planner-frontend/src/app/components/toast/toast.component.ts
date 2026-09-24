@@ -1,14 +1,21 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgClass],
   templateUrl: './toast.component.html',
-  styleUrl: './toast.component.css'
+  styleUrl: './toast.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ToastComponent {
-  public notificationService = inject(NotificationService);
+  private readonly notificationService = inject(NotificationService);
+
+  public readonly notifications = this.notificationService.notifications;
+
+  public removeToast(id: number) : void {
+    this.notificationService.remove(id);
+  }
 }

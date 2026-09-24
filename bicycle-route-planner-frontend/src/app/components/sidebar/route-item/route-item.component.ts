@@ -22,7 +22,7 @@ export class RouteItemComponent {
   public routeDeleted = output<number>();
   public exportGpx = output<number>();
 
-  public allFolders = input<FolderDto[]>();
+  public allFolders = input<FolderDto[]>([]);
   public routeMoved = output<{ routeId: number; folderId: number | null }>();
   public isMoving = signal<boolean>(false);
 
@@ -50,8 +50,9 @@ export class RouteItemComponent {
 
   public confirmDelete(event: Event): void {
     event.stopPropagation();
-    if (this.route().id !== undefined) {
-      this.routeDeleted.emit(this.route().id!);
+    const id = this.route().id;
+    if (id !== undefined && id !== null) {
+      this.routeDeleted.emit(id);
     }
   }
 

@@ -117,3 +117,31 @@
   align-items: center;
   flex-shrink: 0;
 }
+
+.move-confirmation {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  align-items: center;
+}
+.move-confirmation label {
+  display: none;
+}
+.move-confirmation select {
+  flex: 1;
+  padding: 3px;
+}
+
+.rename-confirmation {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+}
+.rename-confirmation label {
+  display: none;
+}
+.route-name-input {
+  flex: 1;
+  padding: 2px 4px;
+}
