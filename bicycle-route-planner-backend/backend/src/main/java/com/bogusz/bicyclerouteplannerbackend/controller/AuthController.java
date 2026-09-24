@@ -2,6 +2,7 @@ package com.bogusz.bicyclerouteplannerbackend.controller;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.AuthResponse;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.LoginRequest;
+import com.bogusz.bicyclerouteplannerbackend.dto.auth.RefreshTokenRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
 import com.bogusz.bicyclerouteplannerbackend.service.AuthService;
 import jakarta.validation.Valid;
@@ -29,5 +30,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(authService.refreshToken(request));
     }
 }

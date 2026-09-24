@@ -206,4 +206,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
         return problemDetail;
     }
+
+    @ExceptionHandler(RefreshTokenException.class)
+    public ProblemDetail handleTokenRefreshException(RefreshTokenException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                ex.getMessage()
+        );
+        problemDetail.setTitle("Token Refresh Error");
+        problemDetail.setProperty(TIMESTAMP_PROPERTY, Instant.now());
+        return problemDetail;
+    }
 }

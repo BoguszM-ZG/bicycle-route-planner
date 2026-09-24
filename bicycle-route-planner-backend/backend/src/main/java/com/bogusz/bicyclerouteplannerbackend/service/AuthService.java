@@ -2,7 +2,9 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.AuthResponse;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.LoginRequest;
+import com.bogusz.bicyclerouteplannerbackend.dto.auth.RefreshTokenRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
+import com.bogusz.bicyclerouteplannerbackend.exception.RefreshTokenException;
 import com.bogusz.bicyclerouteplannerbackend.mapper.UserMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,20 @@ public class AuthService {
         );
         User user = (User) authentication.getPrincipal();
         return createAuthResponse(user);
+    }
+
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        String refreshToken = request.refreshToken();
+        String userEmail = jwtService.extractUsername(refreshToken);
+
+        if (userEmail != null) {
+            User user = userService.getByEmail(userEmail);
+
+            if (jwtService.isTokenValid(refreshToken)) {
+                return createAuthResponse(user);
+            }
+        }
+        throw new RefreshTokenException("Invalid refresh token");
     }
 
     private AuthResponse createAuthResponse(User user) {
