@@ -1,13 +1,22 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { RouteDetailDto, RouteSummaryDto, CreateRouteRequestDto } from '../models/route.model';
 import { RouteService } from './route.service';
+
+import { LoggerService } from './logger.service';
+import { AuthService } from './auth.service';
+import { TranslateService } from '@ngx-translate/core';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RouteStateService {
   private readonly routeService = inject(RouteService);
+  private readonly logger = inject(LoggerService);
+  private readonly authService = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  private readonly notificationService = inject(NotificationService);
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
   private readonly _selectedRoute = signal<RouteDetailDto | null>(null);
@@ -23,6 +32,24 @@ export class RouteStateService {
   public readonly isSaving = this._isSaving.asReadonly();
   public readonly error = this._error.asReadonly();
 
+  constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.logger.debug('User logged out, clearing RouteStateService');
+        this.clearState();
+      }
+    });
+  }
+
+  private clearState(): void {
+    this._routes.set([]);
+    this._selectedRoute.set(null);
+    this._isLoadingList.set(false);
+    this._isSaving.set(false);
+    this._error.set(null);
+  }
+
   public fetchRoutes(): void {
     this._isLoadingList.set(true);
     this._error.set(null);
@@ -33,7 +60,7 @@ export class RouteStateService {
       .subscribe({
         next: (routes) => this._routes.set(routes),
         error: (err) => {
-          console.error('Error fetching routes', err);
+          this.logger.error('Error fetching routes', err);
           this._error.set('Failed to fetch routes list.');
         },
       });
@@ -48,15 +75,13 @@ export class RouteStateService {
     this._error.set(null);
     this._selectedRoute.set(null);
 
-    this.routeService
-      .getRouteDetails(routeId)
-      .subscribe({
-        next: (routeDetails) => this._selectedRoute.set(routeDetails),
-        error: (err) => {
-          console.error('Error fetching route details', err);
-          this._error.set('Failed to fetch route details.');
-        },
-      });
+    this.routeService.getRouteDetails(routeId).subscribe({
+      next: (routeDetails) => this._selectedRoute.set(routeDetails),
+      error: (err) => {
+        this.logger.error('Error fetching route details', err);
+        this._error.set('Failed to fetch route details.');
+      },
+    });
   }
 
   public clearSelectedRoute(): void {
@@ -67,12 +92,13 @@ export class RouteStateService {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
+        this.logger.info('Route successfully deleted', routeId);
         if (this._selectedRoute()?.id === routeId) {
           this._selectedRoute.set(null);
         }
       },
       error: (err) => {
-        console.error('Error deleting route', err);
+        this.logger.error('Error deleting route', err);
         this._error.set('Failed to delete route.');
       },
     });
@@ -96,9 +122,10 @@ export class RouteStateService {
           this._routes.update((routes) => [summary, ...routes]);
 
           if (onSuccess) onSuccess();
+          this.logger.info('Route successfully saved', newRouteDetails.name);
         },
         error: (err) => {
-          console.error('Error saving route', err);
+          this.logger.error('Error saving route', err);
           this._error.set('Failed to save route.');
         },
       });
@@ -107,7 +134,15 @@ export class RouteStateService {
   public exportGpx(routeId: number): void {
     const route = this._routes().find((r) => r.id === routeId);
     const routeName = route ? route.name : `trasa_${routeId}`;
-    this.routeService.downloadGpx(routeId, routeName);
+
+    this.routeService.downloadGpx(routeId, routeName).subscribe({
+      next: () => {
+        this.logger.debug('GPX download initiated successfully');
+      },
+      error: () => {
+        this.notificationService.error(this.translate.instant('ERROR.DOWNLOAD_GPX_ERROR'));
+      },
+    });
   }
 
   public moveRouteToFolder(routeId: number, folderId: number | null): void {
@@ -118,7 +153,7 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        console.error('Error moving route', err);
+        this.logger.error('Error moving route', err);
         this._error.set('Failed to move route.');
       },
     });
@@ -138,7 +173,7 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        console.error('Error renaming route', err);
+        this.logger.error('Error renaming route', err);
         this._error.set('Failed to rename route.');
       },
     });

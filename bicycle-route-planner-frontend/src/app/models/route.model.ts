@@ -34,6 +34,7 @@ export interface CreateRouteRequestDto {
 export interface RouteDraft {
   geometryWkt?: string;
   distanceMeters?: number;
+  targetDistance?: number;
   elevationGain?: number;
   elevationLoss?: number;
   name?: string;
@@ -78,4 +79,9 @@ export interface ElevationPointDto {
 
 export interface UpdateRouteFolderDto {
   folderId: number | null;
+}
+
+export interface AvoidPolygonsGeoJson {
+  type: 'MultiPolygon';
+  coordinates: number[][][][];
 }

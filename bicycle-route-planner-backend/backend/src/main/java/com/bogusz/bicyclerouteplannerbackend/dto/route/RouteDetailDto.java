@@ -5,6 +5,9 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import java.time.Instant;
 
+import com.bogusz.bicyclerouteplannerbackend.model.RouteType;
+import jakarta.validation.constraints.NotNull;
+
 @Builder
 public record RouteDetailDto(
         Long id,
@@ -12,8 +15,8 @@ public record RouteDetailDto(
         @NotBlank(message = "Name of the route is required")
         String name,
 
-        @NotBlank(message = "Type of the route is required")
-        String routeType,
+        @NotNull(message = "Type of the route is required")
+        RouteType routeType,
 
         @PositiveOrZero(message = "Distance must be positive")
         Double targetDistance,

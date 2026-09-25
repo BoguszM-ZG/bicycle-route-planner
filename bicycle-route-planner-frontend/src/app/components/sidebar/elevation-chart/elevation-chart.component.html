@@ -1,11 +1,12 @@
 @if (isLoading()) {
-  <div class="loading">Ładowanie wykresu przewyższeń...</div>
+  <div class="loading">{{ 'SIDEBAR.CHART_LOADING' | translate }}</div>
 } @else if (chartData()) {
   <div class="chart-container">
     <canvas baseChart
             [data]="chartData()!"
             [options]="chartOptions()"
             [type]="'scatter'">
+      <span class="sr-only">{{ 'SIDEBAR.ROUTE_DETAILS_CHART_TITLE' | translate }}</span>
     </canvas>
   </div>
 }

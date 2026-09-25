@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable} from 'rxjs';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import {
   CreateRouteRequestDto,
   ElevationPointDto,
@@ -10,6 +10,7 @@ import {
   UpdateRouteFolderDto,
 } from '../models/route.model';
 import { environment } from '../../environments/environment.development';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +18,7 @@ import { environment } from '../../environments/environment.development';
 export class RouteService {
   private readonly apiUrl = `${environment.apiUrl}/routes`;
   private readonly http = inject(HttpClient);
+  private readonly logger = inject(LoggerService);
 
   getRoutes(): Observable<RouteSummaryDto[]> {
     return this.http.get<RouteSummaryDto[]>(this.apiUrl);
@@ -34,11 +36,11 @@ export class RouteService {
     return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
   }
 
-  public downloadGpx(routeId: number, routeName: string): void {
-    this.http
+  public downloadGpx(routeId: number, routeName: string): Observable<void> {
+    return this.http
       .get(`${this.apiUrl}/${routeId}/export/gpx`, { observe: 'response', responseType: 'blob' })
-      .subscribe({
-        next: (response) => {
+      .pipe(
+        tap((response) => {
           const polishMap: { [key: string]: string } = {
             'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
             'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
@@ -56,12 +58,13 @@ export class RouteService {
           anchor.click();
           anchor.remove();
           window.URL.revokeObjectURL(blobUrl);
-        },
-        error: (err) => {
-          console.error('Error during downloading GPX file:', err);
-          alert('Error downloading GPX file');
-        },
-      });
+        }),
+        map(() => void 0),
+        catchError((err) => {
+          this.logger.error('Error during downloading GPX file:', err);
+          return throwError(() => err);
+        })
+      );
   }
 
   public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {

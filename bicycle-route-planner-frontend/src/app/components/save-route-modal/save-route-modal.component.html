@@ -1,20 +1,38 @@
 @if (isVisible()) {
-  <div class="modal-backdrop">
-    <div class="modal-glass">
-      <h2>Zapisz Trasę</h2>
-      <label for="routeNameInput">Podaj nazwę dla swojej nowej trasy rowerowej</label>
+  <div class="modal-backdrop"
+       (click)="close()"
+       (keydown.enter)="close()"
+       (keydown.space)="close()"
+       tabindex="-1">
+
+    <dialog class="modal-glass"
+            open
+            aria-labelledby="save-route-title"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+
+      <h2 id="save-route-title">{{ 'MODALS.SAVE_ROUTE_TITLE' | translate }}</h2>
+
+      <label for="routeNameInput">{{ 'MODALS.SAVE_ROUTE_LABEL' | translate }}</label>
 
       <input
-      id="routeNameInput"
-      type="text"
-      [(ngModel)]="routeName"
-      placeholder="Np. Wieczorna pętla wokół jeziora"
-      class="route-name-input"
+        #routeInput
+        id="routeNameInput"
+        type="text"
+        [(ngModel)]="routeName"
+        [placeholder]="'MODALS.SAVE_ROUTE_PLACEHOLDER' | translate"
+        class="route-name-input"
+        (keyup.enter)="saveRoute()"
+        (keyup.escape)="close()"
       />
 
-      <label for="folderSelect">Wybierz folder (opcjonalnie)</label>
-      <select id="folderSelect" [(ngModel)]="selectedFolderId" class="route-name-input" style="margin-bottom: 20px;">
-        <option [ngValue]="null">-- Brak folderu (zapisz luzem) --</option>
+      <label for="folderSelect">{{ 'MODALS.FOLDER_SELECT_LABEL' | translate }}</label>
+
+      <select id="folderSelect"
+              [(ngModel)]="selectedFolderId"
+              class="route-name-input"
+              (keyup.escape)="close()">
+        <option [ngValue]="null">{{ 'MODALS.NO_FOLDER' | translate }}</option>
 
         @for (folder of folders(); track folder.id) {
           <option [ngValue]="folder.id">{{ folder.name }}</option>
@@ -22,12 +40,14 @@
       </select>
 
       <div class="modal-actions">
-        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">Anuluj</button>
-        <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading()">
-          {{ isLoading() ? 'Zapisywanie...' : 'Zapisz' }}
+        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">
+          {{ 'MODALS.CANCEL' | translate }}
+        </button>
+        <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading()" aria-live="polite">
+          {{ isLoading() ? ('MODALS.SAVING' | translate) : ('MODALS.SAVE' | translate) }}
         </button>
       </div>
 
-    </div>
+    </dialog>
   </div>
 }

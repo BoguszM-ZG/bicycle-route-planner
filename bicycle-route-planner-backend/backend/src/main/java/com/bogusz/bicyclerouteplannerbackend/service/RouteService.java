@@ -3,26 +3,21 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.*;
 import com.bogusz.bicyclerouteplannerbackend.exception.FolderNotFoundException;
-import com.bogusz.bicyclerouteplannerbackend.exception.InvalidGeometryException;
 import com.bogusz.bicyclerouteplannerbackend.exception.RouteNotFoundException;
+import com.bogusz.bicyclerouteplannerbackend.mapper.RouteMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
+import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.*;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
-import org.locationtech.jts.io.WKTWriter;
 import org.springframework.stereotype.Service;
-
 
 import java.util.ArrayList;
 import java.util.List;
-
-
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +26,7 @@ public class RouteService {
     private final UserRepository userRepository;
     private final GpxExportService gpxExportService;
     private final FolderRepository folderRepository;
+    private final RouteMapper routeMapper;
 
 
     @Transactional(readOnly = true)
@@ -45,14 +41,21 @@ public class RouteService {
     @Transactional(readOnly = true)
     public RouteDetailDto getRouteDetail(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
-        return toRouteDetailDto(route);
+        return routeMapper.toRouteDetailDto(route);
     }
 
     @Transactional
-    public RouteDetailDto saveRouteForUser(CreateRouteRequestDto createRouteRequestDto, Long userId) {
-        Route route = createRouteRequestDtoToRoute(createRouteRequestDto, userId);
+    public RouteDetailDto saveRouteForUser(CreateRouteRequestDto request, Long userId) {
+        Folder folder = null;
+        if (request.folderId() != null) {
+            folder = folderRepository.findByIdAndUserId(request.folderId(), userId)
+                    .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
+        }
+        User user = userRepository.getReferenceById(userId);
+        
+        Route route = routeMapper.toEntity(request, user, folder);
         route = routeRepository.save(route);
-        return toRouteDetailDto(route);
+        return routeMapper.toRouteDetailDto(route);
     }
 
     @Transactional
@@ -113,8 +116,6 @@ public class RouteService {
         route.setName(request.name());
     }
 
-
-
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
         final int R = 6371000;
         double latDistance = Math.toRadians(lat2 - lat1);
@@ -126,70 +127,9 @@ public class RouteService {
         return R * c;
     }
 
-
-
     private Route getValidRouteForUser(Long routeId, Long userId){
         return routeRepository.findByIdAndUserId(routeId, userId)
                 .orElseThrow(() -> new RouteNotFoundException("Route not found or access denied"));
     }
-
-
-    private RouteDetailDto toRouteDetailDto(Route route) {
-        WKTWriter wktWriter3D = new WKTWriter(3);
-
-        return RouteDetailDto.builder()
-                .id(route.getId())
-                .name(route.getName())
-                .routeType(route.getRouteType())
-                .targetDistance(route.getTargetDistance())
-                .distanceMeters(route.getDistanceMeters())
-                .elevationGain(route.getElevationGain())
-                .elevationLoss(route.getElevationLoss())
-                .startPoint(route.getStartPoint() != null ? wktWriter3D.write(route.getStartPoint()) : null)
-                .routeGeom(route.getRouteGeom() != null ? wktWriter3D.write(route.getRouteGeom()) : null)
-                .createdAt(route.getCreatedAt())
-                .folderId(route.getFolder() != null ? route.getFolder().getId() : null)
-                .build();
-    }
-
-
-    private Route createRouteRequestDtoToRoute(CreateRouteRequestDto createRouteRequestDto, Long userId) {
-        WKTReader wktReader = new WKTReader();
-        Route route = new Route();
-
-        route.setUser(userRepository.getReferenceById(userId));
-        route.setName(createRouteRequestDto.name());
-        route.setRouteType(createRouteRequestDto.routeType());
-        route.setTargetDistance(createRouteRequestDto.targetDistance());
-        route.setDistanceMeters(createRouteRequestDto.distanceMeters());
-        route.setElevationGain(createRouteRequestDto.elevationGain());
-        route.setElevationLoss(createRouteRequestDto.elevationLoss());
-
-        try {
-            if (createRouteRequestDto.startPoint() != null) {
-                Geometry startGeom = wktReader.read(createRouteRequestDto.startPoint());
-                startGeom.setSRID(4326);
-                route.setStartPoint((Point) startGeom);
-            }
-
-            if (createRouteRequestDto.routeGeom() != null) {
-                Geometry routeGeom = wktReader.read(createRouteRequestDto.routeGeom());
-                routeGeom.setSRID(4326);
-                route.setRouteGeom((LineString) routeGeom);
-            }
-        } catch (ParseException e) {
-            throw new InvalidGeometryException("Error parsing WKT geometry: " + e.getMessage());
-        }
-
-        if (createRouteRequestDto.folderId() != null) {
-            Folder folder = folderRepository.findByIdAndUserId(createRouteRequestDto.folderId(), userId)
-                    .orElseThrow(() -> new FolderNotFoundException("Folder not found or access denied"));
-            route.setFolder(folder);
-        }
-
-
-        return route;
-    }
-
 
 }

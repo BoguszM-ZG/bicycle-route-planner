@@ -3,36 +3,34 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, finalize } from 'rxjs';
+
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
+  private readonly logger = inject(LoggerService);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
-
 
   private readonly _currentUser = signal<UserDto | null>(null);
   private readonly _isLoading = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
-
   public readonly currentUser = this._currentUser.asReadonly();
   public readonly isLoading = this._isLoading.asReadonly();
   public readonly error = this._error.asReadonly();
-
 
   public readonly isAuthenticated = computed(() => this._currentUser() !== null);
 
   constructor() {
     this.hydrateAuthState();
   }
-
-
 
   public register(data: RegisterRequest): Observable<AuthResponse> {
     this._isLoading.set(true);
@@ -56,8 +54,30 @@ export class AuthService {
     );
   }
 
+  public refreshToken(): Observable<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+
+    if (!refreshToken) {
+      this.logout();
+      return throwError(() => new Error('No refresh token available'));
+    }
+
+    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
+      tap((response) => {
+        this.logger.debug('Session successfully refreshed in AuthService');
+        this.handleAuthSuccess(response);
+      }),
+      catchError((error: HttpErrorResponse) => {
+        this.logger.error('Failed to refresh session. Logging out.', error);
+        this.logout();
+        return throwError(() => error);
+      }),
+    );
+  }
+
   public logout(): void {
     this._currentUser.set(null);
+    this.logger.info('User logged out');
     this._error.set(null);
 
     if (isPlatformBrowser(this.platformId)) {
@@ -69,7 +89,6 @@ export class AuthService {
     void this.router.navigate(['/login']);
   }
 
-
   public getAccessToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
       return localStorage.getItem('accessToken');
@@ -77,6 +96,12 @@ export class AuthService {
     return null;
   }
 
+  public getRefreshToken(): string | null {
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('refreshToken');
+    }
+    return null;
+  }
 
   private hydrateAuthState(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -93,17 +118,19 @@ export class AuthService {
 
   private handleAuthSuccess(response: AuthResponse): void {
     this._currentUser.set(response.user);
+    this.logger.info('User successfully authenticated', response.user.email);
 
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('accessToken', response.accessToken);
-      localStorage.setItem('refreshToken', response.refreshToken);
+      if (response.refreshToken) {
+        localStorage.setItem('refreshToken', response.refreshToken);
+      }
       localStorage.setItem('currentUser', JSON.stringify(response.user));
     }
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {
-    console.error('Auth error:', error);
-
+    this.logger.error('Auth error:', error);
     const errorMsg =
       error.error?.message || 'Invalid authentication credentials. Please try again.';
     this._error.set(errorMsg);

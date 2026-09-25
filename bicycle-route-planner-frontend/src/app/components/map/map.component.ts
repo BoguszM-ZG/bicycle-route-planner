@@ -1,32 +1,45 @@
-import { AfterViewInit, Component, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  inject,
+  ChangeDetectionStrategy,
+  viewChild,
+  NgZone,
+  DestroyRef,
+} from '@angular/core';
 import * as L from 'leaflet';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MapRenderService } from '../../services/map-render.service';
 import { SaveRouteModalComponent } from '../save-route-modal/save-route-modal.component';
 import { SaveZoneModalComponent } from '../save-zone-modal/save-zone-modal.component';
 import { MapControlsComponent } from '../map-controls/map-controls.component';
-
 import { MapRoutingService } from '../../services/map-routing.service';
 import { MapDrawService } from '../../services/map-draw.service';
 import { MapModePanelComponent } from './map-mode-panel/map-mode-panel.component';
 import { MapSearchComponent } from '../map-search/map-search.component';
+import { MAP_CONSTANTS } from '../../constants/map.constants';
 
-const defaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-L.Marker.prototype.options.icon = defaultIcon;
+
+L.Marker.prototype.options.icon = MAP_CONSTANTS.DEFAULT_ICON;
+
+import { LoggerService } from '../../services/logger.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [SidebarComponent, SaveRouteModalComponent, SaveZoneModalComponent, MapControlsComponent, MapModePanelComponent, MapSearchComponent],
+  imports: [
+    SidebarComponent,
+    SaveRouteModalComponent,
+    SaveZoneModalComponent,
+    MapControlsComponent,
+    MapModePanelComponent,
+    MapSearchComponent,
+    TranslatePipe,
+  ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,20 +52,33 @@ export class MapComponent implements AfterViewInit {
   private readonly mapRenderService = inject(MapRenderService);
   public readonly mapRoutingService = inject(MapRoutingService);
   private readonly mapDrawService = inject(MapDrawService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
+  private readonly ngZone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
 
-  @ViewChild('saveRouteModal') saveRouteModal!: SaveRouteModalComponent;
-  @ViewChild('saveZoneModal') saveZoneModal!: SaveZoneModalComponent;
+  public saveRouteModal = viewChild.required<SaveRouteModalComponent>('saveRouteModal');
+  public saveZoneModal = viewChild.required<SaveZoneModalComponent>('saveZoneModal');
 
   ngAfterViewInit(): void {
-    this.mapRenderService.initMap('map');
-    this.map = this.mapRenderService.getMap()!;
-    this.mapRoutingService.initRouting(this.map);
-    this.mapDrawService.init(this.map);
+    this.logger.info('Leaflet map successfully initialized');
 
-    this.mapDrawService.zoneDrawn$.subscribe((wktString) => {
-      this.saveZoneModal.open(wktString);
-      this.mapRoutingService.routingMode.set('direct');
+    this.ngZone.runOutsideAngular(() => {
+      this.mapRenderService.initMap('map');
+      this.map = this.mapRenderService.getMap()!;
+      this.mapRoutingService.initRouting(this.map);
+      this.mapDrawService.init(this.map);
     });
+
+    this.mapDrawService.zoneDrawn$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((wktString) => {
+        this.ngZone.run(() => {
+          this.saveZoneModal().open(wktString);
+          this.mapRoutingService.routingMode.set('direct');
+        });
+      });
   }
 
   public clearRoute(): void {
@@ -64,16 +90,17 @@ export class MapComponent implements AfterViewInit {
     const draft = this.mapRoutingService.currentRouteDraft();
 
     if (!draft?.geometryWkt) {
-      alert('Najpierw wyznacz trasę, żeby ją zapisać.');
+      this.logger.warn('User tried to save a route, but no route is drawn');
+      this.notificationService.warning(this.translate.instant('MAP.DRAW_ROUTE_FIRST'));
       return;
     }
 
     if (!this.authService.isAuthenticated()) {
-      alert('Musisz być zalogowany, aby zapisać trasę.');
+      this.notificationService.warning(this.translate.instant('MAP.LOGIN_REQUIRED'));
       return;
     }
 
-    this.saveRouteModal.open(draft);
+    this.saveRouteModal().open(draft);
   }
 
   public locateMe(): void {
@@ -82,17 +109,30 @@ export class MapComponent implements AfterViewInit {
     this.map.locate({ setView: true, maxZoom: 15 });
 
     this.map.once('locationfound', (e) => {
-      if (this.userLocationMarker) {
-        this.userLocationMarker.setLatLng(e.latlng);
-      } else {
-        this.userLocationMarker = L.marker(e.latlng).addTo(this.map).bindPopup('Tu jesteś!');
-      }
-      this.userLocationMarker.openPopup();
+      this.ngZone.run(() => {
+        if (this.userLocationMarker) {
+          this.userLocationMarker.setLatLng(e.latlng);
+        } else {
+          this.userLocationMarker = L.marker(e.latlng)
+            .addTo(this.map)
+            .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
+
+          this.userLocationMarker.on('click', () => {
+            if (this.userLocationMarker) {
+              this.userLocationMarker.remove();
+              this.userLocationMarker = undefined;
+            }
+          });
+        }
+        this.userLocationMarker?.openPopup();
+      });
     });
+
     this.map.once('locationerror', (e) => {
-      console.error('Error downloading location:', e);
-      alert('Failed to retrieve location. Make sure you have granted location access in your browser.',
-      );
+      this.ngZone.run(() => {
+        this.logger.warn('GPS location access denied or failed:', e);
+        this.notificationService.error(this.translate.instant('MAP.LOCATION_ERROR'));
+      });
     });
   }
 }

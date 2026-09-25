@@ -58,8 +58,8 @@
 }
 
 .icon-btn.delete-icon:hover {
-  color: #ef4444;
   background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 
@@ -100,7 +100,7 @@
 }
 
 .confirm-btn.danger {
-  background-color: #ef4444;
+  background-color: #dc2626;
   color: white;
 }
 .confirm-btn.danger:hover {
@@ -116,4 +116,32 @@
   gap: 4px;
   align-items: center;
   flex-shrink: 0;
+}
+
+.move-confirmation {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  align-items: center;
+}
+.move-confirmation label {
+  display: none;
+}
+.move-confirmation select {
+  flex: 1;
+  padding: 3px;
+}
+
+.rename-confirmation {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+}
+.rename-confirmation label {
+  display: none;
+}
+.route-name-input {
+  flex: 1;
+  padding: 2px 4px;
 }

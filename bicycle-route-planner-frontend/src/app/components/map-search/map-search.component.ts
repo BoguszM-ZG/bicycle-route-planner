@@ -1,49 +1,54 @@
-import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  DestroyRef,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, filter, tap, map as rxMap } from 'rxjs/operators';
-import { of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { MapRenderService } from '../../services/map-render.service';
+import { debounceTime, distinctUntilChanged, switchMap, catchError, filter, tap, map as rxMap, } from 'rxjs/operators';
+import { of } from 'rxjs';
 import * as L from 'leaflet';
-
-const PL_VOIVODESHIPS: Record<string, string> = {
-  'Lubusz': 'lubuskie',
-  'Greater Poland': 'wielkopolskie',
-  'Lesser Poland': 'małopolskie',
-  'Lower Silesian': 'dolnośląskie',
-  'Kuyavian-Pomeranian': 'kujawsko-pomorskie',
-  'Lublin': 'lubelskie',
-  'Łódź': 'łódzkie',
-  'Mazovia': 'mazowieckie',
-  'Opole': 'opolskie',
-  'Podlaskie': 'podlaskie',
-  'Pomeranian': 'pomorskie',
-  'Silesian': 'śląskie',
-  'Subcarpathian': 'podkarpackie',
-  'Świętokrzyskie': 'świętokrzyskie',
-  'Warmian-Masurian': 'warmińsko-mazurskie',
-  'West Pomeranian': 'zachodniopomorskie'
-};
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { GeoFeature, GeoResponse, SearchResult } from '../../models/map-search.model';
+import { LoggerService } from '../../services/logger.service';
+import { MapRenderService } from '../../services/map-render.service';
+import { environment } from '../../../environments/environment';
+import { MAP_CONSTANTS } from '../../constants/map.constants';
 
 @Component({
   selector: 'app-map-search',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './map-search.component.html',
   styleUrl: './map-search.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapSearchComponent {
   public searchControl = new FormControl<string>('', { nonNullable: true });
-  public results = signal<any[]>([]);
+  public results = signal<SearchResult[]>([]);
   public isSearching = signal(false);
+
+  public searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   private readonly http = inject(HttpClient);
   private readonly mapRenderService = inject(MapRenderService);
+  private readonly logger = inject(LoggerService);
+  private readonly destroyRef = inject(DestroyRef);
   private marker?: L.Marker;
+  private readonly translate = inject(TranslateService);
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.marker) {
+        this.marker.remove();
+      }
+    });
+
     this.searchControl.valueChanges
       .pipe(
         debounceTime(350),
@@ -60,39 +65,48 @@ export class MapSearchComponent {
         filter((query) => query.length >= 3),
         switchMap((query) => {
           const map = this.mapRenderService.getMap();
-          let locationParams = '';
+          let url = `${environment.apiUrl}/geocoding/search?q=${encodeURIComponent(query)}`;
           if (map) {
             const center = map.getCenter();
-            locationParams = `&lat=${center.lat}&lon=${center.lng}`;
+            url += `&lat=${center.lat}&lon=${center.lng}`;
           }
 
-          const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5${locationParams}`;
-
-          return this.http.get<any>(url).pipe(
+          return this.http.get<GeoResponse>(url).pipe(
             catchError((err) => {
-              console.error('Błąd Geocodingu Photon:', err);
-              return of({ features: [] });
+              this.logger.error('Error in Geocoding (Backend Proxy):', err);
+              return of({ features: [] } as GeoResponse);
             }),
           );
         }),
-        rxMap((response) => {
+        rxMap((response: GeoResponse) => {
           const features = response.features || [];
 
-          const mappedResults = features.map((f: any) => {
+          const mappedResults: SearchResult[] = features.map((f: GeoFeature) => {
             const props = f.properties;
             const coords = f.geometry.coordinates;
 
-            const mainName = props.name || props.street || props.city || 'Nieznane miejsce';
+            const mainName =
+              props.name ||
+              props.street ||
+              props.city ||
+              this.translate.instant('MAP_SEARCH.UNKNOWN_LOCATION');
+            const details: string[] = [];
 
-            const details = [];
             if (props.city && props.city !== mainName) details.push(props.city);
 
             if (props.state) {
               let stateName = props.state;
+
               if (stateName.includes('Voivodeship')) {
                 const engState = stateName.replace(' Voivodeship', '').trim();
-                const translated = PL_VOIVODESHIPS[engState] || engState.toLowerCase();
-                stateName = `woj. ${translated}`;
+
+                const translationKey = `VOIVODESHIPS.${engState.toUpperCase().replace(/[\s-]+/g, '_')}`;
+
+                const translatedState = this.translate.instant(translationKey);
+
+                if (translatedState !== translationKey) {
+                  stateName = translatedState;
+                }
               }
               details.push(stateName);
             }
@@ -107,8 +121,8 @@ export class MapSearchComponent {
           });
 
           return mappedResults.filter(
-            (val: any, idx: number, arr: any[]) =>
-              idx === arr.findIndex((t: any) => t.label === val.label),
+            (val: SearchResult, idx: number, arr: SearchResult[]) =>
+              idx === arr.findIndex((t: SearchResult) => t.label === val.label),
           );
         }),
         tap(() => this.isSearching.set(false)),
@@ -118,7 +132,14 @@ export class MapSearchComponent {
       });
   }
 
-  public selectResult(result: any) {
+  public clearSearch(): void {
+    this.searchControl.setValue('');
+    this.results.set([]);
+    this.isSearching.set(false);
+    this.searchInput()?.nativeElement.focus();
+  }
+
+  public selectResult(result: SearchResult): void {
     const map = this.mapRenderService.getMap();
     if (!map) return;
 
@@ -131,13 +152,14 @@ export class MapSearchComponent {
       this.marker.remove();
     }
 
-    const icon = L.divIcon({
-      className: 'search-pin',
-      html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3" fill="white"></circle></svg>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-    });
+    this.marker = L.marker([result.y, result.x], { icon: MAP_CONSTANTS.SEARCH_PIN }).addTo(map);
 
-    this.marker = L.marker([result.y, result.x], { icon }).addTo(map);
+    this.marker.once('click', () => {
+      if (this.marker) {
+        this.marker.remove();
+        this.marker = undefined;
+        this.searchControl.setValue('', { emitEvent: false });
+      }
+    });
   }
 }

@@ -1,21 +1,17 @@
 import { Injectable, inject}  from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment.development';
-import {OrsGeoJsonResponse} from '../models/route.model';
+import { environment } from '../../environments/environment';
+import { AvoidPolygonsGeoJson, OrsGeoJsonResponse } from '../models/route.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OrsService {
   private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/routing/directions`;
 
-  public getRouteGeoJson(coords: number[][], avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: environment.orsApiKey,
-    });
-
+  public getRouteGeoJson(coords: number[][], avoidPolygons?: AvoidPolygonsGeoJson): Observable<OrsGeoJsonResponse> {
     const body = {
       coordinates: coords,
       elevation: true,
@@ -23,41 +19,23 @@ export class OrsService {
       options: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
     };
 
-    if (avoidPolygons) {
-      body.options = {
-        avoid_polygons: avoidPolygons,
-      };
-    }
-
-    return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
+    return this.http.post<OrsGeoJsonResponse>(this.apiUrl, body);
   }
 
-
-  public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: any): Observable<OrsGeoJsonResponse> {
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: environment.orsApiKey,
-    });
+  public getRoundTripGeoJson(startCoord: number[], distanceMeters: number, avoidPolygons?: AvoidPolygonsGeoJson): Observable<OrsGeoJsonResponse> {
     const body = {
       coordinates: [startCoord],
       elevation: true,
       instructions: false,
       options: {
         round_trip: {
-          length: distanceMeters,
-          points: 3,
-          seed: Math.floor(Math.random() * 100)
+          length: distanceMeters
         },
-        avoid_polygons: avoidPolygons ? { avoid_polygons: avoidPolygons } : undefined
+        ...(avoidPolygons && { avoid_polygons: avoidPolygons })
       }
     };
 
-    if (avoidPolygons) {
-      body.options.avoid_polygons = avoidPolygons;
-    }
-
-    return this.http.post<OrsGeoJsonResponse>(environment.orsApiUrl, body, { headers });
-
+    return this.http.post<OrsGeoJsonResponse>(this.apiUrl, body);
   }
 
 }

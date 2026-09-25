@@ -5,6 +5,7 @@ import * as wellknown from 'wellknown';
 import { Subject } from 'rxjs';
 import { AvoidanceZoneStateService } from "./avoidance-zone-state.service";
 import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,18 +14,26 @@ export class MapDrawService {
   private map!: L.Map;
 
   private readonly drawnItems: L.FeatureGroup = new L.FeatureGroup();
-
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
+  private readonly authService = inject(AuthService);
   private readonly ngZone = inject(NgZone);
 
   public currentZoneDraft = signal<string | null>(null);
   private tempDrawnLayer?: L.Layer;
   private currentDrawer?: any;
+  public zoneDrawn$ = new Subject<string>();
 
   constructor() {
     effect(() => {
       const zones = this.avoidanceZoneStateService.zones();
       this.renderZones(zones);
+    });
+
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.cancelDrawing();
+      }
     });
   }
 
@@ -40,7 +49,7 @@ export class MapDrawService {
 
     const polygonOptions = {
       allowIntersection: false,
-      showArea: true,
+      showArea: false,
       shapeOptions: { color: 'red' },
     };
 
@@ -66,8 +75,6 @@ export class MapDrawService {
       this.zoneDrawn$.next(draft);
     }
   }
-
-  public zoneDrawn$ = new Subject<string>();
 
   private setupDrawEvents(): void {
     this.map.on(L.Draw.Event.CREATED, (e: any) => {
@@ -103,5 +110,4 @@ export class MapDrawService {
       }
     });
   }
-
 }
