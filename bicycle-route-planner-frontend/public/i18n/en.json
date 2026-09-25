@@ -39,8 +39,10 @@
     "SAVING": "Saving...",
     "SAVE_ZONE_TITLE": "Save Avoidance Zone",
     "SAVE_ZONE_LABEL": "Enter a name for this avoidance zone",
-    "SAVE_ZONE_PLACEHOLDER": "E.g. Construction site 2",
+    "SAVE_ZONE_PLACEHOLDER": "New avoidance zone",
+    "DEFAULT_ZONE_NAME": "New avoidance zone",
     "EMPTY_ROUTE_NAME": "Please enter a route name",
+    "DEFAULT_ROUTE_NAME": "New cycling route",
     "ROUTE_SAVED": "Route saved successfully!",
     "EMPTY_ZONE_NAME": "Please enter a valid zone name"
   },

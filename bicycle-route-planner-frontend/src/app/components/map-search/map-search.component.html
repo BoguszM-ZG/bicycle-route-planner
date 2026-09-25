@@ -6,7 +6,9 @@
     </svg>
 
     <label for="search-address" class="sr-only">{{ 'MAP_CONTROLS.SEARCH_LABEL' | translate }}</label>
+
     <input
+      #searchInput
       id="search-address"
       type="text"
       [formControl]="searchControl"
@@ -16,16 +18,16 @@
 
     @if (isSearching()) {
       <div class="spinner" aria-hidden="true"></div>
-      <span class="sr-only">{{ 'MAP_CONTROLS.SEARCHING' | translate }}</span>
+      <span class="sr-only" aria-live="polite">{{ 'MAP_CONTROLS.SEARCHING' | translate }}</span>
     } @else if (searchControl.value) {
-      <button type="button" class="clear-btn" (click)="searchControl.setValue('')" [title]="'MAP_CONTROLS.CLEAR_SEARCH' | translate">
+      <button type="button" class="clear-btn" (click)="clearSearch()" [title]="'MAP_CONTROLS.CLEAR_SEARCH' | translate">
         <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     }
   </div>
 
   @if (results().length > 0) {
-    <ul class="results-list">
+    <ul id="search-results-list" class="results-list">
       @for (result of results(); track result.label) {
         <li class="result-item">
           <button type="button" class="result-button" (click)="selectResult(result)">

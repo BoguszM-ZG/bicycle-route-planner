@@ -1,24 +1,40 @@
 @if (isVisible()) {
-  <div class="modal-backdrop">
-    <div class="modal-glass">
-      <h2>{{ 'MODALS.SAVE_ZONE_TITLE' | translate }}</h2>
+  <div class="modal-backdrop"
+       (click)="close()"
+       (keydown.enter)="close()"
+       (keydown.space)="close()"
+       tabindex="-1">
+
+    <dialog class="modal-glass"
+            open
+            aria-labelledby="save-zone-title"
+            (click)="$event.stopPropagation()"
+            (keydown)="$event.stopPropagation()">
+
+      <h2 id="save-zone-title">{{ 'MODALS.SAVE_ZONE_TITLE' | translate }}</h2>
+
       <label for="zoneNameInput">{{ 'MODALS.SAVE_ZONE_LABEL' | translate }}</label>
 
       <input
+        #zoneInput
         id="zoneNameInput"
         type="text"
         [formControl]="zoneNameControl"
         [placeholder]="'MODALS.SAVE_ZONE_PLACEHOLDER' | translate"
         class="route-name-input"
         [class.invalid]="zoneNameControl.invalid && zoneNameControl.touched"
+        (keyup.enter)="saveZone()"
+        (keyup.escape)="close()"
       />
 
       <div class="modal-actions">
-        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">{{ 'MODALS.CANCEL' | translate }}</button>
-        <button class="btn-save" (click)="saveZone()" [disabled]="isLoading() || zoneNameControl.invalid">
+        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">
+          {{ 'MODALS.CANCEL' | translate }}
+        </button>
+        <button class="btn-save" (click)="saveZone()" [disabled]="isLoading()" aria-live="polite">
           {{ isLoading() ? ('MODALS.SAVING' | translate) : ('MODALS.SAVE' | translate) }}
         </button>
       </div>
-    </div>
+    </dialog>
   </div>
 }

@@ -38,8 +38,10 @@
     "SAVING": "Zapisywanie...",
     "SAVE_ZONE_TITLE": "Zapisz Strefę Omijania",
     "SAVE_ZONE_LABEL": "Podaj nazwę dla tej strefy omijalnej",
-    "SAVE_ZONE_PLACEHOLDER": "Np. Strefa budowy 2",
+    "SAVE_ZONE_PLACEHOLDER": "Nowa strefa omijania",
+    "DEFAULT_ZONE_NAME": "Nowa strefa omijania",
     "EMPTY_ROUTE_NAME": "Proszę wpisać nazwę trasy",
+    "DEFAULT_ROUTE_NAME": "Nowa trasa rowerowa",
     "ROUTE_SAVED": "Trasa została zapisana pomyślnie!",
     "EMPTY_ZONE_NAME": "Proszę wpisać prawidłową nazwę strefy"
   },

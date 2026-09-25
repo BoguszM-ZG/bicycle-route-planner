@@ -1,4 +1,12 @@
-import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  DestroyRef,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -24,6 +32,8 @@ export class MapSearchComponent {
   public searchControl = new FormControl<string>('', { nonNullable: true });
   public results = signal<SearchResult[]>([]);
   public isSearching = signal(false);
+
+  public searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   private readonly http = inject(HttpClient);
   private readonly mapRenderService = inject(MapRenderService);
@@ -75,7 +85,11 @@ export class MapSearchComponent {
             const props = f.properties;
             const coords = f.geometry.coordinates;
 
-            const mainName = props.name || props.street || props.city || this.translate.instant('MAP_SEARCH.UNKNOWN_LOCATION');
+            const mainName =
+              props.name ||
+              props.street ||
+              props.city ||
+              this.translate.instant('MAP_SEARCH.UNKNOWN_LOCATION');
             const details: string[] = [];
 
             if (props.city && props.city !== mainName) details.push(props.city);
@@ -116,6 +130,13 @@ export class MapSearchComponent {
       .subscribe((finalResults) => {
         this.results.set(finalResults);
       });
+  }
+
+  public clearSearch(): void {
+    this.searchControl.setValue('');
+    this.results.set([]);
+    this.isSearching.set(false);
+    this.searchInput()?.nativeElement.focus();
   }
 
   public selectResult(result: SearchResult): void {

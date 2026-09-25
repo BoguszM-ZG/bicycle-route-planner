@@ -12,8 +12,12 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapModePanelComponent {
-  public readonly mapRoutingService = inject(MapRoutingService);
-  public readonly mapDrawService = inject(MapDrawService);
+  private readonly mapRoutingService = inject(MapRoutingService);
+  private readonly mapDrawService = inject(MapDrawService);
+
+  public routingMode = this.mapRoutingService.routingMode;
+  public roundTripDistanceKm = this.mapRoutingService.roundTripDistanceKm;
+  public currentZoneDraft = this.mapDrawService.currentZoneDraft;
 
   public setMode(mode: 'direct' | 'roundTrip' | 'avoidanceZone'): void {
     this.mapRoutingService.routingMode.set(mode);

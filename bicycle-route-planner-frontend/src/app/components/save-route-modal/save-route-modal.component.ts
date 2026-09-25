@@ -1,4 +1,12 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+  effect,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouteStateService } from '../../services/route-state.service';
 import { NotificationService } from '../../services/notification.service';
@@ -12,7 +20,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
   imports: [FormsModule, TranslatePipe],
   templateUrl: './save-route-modal.component.html',
   styleUrl: './save-route-modal.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SaveRouteModalComponent {
   private readonly routeStateService = inject(RouteStateService);
@@ -28,9 +36,19 @@ export class SaveRouteModalComponent {
   public routeName: string = '';
   private routeDataToSave: RouteDraft | null = null;
 
+  public routeInput = viewChild<ElementRef<HTMLInputElement>>('routeInput');
+
+  constructor() {
+    effect(() => {
+      if (this.isVisible()) {
+        setTimeout(() => this.routeInput()?.nativeElement.focus(), 0);
+      }
+    });
+  }
+
   public open(routeData: RouteDraft): void {
     this.routeDataToSave = routeData;
-    this.routeName = 'Moja trasa rowerowa';
+    this.routeName = this.translate.instant('MODALS.DEFAULT_ROUTE_NAME');
     this.isVisible.set(true);
   }
 
