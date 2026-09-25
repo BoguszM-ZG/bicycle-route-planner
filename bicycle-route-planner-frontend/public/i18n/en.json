@@ -4,7 +4,8 @@
     "LOGIN_REQUIRED": "You must be logged in to save a route.",
     "LOCATION_FOUND": "You are here!",
     "LOCATION_ERROR": "Failed to get location. Make sure your browser has the necessary permissions.",
-    "MAP_CLICK_START": "Click on the map to set the start point"
+    "MAP_CLICK_START": "Click on the map to set the start point",
+    "MAP_REGION_LABEL": "Interactive route map"
   },
   "MAP_MODE_PANEL": {
     "DIRECT": "Point to Point",

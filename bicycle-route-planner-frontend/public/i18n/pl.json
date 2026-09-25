@@ -3,7 +3,8 @@
     "DRAW_ROUTE_FIRST": "Najpierw wyznacz trasę, żeby ją zapisać.",
     "LOGIN_REQUIRED": "Musisz być zalogowany, aby zapisać trasę.",
     "LOCATION_FOUND": "Tu jesteś!",
-    "LOCATION_ERROR": "Nie udało się pobrać lokalizacji. Upewnij się, że przeglądarka ma odpowiednie uprawnienia."
+    "LOCATION_ERROR": "Nie udało się pobrać lokalizacji. Upewnij się, że przeglądarka ma odpowiednie uprawnienia.",
+    "MAP_REGION_LABEL": "Interaktywna mapa trasy"
   },
   "ROUTE": {
     "ENTER_NAME": "Proszę wpisać nazwę trasy",
