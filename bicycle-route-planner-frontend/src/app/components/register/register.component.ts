@@ -1,7 +1,12 @@
-import { Component, inject, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  ChangeDetectionStrategy,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 import { TranslatePipe } from '@ngx-translate/core';
@@ -9,7 +14,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslatePipe],
+  imports: [ReactiveFormsModule, TranslatePipe, RouterLink],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,7 +23,8 @@ export class RegisterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+
+  public fullNameInput = viewChild<ElementRef<HTMLInputElement>>('fullNameInput');
 
   public registerForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -41,12 +47,10 @@ export class RegisterComponent {
 
     const { email, password, fullName } = this.registerForm.getRawValue();
 
-    this.authService.register({ email, password, fullName })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          void this.router.navigate(['/']);
-        },
-      });
+    this.authService.register({ email, password, fullName }).subscribe({
+      next: () => {
+        void this.router.navigate(['/']);
+      },
+    });
   }
 }

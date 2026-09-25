@@ -5,8 +5,8 @@
       <p>{{ 'AUTH.LOGIN_SUBTITLE' | translate }}</p>
     </div>
 
-    @if (errorMessage()){
-      <div class="error-alert" role="alert">
+    @if (errorMessage()) {
+      <div class="error-alert" role="alert" aria-live="assertive">
         {{ errorMessage() | translate }}
       </div>
     }
@@ -14,7 +14,9 @@
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
       <div class="form-group">
         <label for="email">{{ 'AUTH.EMAIL_LABEL' | translate }} <span class="required" aria-hidden="true">*</span></label>
+
         <input
+          #emailInput
           id="email"
           type="email"
           formControlName="email"
@@ -22,7 +24,7 @@
           [placeholder]="'AUTH.EMAIL_PLACEHOLDER' | translate"
           [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
           [attr.aria-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
-          aria-describedby="email-error"
+          [attr.aria-describedby]="(loginForm.get('email')?.invalid && loginForm.get('email')?.touched) ? 'email-error' : null"
         />
         @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
           <div id="email-error" class="error-text">
@@ -41,7 +43,7 @@
           [placeholder]="'AUTH.PASSWORD_PLACEHOLDER' | translate"
           [class.invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
           [attr.aria-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          aria-describedby="password-error"
+          [attr.aria-describedby]="(loginForm.get('password')?.invalid && loginForm.get('password')?.touched) ? 'password-error' : null"
         />
         @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
           <div id="password-error" class="error-text">
@@ -50,12 +52,12 @@
         }
       </div>
 
-      <button type="submit" class="submit-btn" [disabled]="isLoading() || loginForm.invalid">
-        @if (!isLoading()){
+      <button type="submit" class="submit-btn" [disabled]="isLoading()">
+        @if (!isLoading()) {
           <span>{{ 'AUTH.LOGIN_BUTTON' | translate }}</span>
         } @else {
           <span class="loader" aria-hidden="true"></span>
-          <span class="sr-only">{{ 'AUTH.LOADING' | translate }}</span>
+          <span class="sr-only" aria-live="polite">{{ 'AUTH.LOADING' | translate }}</span>
         }
       </button>
     </form>
