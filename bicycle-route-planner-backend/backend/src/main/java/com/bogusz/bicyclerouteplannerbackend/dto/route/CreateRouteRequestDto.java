@@ -5,9 +5,11 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 import com.bogusz.bicyclerouteplannerbackend.model.RouteType;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public record CreateRouteRequestDto(
         @NotBlank(message = "Name of the route is required")
+        @Size(max = 150, message = "Name of the route cannot exceed 150 characters")
         String name,
 
         @NotNull(message = "Type of the route is required")

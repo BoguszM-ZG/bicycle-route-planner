@@ -6,6 +6,7 @@ import {
   DestroyRef,
   ElementRef,
   viewChild,
+
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -42,6 +43,8 @@ export class MapSearchComponent {
   private marker?: L.Marker;
   private readonly translate = inject(TranslateService);
 
+  public hasNoResults = signal(false);
+
   constructor() {
     this.destroyRef.onDestroy(() => {
       if (this.marker) {
@@ -55,6 +58,7 @@ export class MapSearchComponent {
         distinctUntilChanged(),
         takeUntilDestroyed(),
         tap((query) => {
+          this.hasNoResults.set(false);
           if (!query || query.length < 3) {
             this.results.set([]);
             this.isSearching.set(false);
@@ -129,6 +133,9 @@ export class MapSearchComponent {
       )
       .subscribe((finalResults) => {
         this.results.set(finalResults);
+        if (finalResults.length === 0 && this.searchControl.value.length >= 3) {
+          this.hasNoResults.set(true);
+        }
       });
   }
 
@@ -136,6 +143,7 @@ export class MapSearchComponent {
     this.searchControl.setValue('');
     this.results.set([]);
     this.isSearching.set(false);
+    this.hasNoResults.set(false);
     this.searchInput()?.nativeElement.focus();
   }
 
@@ -145,6 +153,7 @@ export class MapSearchComponent {
 
     this.searchControl.setValue(result.shortLabel, { emitEvent: false });
     this.results.set([]);
+    this.hasNoResults.set(false);
 
     map.flyTo([result.y, result.x], 15, { animate: true, duration: 1.5 });
 

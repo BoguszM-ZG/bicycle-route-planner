@@ -127,6 +127,12 @@ export class RouteStateService {
         error: (err) => {
           this.logger.error('Error saving route', err);
           this._error.set('Failed to save route.');
+
+          if (err.status === 400) {
+            this.notificationService.error(this.translate.instant('ERRORS.ROUTE_TOO_SHORT'));
+          } else {
+            this.notificationService.error(this.translate.instant('ERRORS.GLOBAL_UNKNOWN_ERROR'));
+          }
         },
       });
   }

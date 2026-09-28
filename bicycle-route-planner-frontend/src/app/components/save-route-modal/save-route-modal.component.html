@@ -22,6 +22,7 @@
         [(ngModel)]="routeName"
         [placeholder]="'MODALS.SAVE_ROUTE_PLACEHOLDER' | translate"
         class="route-name-input"
+        maxlength="150"
         (keyup.enter)="saveRoute()"
         (keyup.escape)="close()"
       />

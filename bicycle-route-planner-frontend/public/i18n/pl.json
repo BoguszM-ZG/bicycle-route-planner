@@ -11,7 +11,8 @@
     "SAVE_SUCCESS": "Trasa została zapisana pomyślnie!"
   },
   "ZONE": {
-    "ENTER_NAME": "Proszę wpisać prawidłową nazwę strefy"
+    "ENTER_NAME": "Proszę wpisać prawidłową nazwę strefy",
+    "ZONE_POPUP_TITLE": "Strefa omijana:"
   },
   "GPX": {
     "MAP_CLICK_START": "Kliknij na mapie, aby ustawić punkt startowy",
@@ -124,7 +125,10 @@
   },
   "ERRORS": {
     "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia.",
-    "DOWNLOAD_GPX_ERROR": "Nie udało się pobrać pliku GPX. Spróbuj ponownie później."
+    "DOWNLOAD_GPX_ERROR": "Nie udało się pobrać pliku GPX. Spróbuj ponownie później.",
+    "ROUTE_NOT_FOUND": "Nie znaleziono drogi w pobliżu wybranego punktu.",
+    "ROUND_TRIP_NOT_FOUND": "Nie można wyznaczyć pętli w tym obszarze (brak dróg).",
+    "ROUTE_TOO_SHORT": "Trasa jest zbyt krótka, aby ją zapisać (wymaga minimum 2 punktów)."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "woj. lubuskie",

@@ -23,7 +23,8 @@
     "SAVE_SUCCESS": "Route saved successfully!"
   },
   "ZONE": {
-    "ENTER_NAME": "Please enter a valid zone name"
+    "ENTER_NAME": "Please enter a valid zone name",
+    "ZONE_POPUP_TITLE": "Avoidance Zone:"
   },
   "GPX": {
     "DOWNLOAD_START": "GPX file download started",
@@ -32,7 +33,7 @@
   "MODALS": {
     "SAVE_ROUTE_TITLE": "Save Route",
     "SAVE_ROUTE_LABEL": "Enter a name for your new cycling route",
-    "SAVE_ROUTE_PLACEHOLDER": "E.g. Evening lake loop",
+    "SAVE_ROUTE_PLACEHOLDER": "New cycling route",
     "FOLDER_SELECT_LABEL": "Select a folder (optional)",
     "NO_FOLDER": "-- No folder (save to root) --",
     "CANCEL": "Cancel",
@@ -125,7 +126,10 @@
   },
   "ERRORS": {
     "GLOBAL_UNKNOWN_ERROR": "An unexpected application error occurred. We apologize for the inconvenience.",
-    "DOWNLOAD_GPX_ERROR": "Failed to download GPX file. Please try again later."
+    "DOWNLOAD_GPX_ERROR": "Failed to download GPX file. Please try again later.",
+    "ROUTE_NOT_FOUND": "No roads were found near the point.",
+    "ROUND_TRIP_NOT_FOUND": "Unable to generate a loop in this area (no roads available).",
+    "ROUTE_TOO_SHORT": "The route is too short to be saved (requires at least 2 points)."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "Lubusz Province",
