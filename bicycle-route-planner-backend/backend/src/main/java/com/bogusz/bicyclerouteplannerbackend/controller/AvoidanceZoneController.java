@@ -4,6 +4,7 @@ package com.bogusz.bicyclerouteplannerbackend.controller;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.UpdateAvoidanceZoneStatusDto;
 import com.bogusz.bicyclerouteplannerbackend.service.AvoidanceZoneService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,9 +45,10 @@ public class AvoidanceZoneController {
     }
 
     @PatchMapping("/{id}/active")
-    public ResponseEntity<Void> toggleAvoidanceActiveStatus(@PathVariable Long id,
-                                @RequestParam boolean isActive, @AuthenticationPrincipal UserPrincipal principal){
-        avoidanceZoneService.toggleAvoidanceActiveStatus(id, principal.id(), isActive);
+    public ResponseEntity<Void> updateAvoidanceZoneStatus(@PathVariable Long id,
+           @Valid @RequestBody UpdateAvoidanceZoneStatusDto updateDto,
+           @AuthenticationPrincipal UserPrincipal principal){
+        avoidanceZoneService.toggleAvoidanceActiveStatus(id, principal.id(), updateDto.isActive());
         return ResponseEntity.noContent().build();
     }
 

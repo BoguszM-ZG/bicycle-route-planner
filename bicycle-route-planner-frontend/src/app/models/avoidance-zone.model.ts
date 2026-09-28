@@ -5,7 +5,11 @@ export interface AvoidanceZoneDto{
   isActive?: boolean;
 }
 
-export interface CreateAvoidanceZoneRequestDto{
+export interface CreateAvoidanceZoneRequestDto {
   name: string;
   zoneGeom: string;
+}
+
+export interface UpdateAvoidanceZoneStatusDto {
+  isActive: boolean;
 }
