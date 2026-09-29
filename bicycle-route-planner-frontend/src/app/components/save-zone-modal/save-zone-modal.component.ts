@@ -13,6 +13,7 @@ import { AvoidanceZoneStateService } from '../../services/avoidance-zone-state.s
 import { MapDrawService } from '../../services/map-draw.service';
 import { MapRoutingService } from '../../services/map-routing.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-save-zone-modal',
@@ -28,6 +29,7 @@ export class SaveZoneModalComponent {
   private readonly routingService = inject(MapRoutingService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
 
   public isVisible = signal<boolean>(false);
   public isLoading = this.zoneStateService.isLoading;
@@ -36,7 +38,8 @@ export class SaveZoneModalComponent {
 
   public zoneNameControl = new FormControl('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.pattern(/\S/)],
+    validators: [Validators.required, Validators.pattern(/\S/),
+      Validators.minLength(1), Validators.maxLength(100)],
   });
 
   private wktStringToSave: string | null = null;
@@ -66,6 +69,10 @@ export class SaveZoneModalComponent {
   public saveZone(): void {
     if (this.zoneNameControl.invalid) {
       this.zoneNameControl.markAsTouched();
+      this.logger.warn(
+        '[SaveZoneModal] Attempt to save an invalid form',
+        this.zoneNameControl.errors,
+      );
       this.notificationService.warning(this.translate.instant('MODALS.EMPTY_ZONE_NAME'));
       return;
     }

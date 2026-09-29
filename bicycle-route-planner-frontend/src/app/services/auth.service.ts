@@ -118,7 +118,6 @@ export class AuthService {
 
   private handleAuthSuccess(response: AuthResponse): void {
     this._currentUser.set(response.user);
-    this.logger.info('User successfully authenticated', response.user.email);
 
     if (isPlatformBrowser(this.platformId)) {
       localStorage.setItem('accessToken', response.accessToken);

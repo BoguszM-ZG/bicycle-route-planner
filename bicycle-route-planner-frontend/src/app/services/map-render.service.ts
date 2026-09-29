@@ -14,6 +14,7 @@ export class MapRenderService {
 
   private map?: L.Map;
   private currentGeoJsonLayer?: L.GeoJSON;
+  private searchMarker?: L.Marker;
 
   constructor() {
     effect(() => {
@@ -112,5 +113,40 @@ export class MapRenderService {
       this.map.removeLayer(this.currentGeoJsonLayer);
       this.currentGeoJsonLayer = undefined;
     }
+  }
+
+
+
+  public getCenter(): { lat: number; lng: number } | null {
+    if (!this.map) return null;
+    const center = this.map.getCenter();
+    return { lat: center.lat, lng: center.lng };
+  }
+
+
+  public focusOnSearchLocation(
+    lat: number,
+    lng: number,
+    zoom: number,
+    duration: number,
+    onPinClick: () => void,
+  ): void {
+    if (!this.map) return;
+
+    this.map.flyTo([lat, lng], zoom, { animate: true, duration });
+
+    this.clearSearchMarker();
+
+    this.searchMarker = L.marker([lat, lng], { icon: MAP_CONSTANTS.SEARCH_PIN }).addTo(this.map);
+
+    this.searchMarker.once('click', () => {
+      this.clearSearchMarker();
+      onPinClick();
+    });
+  }
+
+  public clearSearchMarker(): void {
+    this.searchMarker?.remove();
+    this.searchMarker = undefined;
   }
 }
