@@ -3,7 +3,7 @@
   <div class="route-item-header">
     @if (!isConfirmingDelete() && !isMoving() && !isRenaming()) {
       <button class="route-info-btn" (click)="onSelect()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate">
-        <span class="route-name">{{ route().name }}</span>
+        <span class="route-name" [class.expanded]="isSelected()">{{ route().name }}</span>
         <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
       </button>
 
