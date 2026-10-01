@@ -15,14 +15,19 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/avoidance-zones")
 @RequiredArgsConstructor
+@Tag(name = "Avoidance Zones", description = "Management of map areas to avoid during routing")
 public class AvoidanceZoneController {
 
     private final AvoidanceZoneService avoidanceZoneService;
 
     @GetMapping
+    @Operation(summary = "Get avoidance zones", description = "Retrieves all avoidance zones for the authenticated user.")
     public ResponseEntity<List<AvoidanceZoneDto>> getAvoidanceZonesForUser(
             @AuthenticationPrincipal UserPrincipal principal){
         List<AvoidanceZoneDto> avoidanceZones = avoidanceZoneService.getAvoidanceZonesForUser(principal.id());
@@ -30,6 +35,7 @@ public class AvoidanceZoneController {
     }
 
     @PostMapping
+    @Operation(summary = "Create avoidance zone", description = "Saves a new avoidance area geometry.")
     public ResponseEntity<AvoidanceZoneDto> createAvoidanceZone(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody CreateAvoidanceZoneRequestDto request){
@@ -38,6 +44,7 @@ public class AvoidanceZoneController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete avoidance zone", description = "Removes a specific avoidance zone.")
     public ResponseEntity<Void> deleteAvoidanceZone(@PathVariable Long id,
                                                     @AuthenticationPrincipal UserPrincipal principal){
         avoidanceZoneService.deleteAvoidanceZone(id, principal.id());
@@ -45,6 +52,7 @@ public class AvoidanceZoneController {
     }
 
     @PatchMapping("/{id}/active")
+    @Operation(summary = "Toggle zone status", description = "Enables or disables an avoidance zone without deleting it.")
     public ResponseEntity<Void> updateAvoidanceZoneStatus(@PathVariable Long id,
            @Valid @RequestBody UpdateAvoidanceZoneStatusDto updateDto,
            @AuthenticationPrincipal UserPrincipal principal){
