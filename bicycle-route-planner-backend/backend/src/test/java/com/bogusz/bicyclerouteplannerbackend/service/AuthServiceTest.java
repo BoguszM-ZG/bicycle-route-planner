@@ -87,7 +87,7 @@ class AuthServiceTest {
         assertThat(response.getAccessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
         assertThat(response.getRefreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
 
-        // Verify
+        // VERIFY
         then(userService).should().registerUser(TEST_EMAIL, TEST_ENCODED_PASSWORD, TEST_FULL_NAME);
     }
 
@@ -121,7 +121,7 @@ class AuthServiceTest {
         assertThat(response.getAccessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
         assertThat(response.getRefreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
 
-        //Verify
+        //VERIFY
         then(authenticationManager).should().authenticate(tokenCaptor.capture());
 
         UsernamePasswordAuthenticationToken capturedToken = tokenCaptor.getValue();

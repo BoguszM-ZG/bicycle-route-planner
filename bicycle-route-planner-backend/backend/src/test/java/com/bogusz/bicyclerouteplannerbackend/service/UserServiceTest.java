@@ -78,7 +78,7 @@ class UserServiceTest {
                 .isInstanceOf(UserAlreadyExistsException.class)
                 .hasMessageContaining("already exists");
 
-        // Verify
+        // VERIFY
         then(userRepository).shouldHaveNoMoreInteractions();
     }
 
