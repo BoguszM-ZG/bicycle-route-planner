@@ -1,0 +1,129 @@
+package com.bogusz.bicyclerouteplannerbackend.service;
+
+import com.bogusz.bicyclerouteplannerbackend.exception.UserAlreadyExistsException;
+import com.bogusz.bicyclerouteplannerbackend.model.User;
+import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    private static final String TEST_EMAIL = "test@example.com";
+    private static final String TEST_PASSWORD = "encodedPassword123";
+    private static final String TEST_FULL_NAME = "Test User";
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private UserService userService;
+
+    @Captor
+    private ArgumentCaptor<User> userCaptor;
+
+    @Test
+    void shouldRegisterUserSuccessfully() {
+        // GIVEN
+        given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(false);
+
+        User mockSavedUser = new User();
+        mockSavedUser.setId(1L);
+        mockSavedUser.setEmail(TEST_EMAIL);
+        mockSavedUser.setRole("ROLE_USER");
+        mockSavedUser.setIsActive(true);
+
+        given(userRepository.save(any(User.class))).willReturn(mockSavedUser);
+
+        // WHEN
+        User result = userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
+
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+
+        // Verify
+        then(userRepository).should().save(userCaptor.capture());
+        User capturedUser = userCaptor.getValue();
+
+        assertThat(capturedUser.getEmail()).isEqualTo(TEST_EMAIL);
+        assertThat(capturedUser.getPassword()).isEqualTo(TEST_PASSWORD);
+        assertThat(capturedUser.getFullName()).isEqualTo(TEST_FULL_NAME);
+        assertThat(capturedUser.getRole()).isEqualTo("ROLE_USER");
+        assertThat(capturedUser.getIsActive()).isTrue();
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRegisteringWithExistingEmail() {
+        // GIVEN
+        given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(true);
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME))
+                .isInstanceOf(UserAlreadyExistsException.class)
+                .hasMessageContaining("already exists");
+
+        // Verify
+        then(userRepository).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldGetUserByEmailSuccessfully() {
+        // GIVEN
+        User mockUser = new User();
+        mockUser.setId(1L);
+        mockUser.setEmail(TEST_EMAIL);
+
+        given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(mockUser));
+
+        // WHEN
+        User result = userService.getByEmail(TEST_EMAIL);
+
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result.getEmail()).isEqualTo(TEST_EMAIL);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenGettingByNonExistentEmail() {
+        // GIVEN
+        given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> userService.getByEmail(TEST_EMAIL))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void shouldLoadUserByUsernameSuccessfully() {
+        // GIVEN
+        User mockUser = new User();
+        mockUser.setEmail(TEST_EMAIL);
+
+
+        given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(mockUser));
+
+        // WHEN
+        UserDetails result = userService.loadUserByUsername(TEST_EMAIL);
+
+        // THEN
+        assertThat(result).isNotNull();
+        assertThat(result.getUsername()).isEqualTo(TEST_EMAIL);
+    }
+}
