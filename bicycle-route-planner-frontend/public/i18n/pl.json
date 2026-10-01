@@ -128,7 +128,21 @@
     "DOWNLOAD_GPX_ERROR": "Nie udało się pobrać pliku GPX. Spróbuj ponownie później.",
     "ROUTE_NOT_FOUND": "Nie znaleziono drogi w pobliżu wybranego punktu.",
     "ROUND_TRIP_NOT_FOUND": "Nie można wyznaczyć pętli w tym obszarze (brak dróg).",
-    "ROUTE_TOO_SHORT": "Trasa jest zbyt krótka, aby ją zapisać (wymaga minimum 2 punktów)."
+    "ROUTE_TOO_SHORT": "Trasa jest zbyt krótka, aby ją zapisać (wymaga minimum 2 punktów).",
+    "FETCH_ROUTES_FAILED": "Nie udało się pobrać listy tras.",
+    "FETCH_ROUTE_DETAILS_FAILED": "Nie udało się pobrać szczegółów trasy.",
+    "DELETE_ROUTE_FAILED": "Nie udało się usunąć trasy.",
+    "SAVE_ROUTE_FAILED": "Nie udało się zapisać trasy.",
+    "MOVE_ROUTE_FAILED": "Nie udało się przenieść trasy.",
+    "RENAME_ROUTE_FAILED": "Nie udało się zmienić nazwy trasy.",
+    "FETCH_FOLDERS_FAILED": "Nie udało się pobrać folderów.",
+    "CREATE_FOLDER_FAILED": "Nie udało się utworzyć folderu.",
+    "DELETE_FOLDER_FAILED": "Nie udało się usunąć folderu.",
+    "RENAME_FOLDER_FAILED": "Nie udało się zmienić nazwy folderu.",
+    "LOAD_ZONES_FAILED": "Nie udało się załadować stref wykluczeń.",
+    "SAVE_ZONE_FAILED": "Nie udało się zapisać strefy wykluczeń.",
+    "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy wykluczeń.",
+    "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "woj. lubuskie",

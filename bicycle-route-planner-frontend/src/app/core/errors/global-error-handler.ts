@@ -1,7 +1,6 @@
 import { ErrorHandler, Injectable, Injector, NgZone, inject } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable()
@@ -14,7 +13,6 @@ export class GlobalErrorHandler implements ErrorHandler {
 
     const logger = this.injector.get(LoggerService);
     const notificationService = this.injector.get(NotificationService);
-    const translate = this.injector.get(TranslateService);
 
     const message = unwrappedError.message ? unwrappedError.message : unwrappedError.toString();
 
@@ -27,8 +25,7 @@ export class GlobalErrorHandler implements ErrorHandler {
     }
 
     this.zone.run(() => {
-      const translatedErrorMessage = translate.instant('ERRORS.GLOBAL_UNKNOWN_ERROR');
-      notificationService.error(translatedErrorMessage);
+      notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
     });
   }
 

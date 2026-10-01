@@ -8,7 +8,7 @@
         @if (toast.type === 'info') { <span>ℹ</span> }
       </div>
 
-      <div class="toast-message">{{ toast.message }}</div>
+      <div class="toast-message">{{ toast.message | translate: toast.translationParams }}</div>
 
       <button
         class="toast-close"

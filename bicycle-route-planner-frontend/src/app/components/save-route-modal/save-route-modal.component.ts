@@ -73,7 +73,7 @@ export class SaveRouteModalComponent {
         '[SaveRouteModal] Attempt to save an invalid form',
         this.routeNameControl.errors,
       );
-      this.notificationService.warning(this.translate.instant('MODALS.EMPTY_ROUTE_NAME'));
+      this.notificationService.warning('MODALS.EMPTY_ROUTE_NAME');
       return;
     }
 
@@ -94,7 +94,7 @@ export class SaveRouteModalComponent {
     };
 
     this.routeStateService.createRoute(dto, () => {
-      this.notificationService.success(this.translate.instant('MODALS.ROUTE_SAVED'));
+      this.notificationService.success('MODALS.ROUTE_SAVED');
       this.close();
     });
   }

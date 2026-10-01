@@ -129,7 +129,21 @@
     "DOWNLOAD_GPX_ERROR": "Failed to download GPX file. Please try again later.",
     "ROUTE_NOT_FOUND": "No roads were found near the point.",
     "ROUND_TRIP_NOT_FOUND": "Unable to generate a loop in this area (no roads available).",
-    "ROUTE_TOO_SHORT": "The route is too short to be saved (requires at least 2 points)."
+    "ROUTE_TOO_SHORT": "The route is too short to be saved (requires at least 2 points).",
+    "FETCH_ROUTES_FAILED": "Failed to fetch routes list.",
+    "FETCH_ROUTE_DETAILS_FAILED": "Failed to fetch route details.",
+    "DELETE_ROUTE_FAILED": "Failed to delete route.",
+    "SAVE_ROUTE_FAILED": "Failed to save route.",
+    "MOVE_ROUTE_FAILED": "Failed to move route.",
+    "RENAME_ROUTE_FAILED": "Failed to rename route.",
+    "FETCH_FOLDERS_FAILED": "Failed to fetch folders.",
+    "CREATE_FOLDER_FAILED": "Failed to create folder.",
+    "DELETE_FOLDER_FAILED": "Failed to delete folder.",
+    "RENAME_FOLDER_FAILED": "Failed to rename folder.",
+    "LOAD_ZONES_FAILED": "Failed to load avoidance zones.",
+    "SAVE_ZONE_FAILED": "Failed to save avoidance zone.",
+    "DELETE_ZONE_FAILED": "Failed to delete avoidance zone.",
+    "TOGGLE_ZONE_FAILED": "Failed to toggle zone status."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "Lubusz Province",

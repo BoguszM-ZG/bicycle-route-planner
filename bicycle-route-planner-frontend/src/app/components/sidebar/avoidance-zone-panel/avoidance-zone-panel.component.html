@@ -11,10 +11,6 @@
     <div class="loading-message" aria-live="polite" aria-busy="true">
       <p>{{ 'SIDEBAR.LOADING' | translate }}</p>
     </div>
-  } @else if (error()) {
-    <div class="error-message" aria-live="assertive">
-      <p>{{ error() }}</p>
-    </div>
   } @else if (zones().length === 0) {
     <div class="empty-message">
       <p>{{ 'SIDEBAR.ZONES_PANEL_EMPTY' | translate }}</p>

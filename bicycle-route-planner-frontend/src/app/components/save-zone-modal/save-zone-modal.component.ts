@@ -73,7 +73,7 @@ export class SaveZoneModalComponent {
         '[SaveZoneModal] Attempt to save an invalid form',
         this.zoneNameControl.errors,
       );
-      this.notificationService.warning(this.translate.instant('MODALS.EMPTY_ZONE_NAME'));
+      this.notificationService.warning('MODALS.EMPTY_ZONE_NAME');
       return;
     }
     if (!this.wktStringToSave || this.isLoading()) {

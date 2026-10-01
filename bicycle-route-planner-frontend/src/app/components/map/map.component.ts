@@ -10,7 +10,7 @@ import {
 import * as L from 'leaflet';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
-import { TranslateService, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MapRenderService } from '../../services/map-render.service';
 import { SaveRouteModalComponent } from '../save-route-modal/save-route-modal.component';
@@ -46,14 +46,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class MapComponent implements AfterViewInit {
   private map!: L.Map;
-  private userLocationMarker?: L.Marker;
 
   private readonly authService = inject(AuthService);
   private readonly mapRenderService = inject(MapRenderService);
   public readonly mapRoutingService = inject(MapRoutingService);
   private readonly mapDrawService = inject(MapDrawService);
   private readonly notificationService = inject(NotificationService);
-  private readonly translate = inject(TranslateService);
   private readonly logger = inject(LoggerService);
   private readonly ngZone = inject(NgZone);
   private readonly destroyRef = inject(DestroyRef);
@@ -91,12 +89,12 @@ export class MapComponent implements AfterViewInit {
 
     if (!draft?.geometryWkt) {
       this.logger.warn('User tried to save a route, but no route is drawn');
-      this.notificationService.warning(this.translate.instant('MAP.DRAW_ROUTE_FIRST'));
+      this.notificationService.warning('MAP.DRAW_ROUTE_FIRST');
       return;
     }
 
     if (!this.authService.isAuthenticated()) {
-      this.notificationService.warning(this.translate.instant('MAP.LOGIN_REQUIRED'));
+      this.notificationService.warning('MAP.LOGIN_REQUIRED');
       return;
     }
 
@@ -104,35 +102,6 @@ export class MapComponent implements AfterViewInit {
   }
 
   public locateMe(): void {
-    if (!this.map) return;
-
-    this.map.locate({ setView: true, maxZoom: 15 });
-
-    this.map.once('locationfound', (e) => {
-      this.ngZone.run(() => {
-        if (this.userLocationMarker) {
-          this.userLocationMarker.setLatLng(e.latlng);
-        } else {
-          this.userLocationMarker = L.marker(e.latlng)
-            .addTo(this.map)
-            .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
-
-          this.userLocationMarker.on('click', () => {
-            if (this.userLocationMarker) {
-              this.userLocationMarker.remove();
-              this.userLocationMarker = undefined;
-            }
-          });
-        }
-        this.userLocationMarker?.openPopup();
-      });
-    });
-
-    this.map.once('locationerror', (e) => {
-      this.ngZone.run(() => {
-        this.logger.warn('GPS location access denied or failed:', e);
-        this.notificationService.error(this.translate.instant('MAP.LOCATION_ERROR'));
-      });
-    });
+    this.mapRenderService.locateUser();
   }
 }

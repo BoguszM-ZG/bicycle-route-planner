@@ -5,7 +5,6 @@ import { RouteService } from './route.service';
 
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
-import { TranslateService } from '@ngx-translate/core';
 import { NotificationService } from './notification.service';
 
 @Injectable({
@@ -15,7 +14,6 @@ export class RouteStateService {
   private readonly routeService = inject(RouteService);
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
-  private readonly translate = inject(TranslateService);
   private readonly notificationService = inject(NotificationService);
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
@@ -23,14 +21,12 @@ export class RouteStateService {
 
   private readonly _isLoadingList = signal<boolean>(false);
   private readonly _isSaving = signal<boolean>(false);
-  private readonly _error = signal<string | null>(null);
 
   public readonly routes = this._routes.asReadonly();
   public readonly selectedRoute = this._selectedRoute.asReadonly();
 
   public readonly isLoadingList = this._isLoadingList.asReadonly();
   public readonly isSaving = this._isSaving.asReadonly();
-  public readonly error = this._error.asReadonly();
 
   constructor() {
     effect(() => {
@@ -47,12 +43,10 @@ export class RouteStateService {
     this._selectedRoute.set(null);
     this._isLoadingList.set(false);
     this._isSaving.set(false);
-    this._error.set(null);
   }
 
   public fetchRoutes(): void {
     this._isLoadingList.set(true);
-    this._error.set(null);
 
     this.routeService
       .getRoutes()
@@ -61,7 +55,7 @@ export class RouteStateService {
         next: (routes) => this._routes.set(routes),
         error: (err) => {
           this.logger.error('Error fetching routes', err);
-          this._error.set('Failed to fetch routes list.');
+          this.notificationService.error('ERRORS.FETCH_ROUTES_FAILED');
         },
       });
   }
@@ -72,14 +66,13 @@ export class RouteStateService {
       return;
     }
 
-    this._error.set(null);
     this._selectedRoute.set(null);
 
     this.routeService.getRouteDetails(routeId).subscribe({
       next: (routeDetails) => this._selectedRoute.set(routeDetails),
       error: (err) => {
         this.logger.error('Error fetching route details', err);
-        this._error.set('Failed to fetch route details.');
+        this.notificationService.error('ERRORS.FETCH_ROUTE_DETAILS_FAILED');
       },
     });
   }
@@ -99,14 +92,13 @@ export class RouteStateService {
       },
       error: (err) => {
         this.logger.error('Error deleting route', err);
-        this._error.set('Failed to delete route.');
+        this.notificationService.error('ERRORS.DELETE_ROUTE_FAILED');
       },
     });
   }
 
   public createRoute(dto: CreateRouteRequestDto, onSuccess?: () => void): void {
     this._isSaving.set(true);
-    this._error.set(null);
 
     this.routeService
       .addRoute(dto)
@@ -126,12 +118,11 @@ export class RouteStateService {
         },
         error: (err) => {
           this.logger.error('Error saving route', err);
-          this._error.set('Failed to save route.');
 
           if (err.status === 400) {
-            this.notificationService.error(this.translate.instant('ERRORS.ROUTE_TOO_SHORT'));
+            this.notificationService.error('ERRORS.ROUTE_TOO_SHORT');
           } else {
-            this.notificationService.error(this.translate.instant('ERRORS.GLOBAL_UNKNOWN_ERROR'));
+            this.notificationService.error('ERRORS.SAVE_ROUTE_FAILED');
           }
         },
       });
@@ -146,7 +137,7 @@ export class RouteStateService {
         this.logger.debug('GPX download initiated successfully');
       },
       error: () => {
-        this.notificationService.error(this.translate.instant('ERROR.DOWNLOAD_GPX_ERROR'));
+        this.notificationService.error('ERROR.DOWNLOAD_GPX_ERROR');
       },
     });
   }
@@ -160,7 +151,7 @@ export class RouteStateService {
       },
       error: (err) => {
         this.logger.error('Error moving route', err);
-        this._error.set('Failed to move route.');
+        this.notificationService.error('ERRORS.MOVE_ROUTE_FAILED');
       },
     });
   }
@@ -180,7 +171,7 @@ export class RouteStateService {
       },
       error: (err) => {
         this.logger.error('Error renaming route', err);
-        this._error.set('Failed to rename route.');
+        this.notificationService.error('ERRORS.RENAME_ROUTE_FAILED');
       },
     });
   }

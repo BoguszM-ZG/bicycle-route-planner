@@ -11,7 +11,6 @@ import { MAP_CONSTANTS } from '../constants/map.constants';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
-import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +23,6 @@ export class MapRoutingService {
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
-  private readonly translateService = inject(TranslateService);
 
   private routingControl?: L.Routing.Control;
   private roundTripLayer?: L.Polyline;
@@ -81,7 +79,7 @@ export class MapRoutingService {
     this.routingControl.on('routingerror', (e: any) => {
       this.logger.error('Route error', e);
       this.ngZone.run(() => {
-        this.notificationService.error(this.translateService.instant('ERRORS.ROUTE_NOT_FOUND'));
+        this.notificationService.error('ERRORS.ROUTE_NOT_FOUND');
       });
     });
   }
@@ -137,7 +135,7 @@ export class MapRoutingService {
     this.orsService.getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson).subscribe({
       next: (data) => {
         if (data.error || !data.features || data.features.length === 0) {
-          this.logger.error('Brak danych o trasie');
+          this.logger.error('No route data found');
           return;
         }
         const feature = data.features[0];

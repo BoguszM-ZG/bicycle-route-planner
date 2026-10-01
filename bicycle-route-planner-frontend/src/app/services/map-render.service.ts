@@ -1,20 +1,27 @@
-import { Injectable, inject, effect } from '@angular/core';
+import { Injectable, inject, effect, NgZone } from '@angular/core';
 import * as L from 'leaflet';
 import { parse } from 'wellknown';
 import { RouteStateService } from './route-state.service';
 import { RouteDetailDto } from '../models/route.model';
-
 import { MAP_CONSTANTS } from '../constants/map.constants';
+import { LoggerService } from './logger.service';
+import { NotificationService } from './notification.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MapRenderService {
   private readonly routeStateService = inject(RouteStateService);
+  private readonly ngZone = inject(NgZone);
+  private readonly logger = inject(LoggerService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly translate = inject(TranslateService);
 
   private map?: L.Map;
   private currentGeoJsonLayer?: L.GeoJSON;
   private searchMarker?: L.Marker;
+  private userLocationMarker?: L.Marker;
 
   constructor() {
     effect(() => {
@@ -115,14 +122,11 @@ export class MapRenderService {
     }
   }
 
-
-
   public getCenter(): { lat: number; lng: number } | null {
     if (!this.map) return null;
     const center = this.map.getCenter();
     return { lat: center.lat, lng: center.lng };
   }
-
 
   public focusOnSearchLocation(
     lat: number,
@@ -148,5 +152,39 @@ export class MapRenderService {
   public clearSearchMarker(): void {
     this.searchMarker?.remove();
     this.searchMarker = undefined;
+  }
+
+  public locateUser(): void {
+    const map = this.map;
+    if (!map) return;
+
+    map.locate({ setView: true, maxZoom: 15 });
+
+    map.once('locationfound', (e) => {
+      this.ngZone.run(() => {
+        if (this.userLocationMarker) {
+          this.userLocationMarker.setLatLng(e.latlng);
+        } else {
+          this.userLocationMarker = L.marker(e.latlng)
+            .addTo(map)
+            .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
+
+          this.userLocationMarker.on('click', () => {
+            if (this.userLocationMarker) {
+              this.userLocationMarker.remove();
+              this.userLocationMarker = undefined;
+            }
+          });
+        }
+        this.userLocationMarker?.openPopup();
+      });
+    });
+
+    map.once('locationerror', (e) => {
+      this.ngZone.run(() => {
+        this.logger.warn('GPS location access denied or failed:', e);
+        this.notificationService.error('MAP.LOCATION_ERROR');
+      });
+    });
   }
 }

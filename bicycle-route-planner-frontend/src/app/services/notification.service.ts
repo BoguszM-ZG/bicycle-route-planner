@@ -1,37 +1,55 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, NgZone } from '@angular/core';
 import { Notification, NotificationType } from '../models/notification.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class NotificationService {
+  private readonly ngZone = inject(NgZone); 
+
   private readonly _notifications = signal<Notification[]>([]);
   public readonly notifications = this._notifications.asReadonly();
 
   private idCounter = 0;
 
-  show(message: string, type: NotificationType = 'info', durationMs: number = 4000) {
+  show(
+    messageKey: string, 
+    type: NotificationType = 'info', 
+    durationMs: number = 4000,
+    translationParams?: Record<string, string | number>
+  ) {
     const id = this.idCounter++;
-    this._notifications.update((n) => [...n, { id, message, type }]);
+    
+    this._notifications.update((n) => [...n, { 
+      id, 
+      message: messageKey,
+      type,
+      translationParams
+    }]);
 
     if (durationMs > 0) {
-      setTimeout(() => {
-        this.remove(id);
-      }, durationMs);
+      this.ngZone.runOutsideAngular(() => {
+        setTimeout(() => {
+          this.remove(id);
+        }, durationMs);
+      });
     }
   }
 
-  success(message: string, durationMs?: number) {
-    this.show(message, 'success', durationMs);
+  success(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+    this.show(messageKey, 'success', durationMs, params);
   }
-  error(message: string, durationMs: number = 6000) {
-    this.show(message, 'error', durationMs);
+  
+  error(messageKey: string, params?: Record<string, any>, durationMs: number = 6000) {
+    this.show(messageKey, 'error', durationMs, params);
   }
-  info(message: string, durationMs?: number) {
-    this.show(message, 'info', durationMs);
+  
+  info(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+    this.show(messageKey, 'info', durationMs, params);
   }
-  warning(message: string, durationMs?: number) {
-    this.show(message, 'warning', durationMs);
+  
+  warning(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+    this.show(messageKey, 'warning', durationMs, params);
   }
 
   remove(id: number) {
