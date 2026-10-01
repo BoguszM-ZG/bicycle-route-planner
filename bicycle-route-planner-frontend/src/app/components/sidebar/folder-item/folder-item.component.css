@@ -1,6 +1,13 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .folder-container {
   display: flex;
   flex-direction: column;
+  width: 100% !important;
+  box-sizing: border-box !important;
   margin-bottom: 4px;
 }
 
@@ -69,6 +76,7 @@
 
 .rename-input {
   flex: 1;
+  min-width: 0;
   padding: 2px 4px;
   margin: 0 5px 0 8px;
 }
@@ -82,3 +90,9 @@
 .right-aligned {
   margin-left: auto;
 }
+
+.folder-header .confirm-btn {
+  flex-shrink: 0;
+}
+
+

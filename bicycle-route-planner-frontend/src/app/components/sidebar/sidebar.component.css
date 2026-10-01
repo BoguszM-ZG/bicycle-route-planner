@@ -130,60 +130,6 @@
   border-radius: 4px;
 }
 
-.folder-actions {
-  margin-bottom: 15px;
-}
 
-.create-folder-btn {
-  width: 100%;
-  padding: 10px;
-  background: rgba(255,255,255,0.5);
-  border: 1px dashed #9ca3af;
-  border-radius: 8px;
-  font-weight: 600;
-  color: #4b5563;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.create-folder-btn:hover {
-  background: rgba(255,255,255,0.8);
-  border-color: #6b7280;
-}
 
-.create-folder-form {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
 
-.folder-input {
-  flex: 1;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.loading-state, .empty-state {
-  text-align: center;
-  margin-top: 30px;
-  font-size: 0.95rem;
-  color: #4b5563;
-  font-style: italic;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}

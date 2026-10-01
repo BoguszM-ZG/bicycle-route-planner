@@ -1,0 +1,57 @@
+<div class="folder-actions">
+  @if (!isCreatingFolder()) {
+    <button class="create-folder-btn" (click)="toggleCreateFolder()">
+      {{ 'SIDEBAR.NEW_FOLDER' | translate }}
+    </button>
+  } @else {
+    <div class="create-folder-form">
+      <label for="newFolderInput" class="sr-only">{{ 'SIDEBAR.NEW_FOLDER_LABEL' | translate }}</label>
+      <input
+        id="newFolderInput"
+        class="folder-input"
+        type="text"
+        [formControl]="newFolderName"
+        [placeholder]="'SIDEBAR.FOLDER_NAME_PLACEHOLDER' | translate"
+        (keyup.enter)="submitNewFolder()"
+        (keyup.escape)="toggleCreateFolder()"
+      >
+      <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" [title]="'SIDEBAR.CONFIRM' | translate">
+        <span aria-hidden="true">✔</span>
+      </button>
+      <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" [title]="'SIDEBAR.CANCEL' | translate">
+        <span aria-hidden="true">✖</span>
+      </button>
+    </div>
+  }
+</div>
+
+@if (isLoadingRoutes()) {
+  <div class="loading-state" aria-live="polite">
+    <span>{{ 'SIDEBAR.LOADING_ROUTES' | translate }}</span>
+  </div>
+}
+
+@if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
+  <div class="empty-state" aria-live="polite">
+    {{ 'SIDEBAR.EMPTY_STATE' | translate }}
+  </div>
+}
+
+@if (!isLoadingRoutes() && (rootRoutes().length > 0 || rootFolders().length > 0)) {
+  @for (folder of rootFolders(); track folder.id) {
+    <app-folder-item [folderId]="folder.id"></app-folder-item>
+  }
+
+  @for (route of rootRoutes(); track route.id) {
+    <app-route-item
+      [route]="route"
+      [isSelected]="route.id === selectedRouteId()"
+      [allFolders]="folders()"
+      (routeSelected)="selectRoute($event)"
+      (routeDeleted)="deleteRoute($event)"
+      (exportGpx)="exportRoute($event)"
+      (routeMoved)="moveRoute($event)"
+      (routeRenamed)="renameRoute($event)">
+    </app-route-item>
+  }
+}

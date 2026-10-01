@@ -18,7 +18,6 @@ export class AvoidanceZonePanelComponent implements OnInit {
 
   public zones = this.zoneStateService.zones;
   public isLoading = this.zoneStateService.isLoading;
-  public error = this.zoneStateService.error;
 
   ngOnInit(): void {
     this.zoneStateService.fetchZones();
@@ -33,3 +32,4 @@ export class AvoidanceZonePanelComponent implements OnInit {
   }
 
 }
+

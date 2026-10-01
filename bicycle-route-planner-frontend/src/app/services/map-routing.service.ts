@@ -10,6 +10,7 @@ import { MAP_CONSTANTS } from '../constants/map.constants';
 
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ export class MapRoutingService {
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
 
   private routingControl?: L.Routing.Control;
   private roundTripLayer?: L.Polyline;
@@ -74,7 +76,12 @@ export class MapRoutingService {
       show: false,
     }).addTo(map);
 
-    this.routingControl.on('routingerror', (e: any) => this.logger.error('Route error', e));
+    this.routingControl.on('routingerror', (e: any) => {
+      this.logger.error('Route error', e);
+      this.ngZone.run(() => {
+        this.notificationService.error('ERRORS.ROUTE_NOT_FOUND');
+      });
+    });
   }
 
   private fetchRoute(waypoints: any[], callback: any, context: any): void {
@@ -128,7 +135,7 @@ export class MapRoutingService {
     this.orsService.getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson).subscribe({
       next: (data) => {
         if (data.error || !data.features || data.features.length === 0) {
-          this.logger.error('Brak danych o trasie');
+          this.logger.error('No route data found');
           return;
         }
         const feature = data.features[0];
@@ -153,7 +160,12 @@ export class MapRoutingService {
 
         this.roundTripMarker = L.marker(startPoint).addTo(map);
       },
+      error: (err) => {
+        this.logger.error('Round trip error', err);
+        this.notificationService.error('ERRORS.ROUND_TRIP_NOT_FOUND');
+      },
     });
+
   }
 
   private getAvoidanceZones(): any {

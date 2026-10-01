@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { AvoidanceZoneStateService } from "./avoidance-zone-state.service";
 import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
 import { AuthService } from './auth.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +18,7 @@ export class MapDrawService {
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
   private readonly authService = inject(AuthService);
   private readonly ngZone = inject(NgZone);
+  private readonly translate = inject(TranslateService);
 
   public currentZoneDraft = signal<string | null>(null);
   private tempDrawnLayer?: L.Layer;
@@ -104,7 +106,7 @@ export class MapDrawService {
           style: { color: 'red', weight: 2, fillColor: '#ff0000', fillOpacity: 0.2 },
         });
 
-        polygonLayer.bindPopup(`<b>Strefa omijana:</b><br>${zone.name}`);
+        polygonLayer.bindPopup(`<b>${this.translate.instant('ZONE.ZONE_POPUP_TITLE')}</b><br>${zone.name}`);
 
         this.drawnItems.addLayer(polygonLayer);
       }

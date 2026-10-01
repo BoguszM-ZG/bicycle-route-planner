@@ -5,14 +5,14 @@ export const MAP_CONSTANTS = {
   // Początkowy widok mapy (Polska)
   DEFAULT_CENTER: [52.069, 19.47] as LatLngTuple,
   DEFAULT_ZOOM: 6,
-  
+
   // Konfiguracja kafelków (OpenStreetMap)
   TILE_LAYER: {
     URL: 'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
     MAX_ZOOM: 19,
     ATTRIBUTION: '@ OpenStreetMap'
   },
-  
+
   // Style rysowanych tras i linii
   STYLES: {
     SAVED_ROUTE: { color: '#e74c3c', weight: 6, opacity: 0.9 },
@@ -59,5 +59,12 @@ export const MAP_CONSTANTS = {
       iconSize: [24, 24],
       iconAnchor: [12, 12]
     })
+  },
+
+  SEARCH_CONFIG: {
+    DEBOUNCE_MS: 350,
+    MIN_CHARS: 3,
+    MAP_ZOOM: 15,
+    ANIMATION_DURATION_SEC: 1.5
   }
 };

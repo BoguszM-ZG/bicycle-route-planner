@@ -19,9 +19,10 @@
         #routeInput
         id="routeNameInput"
         type="text"
-        [(ngModel)]="routeName"
+        [formControl]="routeNameControl"
         [placeholder]="'MODALS.SAVE_ROUTE_PLACEHOLDER' | translate"
         class="route-name-input"
+        maxlength="150"
         (keyup.enter)="saveRoute()"
         (keyup.escape)="close()"
       />
@@ -29,7 +30,7 @@
       <label for="folderSelect">{{ 'MODALS.FOLDER_SELECT_LABEL' | translate }}</label>
 
       <select id="folderSelect"
-              [(ngModel)]="selectedFolderId"
+              [formControl]="selectedFolderControl"
               class="route-name-input"
               (keyup.escape)="close()">
         <option [ngValue]="null">{{ 'MODALS.NO_FOLDER' | translate }}</option>

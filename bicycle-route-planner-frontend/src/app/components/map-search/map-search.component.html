@@ -44,4 +44,9 @@
       }
     </ul>
   }
+  @if (hasNoResults()) {
+    <div class="results-list no-results-box">
+      <span>{{ 'MAP_CONTROLS.UNKNOWN_PLACE' | translate }}</span>
+    </div>
+  }
 </div>

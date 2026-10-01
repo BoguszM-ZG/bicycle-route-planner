@@ -4,6 +4,7 @@ import { FolderService } from './folder.service';
 import { CreateFolderRequestDto, FolderDto, RenameFolderRequestDto } from '../models/folder.model';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root',
@@ -12,14 +13,13 @@ export class FolderStateService {
   private readonly folderService = inject(FolderService);
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
 
   private readonly _folders = signal<FolderDto[]>([]);
   private readonly _isLoading = signal<boolean>(false);
-  private readonly _error = signal<string | null>(null);
 
   public readonly folders = this._folders.asReadonly();
   public readonly isLoading = this._isLoading.asReadonly();
-  public readonly error = this._error.asReadonly();
 
   constructor() {
     effect(() => {
@@ -34,12 +34,10 @@ export class FolderStateService {
   private clearState(): void {
     this._folders.set([]);
     this._isLoading.set(false);
-    this._error.set(null);
   }
 
   public fetchFolders(): void {
     this._isLoading.set(true);
-    this._error.set(null);
 
     this.folderService
       .getUserFolders()
@@ -50,14 +48,12 @@ export class FolderStateService {
         },
         error: (err) => {
           this.logger.error('Error occurred while fetching folders.', err);
-          this._error.set('Error occurred while fetching folders.');
-        },
+          this.notificationService.error('ERRORS.FETCH_FOLDERS_FAILED');        },
       });
   }
 
   public createFolder(request: CreateFolderRequestDto): void {
     this._isLoading.set(true);
-    this._error.set(null);
 
     this.folderService
       .createFolder(request)
@@ -68,7 +64,7 @@ export class FolderStateService {
         },
         error: (err) => {
           this.logger.error('Error occurred while creating folder.', err);
-          this._error.set('Error occurred while creating folder.');
+          this.notificationService.error('ERRORS.CREATE_FOLDER_FAILED');
         },
       });
   }
@@ -79,8 +75,8 @@ export class FolderStateService {
         this._folders.update((folders) => folders.filter((f) => f.id !== folderId));
       },
       error: (err) => {
-        this._error.set('Error occurred while deleting folder.');
         this.logger.error('Error deleting folder', err);
+        this.notificationService.error('ERRORS.DELETE_FOLDER_FAILED');
       },
     });
   }
@@ -93,7 +89,7 @@ export class FolderStateService {
         );
       },
       error: (err) => {
-        this._error.set('Error occurred while renaming folder.');
+        this.notificationService.error('ERRORS.RENAME_FOLDER_FAILED');
         this.logger.error('Error renaming folder', err);
       },
     });

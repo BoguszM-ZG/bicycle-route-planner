@@ -22,6 +22,7 @@
         [formControl]="zoneNameControl"
         [placeholder]="'MODALS.SAVE_ZONE_PLACEHOLDER' | translate"
         class="route-name-input"
+        maxlength="100"
         [class.invalid]="zoneNameControl.invalid && zoneNameControl.touched"
         (keyup.enter)="saveZone()"
         (keyup.escape)="close()"
