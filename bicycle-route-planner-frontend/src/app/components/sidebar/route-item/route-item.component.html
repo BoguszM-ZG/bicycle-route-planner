@@ -1,14 +1,12 @@
-<div class="route-item">
-
-  <div class="route-item-header">
+<div class="route-item" style="position: relative !important; display: block !important; width: 100% !important; box-sizing: border-box !important;">
+  <div class="route-item-header" style="display: block !important; width: 100% !important;">
     @if (!isConfirmingDelete() && !isMoving() && !isRenaming()) {
-      <button class="route-info-btn" (click)="onSelect()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate">
-        <span class="route-name" [class.expanded]="isSelected()">{{ route().name }}</span>
-        <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
+      <button class="route-info-btn" (click)="onSelect()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate" style="display: block !important; width: calc(100% - 130px) !important; text-align: left !important; padding: 0 !important; background: transparent !important; border: none !important;">
+        <span class="route-name" [class.expanded]="isSelected()" style="display: block !important; width: 100% !important;">{{ route().name }}</span>
+        <span class="route-distance" style="display: block !important;">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
       </button>
 
-      <div class="route-actions">
-
+      <div class="route-actions" style="position: absolute !important; right: 16px !important; top: 12px !important; display: flex !important; gap: 4px !important; align-items: center !important;">
         <button class="icon-btn edit-icon" (click)="toggleRename($event)" [title]="'SIDEBAR.ROUTE_ITEM_RENAME' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -18,7 +16,7 @@
 
         <button class="icon-btn move-icon" (click)="toggleMove($event)" [title]="'SIDEBAR.ROUTE_ITEM_MOVE' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3 3-3M2 12h20M12 2v20"/>
+            <path d="M5 9l-3 3 3 3M9 5l3-3 3 3M19 9l3 3-3 3M9 19l3 3-3 3M2 12h20M12 2v20"/>
           </svg>
         </button>
 
@@ -34,7 +32,6 @@
           </svg>
         </button>
       </div>
-
     } @else if (isConfirmingDelete()) {
       <div class="delete-confirmation">
         <span class="warning-text">{{ 'SIDEBAR.ROUTE_ITEM_CONFIRM_DELETE' | translate }}</span>
@@ -80,5 +77,4 @@
   @if (isSelected()) {
     <app-route-details></app-route-details>
   }
-
 </div>

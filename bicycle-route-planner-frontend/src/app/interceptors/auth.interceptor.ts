@@ -25,6 +25,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
       if (error.status === 401 && isApiUrl && !isAuthEndpoint) {
+
         return handle401Error(authReq, next, authService, logger);
       }
 

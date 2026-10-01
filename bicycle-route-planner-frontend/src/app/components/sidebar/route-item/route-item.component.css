@@ -1,6 +1,13 @@
+﻿:host {
+  display: block;
+  width: 100%;
+}
+
 .route-item {
-  display: flex;
-  flex-direction: column;
+  display: block;
+  width: 100%;
+  position: relative;
+  box-sizing: border-box;
   padding: 12px 16px;
   margin-bottom: 8px;
   background-color: #f9fafb;
@@ -10,31 +17,30 @@
   min-height: 50px;
 }
 
-.route-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-}
-
 .route-item:hover {
   background-color: #f3f4f6;
   border-color: #d1d5db;
-  transform: translateX(4px);
+}
+
+.route-item-header {
+  display: block;
+  width: 100%;
 }
 
 .route-info-btn {
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - 130px);
+  min-width: 0;
   background: transparent;
   border: none;
   text-align: left;
   cursor: pointer;
-  padding: 0 12px 0 0;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  min-width: 0;
+  padding: 0;
 }
+
 .route-name {
+  display: block;
   font-weight: 600;
   color: #374151;
   font-size: 0.95rem;
@@ -47,12 +53,23 @@
 .route-name.expanded {
   white-space: normal;
   overflow: visible;
-  overflow-wrap: anywhere;}
+  overflow-wrap: anywhere;
+}
 
 .route-distance {
+  display: block;
   font-size: 0.8rem;
   color: #6b7280;
   margin-top: 2px;
+}
+
+.route-actions {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
 .icon-btn {
@@ -73,7 +90,6 @@
   color: #b91c1c;
 }
 
-
 .delete-confirmation {
   display: flex;
   justify-content: space-between;
@@ -81,6 +97,7 @@
   width: 100%;
   animation: slideIn 0.2s ease-out;
 }
+
 .warning-text {
   color: #ef4444;
   font-weight: 600;
@@ -117,16 +134,10 @@
 .confirm-btn.danger:hover {
   background-color: #dc2626;
 }
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(10px); }
   to { opacity: 1; transform: translateX(0); }
-}
-
-.route-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  flex-shrink: 0;
 }
 
 .move-confirmation {
@@ -156,3 +167,4 @@
   flex: 1;
   padding: 2px 4px;
 }
+
