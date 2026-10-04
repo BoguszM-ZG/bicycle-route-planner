@@ -14,6 +14,7 @@ export class MapSearchService {
   private readonly translate = inject(TranslateService);
 
   public searchLocation(query: string, lat?: number, lng?: number): Observable<SearchResult[]> {
+    this.logger.info(`[MapSearch] Searching for address: ${query}`);
     const url = `${environment.apiUrl}/geocoding/search`;
 
     let params = new HttpParams().set('q', query);
@@ -24,7 +25,7 @@ export class MapSearchService {
     return this.http.get<GeoResponse>(url, { params }).pipe(
       rxMap((response) => this.mapToSearchResults(response.features || [])),
       catchError((err) => {
-        this.logger.error('Error in Geocoding (Backend Proxy):', err);
+        this.logger.error('[MapSearch] Error in Geocoding (Backend Proxy):', err);
         return of([]);
       }),
     );

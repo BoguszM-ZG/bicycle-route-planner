@@ -69,7 +69,7 @@ export class SaveZoneModalComponent {
   public saveZone(): void {
     if (this.zoneNameControl.invalid) {
       this.zoneNameControl.markAsTouched();
-      this.logger.warn(
+      this.logger.debug(
         '[SaveZoneModal] Attempt to save an invalid form',
         this.zoneNameControl.errors,
       );

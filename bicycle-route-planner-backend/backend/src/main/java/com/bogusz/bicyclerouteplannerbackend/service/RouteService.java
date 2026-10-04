@@ -11,6 +11,7 @@ import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.*;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RouteService {
@@ -55,12 +57,14 @@ public class RouteService {
         
         Route route = routeMapper.toEntity(request, user, folder);
         route = routeRepository.save(route);
+        log.info("Saved new route with ID: {} for user ID: {}", route.getId(), userId);
         return routeMapper.toRouteDetailDto(route);
     }
 
     @Transactional
     public void deleteRouteForUser(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
+        log.info("Deleting route with ID: {} for user ID: {}", route.getId(), userId);
         routeRepository.delete(route);
     }
 
@@ -104,15 +108,20 @@ public class RouteService {
 
         if (request.folderId() == null) {
             route.setFolder(null);
+            log.info("Removed route ID: {} from folder for user ID: {}", routeId, userId);
         } else {
             route.setFolder(folderRepository.findByIdAndUserId(request.folderId(), userId).orElseThrow(
                     () -> new FolderNotFoundException("Folder not found or access denied")));
+
+            log.info("Moved route ID: {} to folder ID: {} for user ID: {}", routeId,
+                    request.folderId(), userId);
         }
     }
 
     @Transactional
     public void renameRoute(Long routeId, RenameRouteRequestDto request, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
+        log.info("Renamed route ID: {} from '{}' to '{}' for user ID: {}", routeId, route.getName(), request.name(), userId);
         route.setName(request.name());
     }
 

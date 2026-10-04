@@ -9,6 +9,7 @@ import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FolderService {
@@ -45,20 +47,24 @@ public class FolderService {
                     .orElseThrow(() -> new FolderNotFoundException("Parent folder not found or access denied"));
             folder.setParentFolder(parent);
         }
+        Folder savedFolder = folderRepository.save(folder);
+        log.info("Created new folder with ID: {} for user ID: {}", savedFolder.getId(), userId);
 
-        return folderMapper.toDto(folderRepository.save(folder));
+        return folderMapper.toDto(savedFolder);
     }
 
     @Transactional
     public void deleteFolder(Long folderId, Long userId) {
         Folder folder = getValidFolderForUser(folderId, userId);
         folderRepository.delete(folder);
+        log.info("Deleted folder with ID: {} for user ID: {}", folderId, userId);
     }
 
     @Transactional
     public FolderDto renameFolder(Long folderId, RenameFolderRequest request, Long userId){
         Folder folder = getValidFolderForUser(folderId, userId);
 
+        log.info("Renamed folder ID: {} from '{}' to '{}' for user ID: {}", folderId, folder.getName(), request.name(), userId);
         folder.setName(request.name());
 
         return folderMapper.toDto(folder);

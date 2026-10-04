@@ -60,7 +60,7 @@ export class MapComponent implements AfterViewInit {
   public saveZoneModal = viewChild.required<SaveZoneModalComponent>('saveZoneModal');
 
   ngAfterViewInit(): void {
-    this.logger.info('Leaflet map successfully initialized');
+    this.logger.info('[Map] Leaflet map successfully initialized');
 
     this.ngZone.runOutsideAngular(() => {
       this.mapRenderService.initMap('map');
@@ -88,7 +88,7 @@ export class MapComponent implements AfterViewInit {
     const draft = this.mapRoutingService.currentRouteDraft();
 
     if (!draft?.geometryWkt) {
-      this.logger.warn('User tried to save a route, but no route is drawn');
+      this.logger.debug('[Map]User tried to save a route, but no route is drawn');
       this.notificationService.warning('MAP.DRAW_ROUTE_FIRST');
       return;
     }

@@ -74,7 +74,6 @@ export class MapSearchComponent implements OnInit {
 
     return this.mapSearchService.searchLocation(query, center?.lat, center?.lng).pipe(
       catchError((err) => {
-        this.logger.error('[MapSearch] Unable to execute search', err);
         return of([]);
       }),
     );

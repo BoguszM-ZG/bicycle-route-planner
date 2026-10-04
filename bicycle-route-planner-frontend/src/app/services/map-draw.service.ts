@@ -7,6 +7,7 @@ import { AvoidanceZoneStateService } from "./avoidance-zone-state.service";
 import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
 import { AuthService } from './auth.service';
 import { TranslateService } from '@ngx-translate/core';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,7 @@ export class MapDrawService {
   private readonly authService = inject(AuthService);
   private readonly ngZone = inject(NgZone);
   private readonly translate = inject(TranslateService);
+  private readonly logger = inject(LoggerService);
 
   public currentZoneDraft = signal<string | null>(null);
   private tempDrawnLayer?: L.Layer;
@@ -86,6 +88,7 @@ export class MapDrawService {
 
         const layer = e.layer as L.Polygon;
         const geoJson = layer.toGeoJSON();
+        this.logger.debug('[AvoidanceZone] New polygon drawn on map.');
         const wktString = wellknown.stringify(geoJson.geometry as any);
 
         this.currentZoneDraft.set(wktString);
