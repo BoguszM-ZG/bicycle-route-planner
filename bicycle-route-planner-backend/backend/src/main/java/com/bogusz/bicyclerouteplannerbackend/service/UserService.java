@@ -33,7 +33,7 @@ public class UserService implements UserDetailsService {
         user.setIsActive(Boolean.TRUE);
         User savedUser = userRepository.save(user);
 
-        log.info("Registered new user with ID: {} and email: {}", savedUser.getId(), email);
+        log.info("Registered new user with ID: {}", savedUser.getId());
 
         return savedUser;
     }

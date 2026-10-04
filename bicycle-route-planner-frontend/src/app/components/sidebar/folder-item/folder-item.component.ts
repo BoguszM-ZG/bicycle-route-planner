@@ -63,6 +63,14 @@ export class FolderItemComponent {
   public confirmRename(event: Event): void {
     event.stopPropagation();
     if (this.renameControl.valid && this.renameControl.value) {
+
+      const newName = this.renameControl.value.trim();
+      const oldName = this.folderData()?.name;
+      if (newName === oldName) {
+        this.isRenaming.set(false);
+        return;
+      }
+
       this.folderStateService.renameFolder(this.folderId(), this.renameControl.value);
       this.isRenaming.set(false);
     }

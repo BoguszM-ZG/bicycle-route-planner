@@ -61,13 +61,11 @@ public class FolderService {
     }
 
     @Transactional
-    public FolderDto renameFolder(Long folderId, RenameFolderRequest request, Long userId){
+    public void renameFolder(Long folderId, RenameFolderRequest request, Long userId){
         Folder folder = getValidFolderForUser(folderId, userId);
 
         log.info("Renamed folder ID: {} from '{}' to '{}' for user ID: {}", folderId, folder.getName(), request.name(), userId);
         folder.setName(request.name());
-
-        return folderMapper.toDto(folder);
     }
 
 

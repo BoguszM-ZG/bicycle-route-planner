@@ -21,8 +21,8 @@ export class FolderService {
     return this.http.post<FolderDto>(this.apiUrl, data);
   }
 
-  public renameFolder(folderId: number, request: RenameFolderRequestDto): Observable<FolderDto> {
-    return this.http.patch<FolderDto>(`${this.apiUrl}/${folderId}`, request);
+  public renameFolder(folderId: number, request: RenameFolderRequestDto): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${folderId}`, request);
   }
 
   public deleteFolder(folderId: number): Observable<void> {

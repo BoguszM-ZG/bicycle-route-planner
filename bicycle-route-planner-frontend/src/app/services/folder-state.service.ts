@@ -61,6 +61,11 @@ export class FolderStateService {
       .subscribe({
         next: (createdFolder: FolderDto) => {
           this._folders.update((currentFolders) => [...currentFolders, createdFolder]);
+
+          this.logger.info('[Folder] Folder successfully created.', {
+            folderId: createdFolder.id,
+            folderName: createdFolder.name,
+          });
         },
         error: (err) => {
           this.logger.error('Error occurred while creating folder.', err);
@@ -73,6 +78,9 @@ export class FolderStateService {
     this.folderService.deleteFolder(folderId).subscribe({
       next: () => {
         this._folders.update((folders) => folders.filter((f) => f.id !== folderId));
+        this.logger.info('[Folder] Folder successfully deleted.', {
+          deletedFolderId: folderId,
+        });
       },
       error: (err) => {
         this.logger.error('Error deleting folder', err);
@@ -83,10 +91,11 @@ export class FolderStateService {
   public renameFolder(folderId: number, newName: string): void {
     const request: RenameFolderRequestDto = { name: newName };
     this.folderService.renameFolder(folderId, request).subscribe({
-      next: (updatedFolder) => {
+      next: () => {
         this._folders.update((folders) =>
-          folders.map((f) => (f.id === folderId ? { ...f, name: updatedFolder.name } : f)),
+          folders.map((f) => (f.id === folderId ? { ...f, name: newName } : f)),
         );
+        this.logger.info('[Folder] Folder renamed successfully.', { folderId, newName });
       },
       error: (err) => {
         this.notificationService.error('ERRORS.RENAME_FOLDER_FAILED');

@@ -84,6 +84,12 @@ export class RouteItemComponent {
   public confirmRename(event: Event): void {
     event.stopPropagation();
     if (this.renameControl.valid && this.renameControl.value) {
+      const newName = this.renameControl.value.trim();
+      const oldName = this.route().name;
+      if (newName === oldName) {
+        this.isRenaming.set(false);
+        return;
+      }
       this.routeRenamed.emit({ routeId: this.route().id!, newName: this.renameControl.value });
       this.isRenaming.set(false);
     }
