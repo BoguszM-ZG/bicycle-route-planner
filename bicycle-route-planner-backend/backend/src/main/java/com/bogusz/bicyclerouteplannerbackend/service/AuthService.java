@@ -8,12 +8,16 @@ import com.bogusz.bicyclerouteplannerbackend.exception.RefreshTokenException;
 import com.bogusz.bicyclerouteplannerbackend.mapper.UserMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -27,6 +31,8 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = userService.registerUser(request.getEmail(), encodedPassword, request.getFullName());
+
+        log.info("Authentication response generated for new user with ID: {}", user.getId());
         return createAuthResponse(user);
     }
 
@@ -34,7 +40,8 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
-        User user = (User) authentication.getPrincipal();
+        User user = Objects.requireNonNull((User) authentication.getPrincipal());
+        log.info("User logged in successfully with ID: {}", user.getId());
         return createAuthResponse(user);
     }
 

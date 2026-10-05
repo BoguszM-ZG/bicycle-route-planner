@@ -4,19 +4,22 @@ import com.bogusz.bicyclerouteplannerbackend.exception.UserAlreadyExistsExceptio
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    @Transactional
     public User registerUser(String email, String encodedPassword, String fullName) {
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException("User with email " + email + " already exists");
@@ -28,7 +31,11 @@ public class UserService implements UserDetailsService {
         user.setFullName(fullName);
         user.setRole("ROLE_USER");
         user.setIsActive(Boolean.TRUE);
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        log.info("Registered new user with ID: {}", savedUser.getId());
+
+        return savedUser;
     }
 
     public User getByEmail(String email) {

@@ -155,6 +155,7 @@ export class MapRenderService {
   }
 
   public locateUser(): void {
+    this.logger.info('[Geolocation] Requesting user GPS location...');
     const map = this.map;
     if (!map) return;
 

@@ -59,6 +59,7 @@ export class AvoidanceZoneStateService {
       .saveAvoidanceZone(newZone)
       .subscribe({
         next: (savedZone) => {
+          this.logger.info(`[AvoidanceZone] Zone successfully saved: ${name}`);
           this._zones.update((currentZones) => [...currentZones, savedZone]);
         },
         error: (err) => {
@@ -74,6 +75,10 @@ export class AvoidanceZoneStateService {
       .deleteAvoidanceZone(id)
       .subscribe({
         next: () => {
+          this.logger.info(
+            '[AvoidanceZone] Zone successfully deleted.',
+            { deletedZoneId: id },
+          );
           this._zones.update((currentZones) => currentZones.filter((z) => z.id !== id));
         },
         error: (err) => {
@@ -95,6 +100,10 @@ export class AvoidanceZoneStateService {
 
     this.avoidanceZoneService.toggleAvoidanceZoneActiveStatus(zone.id, newStatus).subscribe({
       next: () => {
+        this.logger.info('[AvoidanceZone] Toggled zone activity successfully.', {
+          zoneId: zone.id,
+          newActiveStatus: newStatus,
+        });
       },
       error: (err) => {
         this.logger.error('Error toggling zone status', err);

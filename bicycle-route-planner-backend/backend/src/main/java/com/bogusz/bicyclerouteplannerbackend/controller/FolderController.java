@@ -49,12 +49,12 @@ public class FolderController {
 
     @PatchMapping("/{folderId}")
     @Operation(summary = "Rename folder", description = "Updates the name of an existing folder.")
-    public ResponseEntity<FolderDto> renameFolder(
+    public ResponseEntity<Void> renameFolder(
             @PathVariable Long folderId,
             @Valid @RequestBody RenameFolderRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
-        FolderDto updatedFolder = folderService.renameFolder(folderId, request, principal.id());
-        return ResponseEntity.ok(updatedFolder);
+        folderService.renameFolder(folderId, request, principal.id());
+        return ResponseEntity.noContent().build();
     }
 
 

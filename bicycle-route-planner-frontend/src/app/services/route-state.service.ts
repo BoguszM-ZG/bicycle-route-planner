@@ -85,7 +85,7 @@ export class RouteStateService {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
-        this.logger.info('Route successfully deleted', routeId);
+        this.logger.info('[Route] Route successfully deleted', routeId);
         if (this._selectedRoute()?.id === routeId) {
           this._selectedRoute.set(null);
         }
@@ -114,7 +114,7 @@ export class RouteStateService {
           this._routes.update((routes) => [summary, ...routes]);
 
           if (onSuccess) onSuccess();
-          this.logger.info('Route successfully saved', newRouteDetails.name);
+          this.logger.info('[Route] Route successfully saved', newRouteDetails.name);
         },
         error: (err) => {
           this.logger.error('Error saving route', err);
@@ -134,7 +134,7 @@ export class RouteStateService {
 
     this.routeService.downloadGpx(routeId, routeName).subscribe({
       next: () => {
-        this.logger.debug('GPX download initiated successfully');
+        this.logger.debug('[Route] GPX download initiated successfully');
       },
       error: () => {
         this.notificationService.error('ERROR.DOWNLOAD_GPX_ERROR');
@@ -145,6 +145,10 @@ export class RouteStateService {
   public moveRouteToFolder(routeId: number, folderId: number | null): void {
     this.routeService.updateRouteFolder(routeId, { folderId }).subscribe({
       next: () => {
+        this.logger.info(
+          '[Route] Route moved to new folder.',
+          { routeId: routeId, targetFolderId: folderId },
+        );
         this._routes.update((routes) =>
           routes.map((r) => (r.id === routeId ? { ...r, folderId } : r)),
         );
@@ -165,6 +169,10 @@ export class RouteStateService {
   public renameRoute(routeId: number, newName: string): void {
     this.routeService.renameRoute(routeId, { name: newName }).subscribe({
       next: () => {
+        this.logger.info('[Route] Route renamed successfully.', {
+          routeId: routeId,
+          newName: newName,
+        });
         this._routes.update((routes) =>
           routes.map((r) => (r.id === routeId ? { ...r, name: newName } : r)),
         );

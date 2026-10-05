@@ -69,7 +69,6 @@ export class ElevationChartComponent {
         switchMap((id) =>
           this.routeService.getElevationProfile(id).pipe(
             catchError((err) => {
-              this.logger.error('Error loading elevation profile:', err);
               this.isLoading.set(false);
               return EMPTY;
             }),

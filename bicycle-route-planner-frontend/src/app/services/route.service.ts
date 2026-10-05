@@ -42,10 +42,26 @@ export class RouteService {
       .pipe(
         tap((response) => {
           const polishMap: { [key: string]: string } = {
-            'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n', 'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',
-            'Ą': 'A', 'Ć': 'C', 'Ę': 'E', 'Ł': 'L', 'Ń': 'N', 'Ó': 'O', 'Ś': 'S', 'Ź': 'Z', 'Ż': 'Z'
+            ą: 'a',
+            ć: 'c',
+            ę: 'e',
+            ł: 'l',
+            ń: 'n',
+            ó: 'o',
+            ś: 's',
+            ź: 'z',
+            ż: 'z',
+            Ą: 'A',
+            Ć: 'C',
+            Ę: 'E',
+            Ł: 'L',
+            Ń: 'N',
+            Ó: 'O',
+            Ś: 'S',
+            Ź: 'Z',
+            Ż: 'Z',
           };
-          const asciiName = routeName.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, match => polishMap[match]);
+          const asciiName = routeName.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (match) => polishMap[match]);
           const safeName = asciiName.replace(/[^a-zA-Z0-9-]/g, '_');
           const fileName = `${safeName}.gpx`;
 
@@ -63,12 +79,22 @@ export class RouteService {
         catchError((err) => {
           this.logger.error('Error during downloading GPX file:', err);
           return throwError(() => err);
-        })
+        }),
       );
   }
 
   public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {
-    return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`);
+    return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`).pipe(
+      catchError((err) => {
+
+        this.logger.error(
+          `[RouteService] Error loading elevation profile for route ID: ${routeId}`,
+          err,
+        );
+
+        return throwError(() => err);
+      }),
+    );
   }
 
   public updateRouteFolder(routeId: number, request: UpdateRouteFolderDto): Observable<void> {

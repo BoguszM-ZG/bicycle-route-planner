@@ -69,7 +69,7 @@ export class SaveRouteModalComponent {
   public saveRoute(): void {
     if (this.routeNameControl.invalid) {
       this.routeNameControl.markAsTouched();
-      this.logger.warn(
+      this.logger.debug(
         '[SaveRouteModal] Attempt to save an invalid form',
         this.routeNameControl.errors,
       );
