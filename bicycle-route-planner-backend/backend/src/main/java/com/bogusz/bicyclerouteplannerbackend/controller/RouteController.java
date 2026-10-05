@@ -16,13 +16,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/routes")
 @RequiredArgsConstructor
+@Tag(name = "Routes", description = "Management of bicycle routes, elevation data, and GPX exports")
 public class RouteController {
     private final RouteService routeService;
 
     @GetMapping
+    @Operation(summary = "Get user routes", description = "Retrieves all routes for the authenticated user, optionally filtered by folder ID.")
     public ResponseEntity<List<RouteSummaryDto>> getAllRoutes(
             @RequestParam(value = "folderId", required = false) Long folderId,
             @AuthenticationPrincipal UserPrincipal principal) {
@@ -31,6 +36,7 @@ public class RouteController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get route details", description = "Retrieves full details and geometry of a specific route.")
     public ResponseEntity<RouteDetailDto> getRouteDetail(@PathVariable Long id,
                                                          @AuthenticationPrincipal UserPrincipal principal){
         RouteDetailDto routeDetail = routeService.getRouteDetail(id, principal.id());
@@ -38,6 +44,7 @@ public class RouteController {
     }
 
     @PostMapping
+    @Operation(summary = "Save route", description = "Saves a new bicycle route for the authenticated user.")
     public ResponseEntity<RouteDetailDto> saveRoute( @Valid @RequestBody CreateRouteRequestDto createRouteRequestDto,
                                                     @AuthenticationPrincipal UserPrincipal principal) {
         RouteDetailDto savedRoute = routeService.saveRouteForUser(createRouteRequestDto, principal.id());
@@ -45,6 +52,7 @@ public class RouteController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete route", description = "Deletes a specific route.")
     public ResponseEntity<Void> deleteRoute(@PathVariable Long id,
                                             @AuthenticationPrincipal UserPrincipal principal){
         routeService.deleteRouteForUser(id, principal.id());
@@ -53,6 +61,7 @@ public class RouteController {
     }
 
     @GetMapping("/{id}/export/gpx")
+    @Operation(summary = "Export route to GPX", description = "Generates and returns a GPX file for the specified route.")
     public ResponseEntity<byte[]> exportRouteToGpx(@PathVariable Long id,
                                                    @AuthenticationPrincipal UserPrincipal principal){
 
@@ -69,6 +78,7 @@ public class RouteController {
     }
 
     @GetMapping("/{id}/elevation")
+    @Operation(summary = "Get elevation data", description = "Retrieves elevation profile points for a specific route.")
     public ResponseEntity<List<ElevationPointDto>> getElevationPoints(@PathVariable Long id,
                                                    @AuthenticationPrincipal UserPrincipal principal){
         List<ElevationPointDto> elevationPoints = routeService.getElevationPointsForRoute(id, principal.id());
@@ -76,6 +86,7 @@ public class RouteController {
     }
 
     @PatchMapping("/{id}/folder")
+    @Operation(summary = "Move route to folder", description = "Moves a route to a different folder.")
     public ResponseEntity<Void> updateRouteFolder(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -86,6 +97,7 @@ public class RouteController {
     }
 
     @PatchMapping("/{id}/name")
+    @Operation(summary = "Rename route", description = "Updates the name of a specific route.")
     public ResponseEntity<Void> renameRoute(
             @PathVariable Long id,
             @Valid @RequestBody RenameRouteRequestDto request,
