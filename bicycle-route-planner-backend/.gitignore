@@ -1,22 +1,25 @@
-# Ustawienia edytorów (IntelliJ, VS Code)
+# Editor Settings (IntelliJ, WebStorm, VS Code)
 .idea/
 *.iml
 *.iws
 *.ipr
 .vscode/
 
-# Ignorowane pliki Backend (Spring Boot / Maven)
+# Backend Ignored Files (Spring Boot / Maven)
 backend/target/
 backend/*.jar
 backend/*.war
 backend/.mvn/wrapper/maven-wrapper.jar
 backend/HELP.md
 
-# Ignorowane pliki Frontend (Angular / Node)
+# Frontend Ignored Files (Angular / Node)
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/
+frontend/coverage/
 
-# Zmienne środowiskowe i pliki systemowe
+# Environment Variables, Logs, and System Files
 *.env
+*.log
 .DS_Store
+Thumbs.db
