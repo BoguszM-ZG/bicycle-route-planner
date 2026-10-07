@@ -46,17 +46,31 @@ public class AuthService {
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        String refreshToken = request.refreshToken();
-        String userEmail = jwtService.extractUsername(refreshToken);
-
-        if (userEmail != null) {
-            User user = userService.getByEmail(userEmail);
-
-            if (jwtService.isTokenValid(refreshToken)) {
-                return createAuthResponse(user);
-            }
+        if (request == null || request.refreshToken() == null || request.refreshToken().isBlank()) {
+            throw new RefreshTokenException("Invalid refresh token");
         }
-        throw new RefreshTokenException("Invalid refresh token");
+
+        String refreshToken = request.refreshToken();
+        String userEmail;
+
+        try {
+            io.jsonwebtoken.Claims claims = jwtService.extractAllClaims(refreshToken);
+            if (!"REFRESH".equals(claims.get("type", String.class))) {
+                log.warn("Attempt to use non-refresh token as a refresh token");
+                throw new RefreshTokenException("Invalid token type");
+            }
+            userEmail = claims.getSubject();
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse refresh token: {}", e.getMessage());
+            throw new RefreshTokenException("Invalid refresh token");
+        }
+
+        if (userEmail == null) {
+            throw new RefreshTokenException("Invalid refresh token");
+        }
+
+        User user = userService.getByEmail(userEmail);
+        return createAuthResponse(user);
     }
 
     private AuthResponse createAuthResponse(User user) {

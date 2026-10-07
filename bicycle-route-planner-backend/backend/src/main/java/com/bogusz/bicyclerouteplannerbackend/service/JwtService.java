@@ -25,6 +25,7 @@ public class JwtService {
 
     public String generateAccessToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("type", "ACCESS");
         if (userDetails instanceof User user) {
             extraClaims.put("userId", user.getId());
             extraClaims.put("role", user.getRole());
@@ -34,6 +35,7 @@ public class JwtService {
 
     public String generateRefreshToken(UserDetails userDetails) {
         Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("type", "REFRESH");
         if (userDetails instanceof User user) {
             extraClaims.put("userId", user.getId());
         }
@@ -54,15 +56,6 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractUsername(String token) {
-        return extractAllClaims(token).getSubject();
-    }
-
-
-    public boolean isTokenValid(String token) {
-        return extractAllClaims(token).getExpiration().toInstant().isAfter(Instant.now());
-    }
-
     public long getAccessTokenExpirationMs() {
         return jwtConfig.getAccessTokenExpirationMs();
     }
@@ -71,7 +64,7 @@ public class JwtService {
         return jwtConfig.getRefreshTokenExpirationMs();
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
@@ -85,13 +78,5 @@ public class JwtService {
             throw new IllegalStateException("JWT secret must be at least 32 characters long");
         }
         return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public Long extractUserId(String token) {
-        return extractAllClaims(token).get("userId", Long.class);
-    }
-
-    public String extractRole(String token) {
-        return extractAllClaims(token).get("role", String.class);
     }
 }

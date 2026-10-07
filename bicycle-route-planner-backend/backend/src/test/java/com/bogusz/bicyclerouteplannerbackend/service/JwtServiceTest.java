@@ -2,6 +2,7 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.config.JwtConfig;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,11 +57,12 @@ class JwtServiceTest {
         // THEN
         assertThat(token).isNotBlank();
 
-        // Verifying that claims were correctly packed inside the token
-        assertThat(jwtService.extractUsername(token)).isEqualTo(TEST_EMAIL);
-        assertThat(jwtService.extractUserId(token)).isEqualTo(TEST_USER_ID);
-        assertThat(jwtService.extractRole(token)).isEqualTo(TEST_ROLE);
-        assertThat(jwtService.isTokenValid(token)).isTrue();
+        // Verify
+        Claims claims = jwtService.extractAllClaims(token);
+        assertThat(claims.getSubject()).isEqualTo(TEST_EMAIL);
+        assertThat(claims.get("userId", Long.class)).isEqualTo(TEST_USER_ID);
+        assertThat(claims.get("role", String.class)).isEqualTo(TEST_ROLE);
+        assertThat(claims.get("type", String.class)).isEqualTo("ACCESS");
     }
 
     @Test
@@ -75,10 +77,11 @@ class JwtServiceTest {
         // THEN
         assertThat(token).isNotBlank();
 
-        // Refresh token does not contain role, only email and userId
-        assertThat(jwtService.extractUsername(token)).isEqualTo(TEST_EMAIL);
-        assertThat(jwtService.extractUserId(token)).isEqualTo(TEST_USER_ID);
-        assertThat(jwtService.extractRole(token)).isNull();
+        Claims claims = jwtService.extractAllClaims(token);
+        assertThat(claims.getSubject()).isEqualTo(TEST_EMAIL);
+        assertThat(claims.get("userId", Long.class)).isEqualTo(TEST_USER_ID);
+        assertThat(claims.get("role", String.class)).isNull();
+        assertThat(claims.get("type", String.class)).isEqualTo("REFRESH");
     }
 
     @Test
@@ -98,12 +101,11 @@ class JwtServiceTest {
         // GIVEN
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
 
-        // Setting negative expiration forces the token to be immediately expired upon creation
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(-1000L);
         String expiredToken = jwtService.generateAccessToken(testUser);
 
         // WHEN & THEN
-        assertThatThrownBy(() -> jwtService.extractUsername(expiredToken))
+        assertThatThrownBy(() -> jwtService.extractAllClaims(expiredToken))
                 .isInstanceOf(ExpiredJwtException.class);
     }
 
@@ -115,17 +117,12 @@ class JwtServiceTest {
 
         String validToken = jwtService.generateAccessToken(testUser);
 
-        // Simulating a hacker modifying the token payload
         String manipulatedToken = validToken.substring(0, validToken.length() - 5) + "HACK";
 
         // WHEN & THEN
-        assertThatThrownBy(() -> jwtService.extractUsername(manipulatedToken))
+        assertThatThrownBy(() -> jwtService.extractAllClaims(manipulatedToken))
                 .isInstanceOf(SignatureException.class);
     }
-
-    // =======================================================
-    // 3. CONFIG DELEGATION
-    // =======================================================
 
     @Test
     void shouldReturnAccessTokenExpirationMs() {

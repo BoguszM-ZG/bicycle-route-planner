@@ -43,13 +43,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
 
         try {
-            final String userEmail = jwtService.extractUsername(jwt);
-            final Long userId = jwtService.extractUserId(jwt);
-            final String userRole = jwtService.extractRole(jwt);
+            io.jsonwebtoken.Claims claims = jwtService.extractAllClaims(jwt);
+            
+            if (!"ACCESS".equals(claims.get("type", String.class))) {
+                throw new JwtException("Invalid token type");
+            }
+
+            final String userEmail = claims.getSubject();
+            final Long userId = claims.get("userId", Long.class);
+            final String userRole = claims.get("role", String.class);
 
             if (userEmail != null && userId != null
-                    && SecurityContextHolder.getContext().getAuthentication() == null
-                    && jwtService.isTokenValid(jwt)) {
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UsernamePasswordAuthenticationToken authToken = createAuthToken(userId, userEmail, userRole, request);
                 SecurityContextHolder.getContext().setAuthentication(authToken);
