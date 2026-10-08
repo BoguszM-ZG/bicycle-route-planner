@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -9,6 +10,9 @@ import java.time.Duration;
 
 @Configuration
 public class GeocodingConfig {
+
+    @Value("${photon.api.url}")
+    private String photonApiUrl;
 
     @Bean
     public RestClient photonRestClient() {
@@ -21,7 +25,9 @@ public class GeocodingConfig {
 
         return RestClient.builder()
                 .requestFactory(requestFactory)
-                .baseUrl("https://photon.komoot.io")
+                .baseUrl(photonApiUrl)
                 .build();
     }
 }
+
+
