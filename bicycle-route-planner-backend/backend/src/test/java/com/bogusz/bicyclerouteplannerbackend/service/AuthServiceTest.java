@@ -8,6 +8,8 @@ import com.bogusz.bicyclerouteplannerbackend.dto.user.UserDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.RefreshTokenException;
 import com.bogusz.bicyclerouteplannerbackend.mapper.UserMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -82,10 +84,10 @@ class AuthServiceTest {
 
         // THEN
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
-        assertThat(response.getRefreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
-        assertThat(response.getAccessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
-        assertThat(response.getRefreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
+        assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
+        assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
+        assertThat(response.accessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
+        assertThat(response.refreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
 
         // VERIFY
         then(userService).should().registerUser(TEST_EMAIL, TEST_ENCODED_PASSWORD, TEST_FULL_NAME);
@@ -116,10 +118,10 @@ class AuthServiceTest {
 
         // THEN
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
-        assertThat(response.getRefreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
-        assertThat(response.getAccessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
-        assertThat(response.getRefreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
+        assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
+        assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
+        assertThat(response.accessTokenExpiresInMs()).isEqualTo(ACCESS_TOKEN_EXPIRATION_MS);
+        assertThat(response.refreshTokenExpiresInMs()).isEqualTo(REFRESH_TOKEN_EXPIRATION_MS);
 
         //VERIFY
         then(authenticationManager).should().authenticate(tokenCaptor.capture());
@@ -141,9 +143,12 @@ class AuthServiceTest {
 
         UserDto mockUserDto = UserDto.builder().id(1L).email(TEST_EMAIL).build();
 
-        given(jwtService.extractUsername(FAKE_REFRESH_TOKEN)).willReturn(TEST_EMAIL);
+        Claims mockClaims = mock(Claims.class);
+        given(jwtService.extractAllClaims(FAKE_REFRESH_TOKEN)).willReturn(mockClaims);
+        given(mockClaims.getSubject()).willReturn(TEST_EMAIL);
+        given(mockClaims.get("type", String.class)).willReturn("REFRESH");
         given(userService.getByEmail(TEST_EMAIL)).willReturn(mockUser);
-        given(jwtService.isTokenValid(FAKE_REFRESH_TOKEN)).willReturn(true);
+        
 
 
         mockTokenGeneration(mockUser, mockUserDto);
@@ -153,17 +158,65 @@ class AuthServiceTest {
 
         // THEN
         assertThat(response).isNotNull();
-        assertThat(response.getAccessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
-        assertThat(response.getRefreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
+        assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
+        assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
     }
 
     @Test
     void shouldThrowExceptionWhenRefreshTokenIsInvalid() {
         // GIVEN
         RefreshTokenRequest request = new RefreshTokenRequest("BROKEN_TOKEN");
-        given(jwtService.extractUsername("BROKEN_TOKEN")).willReturn(null);
+        Claims mockBrokenClaims = mock(Claims.class);
+        given(jwtService.extractAllClaims("BROKEN_TOKEN")).willReturn(mockBrokenClaims);
+        given(mockBrokenClaims.get("type", String.class)).willReturn("REFRESH");
+        given(mockBrokenClaims.getSubject()).willReturn(null);
 
         // WHEN & THEN
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(RefreshTokenException.class)
+                .hasMessage("Invalid refresh token");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRefreshTokenRequestIsNull() {
+        assertThatThrownBy(() -> authService.refreshToken(null))
+                .isInstanceOf(RefreshTokenException.class)
+                .hasMessage("Invalid refresh token");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRefreshTokenIsNull() {
+        RefreshTokenRequest request = new RefreshTokenRequest(null);
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(RefreshTokenException.class)
+                .hasMessage("Invalid refresh token");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenRefreshTokenIsBlank() {
+        RefreshTokenRequest request = new RefreshTokenRequest("   ");
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(RefreshTokenException.class)
+                .hasMessage("Invalid refresh token");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenTokenTypeIsInvalid() {
+        RefreshTokenRequest request = new RefreshTokenRequest(FAKE_ACCESS_TOKEN);
+        Claims mockClaims = mock(Claims.class);
+        given(jwtService.extractAllClaims(FAKE_ACCESS_TOKEN)).willReturn(mockClaims);
+        given(mockClaims.get("type", String.class)).willReturn("ACCESS");
+
+        assertThatThrownBy(() -> authService.refreshToken(request))
+                .isInstanceOf(RefreshTokenException.class)
+                .hasMessage("Invalid token type");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenJwtParsingFails() {
+        RefreshTokenRequest request = new RefreshTokenRequest("MALFORMED_TOKEN");
+        given(jwtService.extractAllClaims("MALFORMED_TOKEN")).willThrow(new JwtException("Invalid signature"));
+
         assertThatThrownBy(() -> authService.refreshToken(request))
                 .isInstanceOf(RefreshTokenException.class)
                 .hasMessage("Invalid refresh token");

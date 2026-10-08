@@ -137,7 +137,8 @@ export class RouteStateService {
         this.logger.debug('[Route] GPX download initiated successfully');
       },
       error: () => {
-        this.notificationService.error('ERROR.DOWNLOAD_GPX_ERROR');
+        this.logger.error('Error exporting GPX', { routeId });
+        this.notificationService.error('ERRORS.DOWNLOAD_GPX_ERROR');
       },
     });
   }
