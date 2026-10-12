@@ -2,6 +2,7 @@ package com.bogusz.bicyclerouteplannerbackend.config;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.service.JwtService;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -43,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
 
         try {
-            io.jsonwebtoken.Claims claims = jwtService.extractAllClaims(jwt);
+            Claims claims = jwtService.extractAllClaims(jwt);
             
             if (!"ACCESS".equals(claims.get("type", String.class))) {
                 throw new JwtException("Invalid token type");
