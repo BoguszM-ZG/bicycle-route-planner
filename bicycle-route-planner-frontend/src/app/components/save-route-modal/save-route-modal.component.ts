@@ -83,7 +83,7 @@ export class SaveRouteModalComponent {
 
     const dto: CreateRouteRequestDto = {
       name: this.routeNameControl.value.trim(),
-      routeType: this.routeDataToSave.routeType || 'cycling',
+      routeType: this.routeDataToSave.routeType || 'POINT_TO_POINT',
       targetDistance: this.routeDataToSave.targetDistance || 0,
       distanceMeters: this.routeDataToSave.distanceMeters || 0,
       elevationGain: this.routeDataToSave.elevationGain || 0,

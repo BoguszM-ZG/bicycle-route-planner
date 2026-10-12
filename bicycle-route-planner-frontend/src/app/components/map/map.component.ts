@@ -69,6 +69,12 @@ export class MapComponent implements AfterViewInit {
       this.mapDrawService.init(this.map);
     });
 
+    this.destroyRef.onDestroy(() => {
+      this.mapRoutingService.destroyRouting();
+      this.mapDrawService.destroy();
+      this.mapRenderService.destroyMap();
+    });
+
     this.mapDrawService.zoneDrawn$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((wktString) => {

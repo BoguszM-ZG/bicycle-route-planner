@@ -2,17 +2,19 @@ import { Injectable, inject, effect, NgZone } from '@angular/core';
 import * as L from 'leaflet';
 import { parse } from 'wellknown';
 import { RouteStateService } from './route-state.service';
-import { RouteDetailDto } from '../models/route.model';
+import { RouteDetailDto, RouteType } from '../models/route.model';
 import { MAP_CONSTANTS } from '../constants/map.constants';
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MapRenderService {
   private readonly routeStateService = inject(RouteStateService);
+  private readonly authService = inject(AuthService);
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
   private readonly notificationService = inject(NotificationService);
@@ -24,6 +26,14 @@ export class MapRenderService {
   private userLocationMarker?: L.Marker;
 
   constructor() {
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (!user) {
+        this.clearUserLocationMarker();
+        this.clearSearchMarker();
+      }
+    });
+
     effect(() => {
       const routeState = this.routeStateService.selectedRoute();
       if (routeState) {
@@ -57,6 +67,8 @@ export class MapRenderService {
   public destroyMap(): void {
     if (this.map) {
       this.clearRenderedRoute();
+      this.clearSearchMarker();
+      this.clearUserLocationMarker();
       this.map.remove();
       this.map = undefined;
     }
@@ -84,7 +96,7 @@ export class MapRenderService {
     }
   }
 
-  private addRouteMarkers(geoJsonGeometry: any, routeType: string): void {
+  private addRouteMarkers(geoJsonGeometry: any, routeType: RouteType): void {
     if (geoJsonGeometry.type !== 'LineString') return;
 
     const coords = geoJsonGeometry.coordinates as number[][];
@@ -154,6 +166,11 @@ export class MapRenderService {
     this.searchMarker = undefined;
   }
 
+  public clearUserLocationMarker(): void {
+    this.userLocationMarker?.remove();
+    this.userLocationMarker = undefined;
+  }
+
   public locateUser(): void {
     this.logger.info('[Geolocation] Requesting user GPS location...');
     const map = this.map;
@@ -163,18 +180,16 @@ export class MapRenderService {
 
     map.once('locationfound', (e) => {
       this.ngZone.run(() => {
-        if (this.userLocationMarker) {
+        if (this.userLocationMarker && map.hasLayer(this.userLocationMarker)) {
           this.userLocationMarker.setLatLng(e.latlng);
         } else {
+          this.clearUserLocationMarker();
           this.userLocationMarker = L.marker(e.latlng)
             .addTo(map)
             .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
 
           this.userLocationMarker.on('click', () => {
-            if (this.userLocationMarker) {
-              this.userLocationMarker.remove();
-              this.userLocationMarker = undefined;
-            }
+            this.clearUserLocationMarker();
           });
         }
         this.userLocationMarker?.openPopup();

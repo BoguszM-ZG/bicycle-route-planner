@@ -4,7 +4,9 @@ import {
   ChangeDetectionStrategy,
   ElementRef,
   viewChild,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -23,6 +25,7 @@ export class RegisterComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   public fullNameInput = viewChild<ElementRef<HTMLInputElement>>('fullNameInput');
 
@@ -47,10 +50,13 @@ export class RegisterComponent {
 
     const { email, password, fullName } = this.registerForm.getRawValue();
 
-    this.authService.register({ email, password, fullName }).subscribe({
-      next: () => {
-        void this.router.navigate(['/']);
-      },
-    });
+    this.authService
+      .register({ email, password, fullName })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/']);
+        },
+      });
   }
 }

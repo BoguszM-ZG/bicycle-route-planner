@@ -5,7 +5,9 @@ import {
   ElementRef,
   viewChild,
   effect,
+  DestroyRef,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -24,6 +26,7 @@ export class LoginComponent {
   private readonly fb = inject(NonNullableFormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   public emailInput = viewChild<ElementRef<HTMLInputElement>>('emailInput');
 
@@ -53,10 +56,13 @@ export class LoginComponent {
 
     const { email, password } = this.loginForm.getRawValue();
 
-    this.authService.login({ email, password }).subscribe({
-      next: () => {
-        void this.router.navigate(['/']);
-      },
-    });
+    this.authService
+      .login({ email, password })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          void this.router.navigate(['/']);
+        },
+      });
   }
 }
