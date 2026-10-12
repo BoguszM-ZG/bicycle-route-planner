@@ -16,7 +16,7 @@ class ClientTelemetryServiceTest {
     @ParameterizedTest
     @EnumSource(ClientLogLevel.class)
     void shouldProcessClientLogWithoutExceptionsForAnyLevel(ClientLogLevel level) {
-        // GIVEN
+        // Given
         ClientLogRequestDto request = new ClientLogRequestDto(
                 level,
                 "Test telemetry message",
@@ -24,7 +24,7 @@ class ClientTelemetryServiceTest {
                 "App crashed on route calculation"
         );
 
-        // WHEN & THEN
+        // When & Then
         assertThatCode(() -> telemetryService.processClientLog(request))
                 .doesNotThrowAnyException();
     }

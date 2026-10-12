@@ -31,12 +31,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     private static final String EMAIL = "test@example.com";
+    private static final String INVALID_EMAIL = "invalid-email";
+    private static final String BLANK_STRING = "";
     private static final String PASSWORD = "StrongPassword123!";
     private static final String FULL_NAME = "Test User";
     private static final String ACCESS_TOKEN = "access.token.string";
     private static final String REFRESH_TOKEN = "refresh.token.string";
     private static final long EXPIRES_IN_MS = 3600000L;
     private static final String TOKEN_TYPE = "Bearer";
+
+    private static final String REGISTER_URL = "/api/auth/register";
+    private static final String LOGIN_URL = "/api/auth/login";
+    private static final String REFRESH_URL = "/api/auth/refresh";
 
     @Autowired
     private MockMvc mockMvc;
@@ -58,7 +64,7 @@ class AuthControllerTest {
         given(authService.register(any())).willReturn(response);
 
         // When
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -78,10 +84,10 @@ class AuthControllerTest {
     @Test
     void shouldReturn400BadRequestWhenRegisteringWithInvalidEmail() throws Exception {
         // Given
-        RegisterRequest badRequest = new RegisterRequest("invalid-email", PASSWORD, FULL_NAME);
+        RegisterRequest badRequest = new RegisterRequest(INVALID_EMAIL, PASSWORD, FULL_NAME);
 
         // When & Then
-        mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post(REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
@@ -99,7 +105,7 @@ class AuthControllerTest {
         given(authService.login(any())).willReturn(response);
 
         // When
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -118,10 +124,10 @@ class AuthControllerTest {
     @Test
     void shouldReturn400BadRequestWhenLoggingInWithBlankPassword() throws Exception {
         // Given
-        LoginRequest badRequest = new LoginRequest(EMAIL, "");
+        LoginRequest badRequest = new LoginRequest(EMAIL, BLANK_STRING);
 
         // When & Then
-        mockMvc.perform(post("/api/auth/login")
+        mockMvc.perform(post(LOGIN_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
@@ -139,7 +145,7 @@ class AuthControllerTest {
         given(authService.refreshToken(any())).willReturn(response);
 
         // When
-        mockMvc.perform(post("/api/auth/refresh")
+        mockMvc.perform(post(REFRESH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -157,10 +163,10 @@ class AuthControllerTest {
     @Test
     void shouldReturn400BadRequestWhenRefreshingWithBlankToken() throws Exception {
         // Given
-        RefreshTokenRequest badRequest = new RefreshTokenRequest("");
+        RefreshTokenRequest badRequest = new RefreshTokenRequest(BLANK_STRING);
 
         // When & Then
-        mockMvc.perform(post("/api/auth/refresh")
+        mockMvc.perform(post(REFRESH_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());

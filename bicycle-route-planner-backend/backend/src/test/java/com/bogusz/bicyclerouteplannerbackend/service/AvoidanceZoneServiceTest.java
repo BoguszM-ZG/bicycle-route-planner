@@ -46,17 +46,17 @@ class AvoidanceZoneServiceTest {
 
     @Test
     void shouldGetAvoidanceZonesForUserSuccessfully() {
-        // GIVEN
+        // Given
         AvoidanceZone mockZone = new AvoidanceZone();
         AvoidanceZoneDto mockDto = mock(AvoidanceZoneDto.class);
 
         given(avoidanceZoneRepository.findByUserId(USER_ID)).willReturn(List.of(mockZone));
         given(avoidanceZoneMapper.toDto(mockZone)).willReturn(mockDto);
 
-        // WHEN
+        // When
         List<AvoidanceZoneDto> result = avoidanceZoneService.getAvoidanceZonesForUser(USER_ID);
 
-        // THEN
+        // Then
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(mockDto);
     }
@@ -64,7 +64,7 @@ class AvoidanceZoneServiceTest {
 
     @Test
     void shouldSaveAvoidanceZoneForUserSuccessfully() {
-        // GIVEN
+        // Given
         CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto(ZONE_NAME, ZONE_GEOM);
         User mockUser = new User();
         AvoidanceZone mockZone = new AvoidanceZone();
@@ -75,10 +75,10 @@ class AvoidanceZoneServiceTest {
         given(avoidanceZoneRepository.save(mockZone)).willReturn(mockZone);
         given(avoidanceZoneMapper.toDto(mockZone)).willReturn(mockDto);
 
-        // WHEN
+        // When
         AvoidanceZoneDto result = avoidanceZoneService.saveAvoidanceZoneForUser(request, USER_ID);
 
-        // THEN
+        // Then
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo(mockDto);
 
@@ -88,23 +88,23 @@ class AvoidanceZoneServiceTest {
 
     @Test
     void shouldDeleteAvoidanceZoneSuccessfully() {
-        // GIVEN
+        // Given
         AvoidanceZone mockZone = new AvoidanceZone();
         given(avoidanceZoneRepository.findByIdAndUserId(ZONE_ID, USER_ID)).willReturn(Optional.of(mockZone));
 
-        // WHEN
+        // When
         avoidanceZoneService.deleteAvoidanceZone(ZONE_ID, USER_ID);
 
-        // THEN
+        // Then
         then(avoidanceZoneRepository).should().delete(mockZone);
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistentAvoidanceZone() {
-        // GIVEN
+        // Given
         given(avoidanceZoneRepository.findByIdAndUserId(ZONE_ID, USER_ID)).willReturn(Optional.empty());
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> avoidanceZoneService.deleteAvoidanceZone(ZONE_ID, USER_ID))
                 .isInstanceOf(AvoidanceZoneNotFoundException.class)
                 .hasMessageContaining("Avoidance Zone not found or access denied");
@@ -115,26 +115,25 @@ class AvoidanceZoneServiceTest {
 
     @Test
     void shouldToggleAvoidanceActiveStatusSuccessfully() {
-        // GIVEN
+        // Given
         AvoidanceZone mockZone = new AvoidanceZone();
         mockZone.setIsActive(false);
 
         given(avoidanceZoneRepository.findByIdAndUserId(ZONE_ID, USER_ID)).willReturn(Optional.of(mockZone));
 
-        // WHEN
+        // When
         avoidanceZoneService.toggleAvoidanceActiveStatus(ZONE_ID, USER_ID, true);
 
-        // THEN
-        // Verifying Hibernate's Dirty Checking mechanism
+        // Then
         assertThat(mockZone.getIsActive()).isTrue();
     }
 
     @Test
     void shouldThrowExceptionWhenTogglingNonExistentAvoidanceZone() {
-        // GIVEN
+        // Given
         given(avoidanceZoneRepository.findByIdAndUserId(ZONE_ID, USER_ID)).willReturn(Optional.empty());
 
-        // WHEN & THEN
+        // When & Then
         assertThatThrownBy(() -> avoidanceZoneService.toggleAvoidanceActiveStatus(ZONE_ID, USER_ID, true))
                 .isInstanceOf(AvoidanceZoneNotFoundException.class)
                 .hasMessageContaining("Avoidance Zone not found or access denied");

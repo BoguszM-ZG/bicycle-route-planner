@@ -54,17 +54,17 @@ class FolderServiceTest {
 
     @Test
     void shouldGetUserFoldersSuccessfully() {
-        // GIVEN
+        // Given
         Folder mockFolder = new Folder();
         FolderDto mockFolderDto = mock(FolderDto.class);
 
         given(folderRepository.findAllByUserId(USER_ID)).willReturn(List.of(mockFolder));
         given(folderMapper.toDto(mockFolder)).willReturn(mockFolderDto);
 
-        // WHEN
+        // When
         List<FolderDto> result = folderService.getUserFolders(USER_ID);
 
-        // THEN
+        // Then
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(mockFolderDto);
     }
@@ -72,7 +72,7 @@ class FolderServiceTest {
 
     @Test
     void shouldCreateRootFolderSuccessfully() {
-        // GIVEN
+        // Given
         CreateFolderRequestDto request = new CreateFolderRequestDto(FOLDER_NAME, null);
         User mockUser = new User();
         FolderDto mockFolderDto = mock(FolderDto.class);
@@ -81,10 +81,10 @@ class FolderServiceTest {
         given(folderRepository.save(any(Folder.class))).willAnswer(invocation -> invocation.getArgument(0));
         given(folderMapper.toDto(any(Folder.class))).willReturn(mockFolderDto);
 
-        // WHEN
+        // When
         FolderDto result = folderService.createFolder(request, USER_ID);
 
-        // THEN
+        // Then
         assertThat(result).isNotNull();
 
         // VERIFY
@@ -93,12 +93,12 @@ class FolderServiceTest {
 
         assertThat(capturedFolder.getName()).isEqualTo(FOLDER_NAME);
         assertThat(capturedFolder.getUser()).isEqualTo(mockUser);
-        assertThat(capturedFolder.getParentFolder()).isNull(); // Nie podaliśmy rodzica, więc ma być null
+        assertThat(capturedFolder.getParentFolder()).isNull();
     }
 
     @Test
     void shouldCreateSubFolderSuccessfully() {
-        // GIVEN
+        // Given
         CreateFolderRequestDto request = new CreateFolderRequestDto(FOLDER_NAME, PARENT_FOLDER_ID);
         User mockUser = new User();
         Folder mockParentFolder = new Folder();
@@ -107,10 +107,10 @@ class FolderServiceTest {
         given(folderRepository.findByIdAndUserId(PARENT_FOLDER_ID, USER_ID)).willReturn(Optional.of(mockParentFolder));
         given(folderRepository.save(any(Folder.class))).willAnswer(invocation -> invocation.getArgument(0));
 
-        // WHEN
+        // When
         folderService.createFolder(request, USER_ID);
 
-        // THEN / VERIFY
+        // Then / VERIFY
         then(folderRepository).should().save(folderCaptor.capture());
         Folder capturedFolder = folderCaptor.getValue();
 
@@ -120,14 +120,14 @@ class FolderServiceTest {
 
     @Test
     void shouldThrowExceptionWhenCreatingSubFolderWithNonExistentParent() {
-        // GIVEN
+        // Given
         CreateFolderRequestDto request = new CreateFolderRequestDto(FOLDER_NAME, PARENT_FOLDER_ID);
         User mockUser = new User();
 
         given(userRepository.getReferenceById(USER_ID)).willReturn(mockUser);
         given(folderRepository.findByIdAndUserId(PARENT_FOLDER_ID, USER_ID)).willReturn(Optional.empty());
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> folderService.createFolder(request, USER_ID))
                 .isInstanceOf(FolderNotFoundException.class)
                 .hasMessageContaining("Parent folder not found");
@@ -139,45 +139,45 @@ class FolderServiceTest {
 
     @Test
     void shouldRenameFolderSuccessfully() {
-        // GIVEN
+        // Given
         Folder mockFolder = new Folder();
         mockFolder.setName(FOLDER_NAME);
         RenameFolderRequest request = new RenameFolderRequest(NEW_FOLDER_NAME);
 
         given(folderRepository.findByIdAndUserId(FOLDER_ID, USER_ID)).willReturn(Optional.of(mockFolder));
 
-        // WHEN
+        // When
         folderService.renameFolder(FOLDER_ID, request, USER_ID);
 
-        // THEN
+        // Then
         assertThat(mockFolder.getName()).isEqualTo(NEW_FOLDER_NAME);
     }
 
 
     @Test
     void shouldDeleteFolderSuccessfully() {
-        // GIVEN
+        // Given
         Folder mockFolder = new Folder();
         given(folderRepository.findByIdAndUserId(FOLDER_ID, USER_ID)).willReturn(Optional.of(mockFolder));
 
-        // WHEN
+        // When
         folderService.deleteFolder(FOLDER_ID, USER_ID);
 
-        // THEN
+        // Then
         then(folderRepository).should().delete(mockFolder);
     }
 
     @Test
     void shouldThrowExceptionWhenDeletingNonExistentFolder() {
-        // GIVEN
+        // Given
         given(folderRepository.findByIdAndUserId(FOLDER_ID, USER_ID)).willReturn(Optional.empty());
 
-        // WHEN & THEN
+        // When & Then
         assertThatThrownBy(() -> folderService.deleteFolder(FOLDER_ID, USER_ID))
                 .isInstanceOf(FolderNotFoundException.class)
                 .hasMessageContaining("Folder not found");
 
-        // VERIFY
+        // Verify
         then(folderRepository).shouldHaveNoMoreInteractions();
     }
 }

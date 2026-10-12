@@ -24,6 +24,7 @@ import static org.mockito.BDDMockito.then;
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
+    private static final long TEST_USER_ID = 1L;
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "encodedPassword123";
     private static final String TEST_FULL_NAME = "Test User";
@@ -39,23 +40,23 @@ class UserServiceTest {
 
     @Test
     void shouldRegisterUserSuccessfully() {
-        // GIVEN
+        // Given
         given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(false);
 
         User mockSavedUser = new User();
-        mockSavedUser.setId(1L);
+        mockSavedUser.setId(TEST_USER_ID);
         mockSavedUser.setEmail(TEST_EMAIL);
         mockSavedUser.setRole("ROLE_USER");
         mockSavedUser.setIsActive(true);
 
         given(userRepository.save(any(User.class))).willReturn(mockSavedUser);
 
-        // WHEN
+        // When
         User result = userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
 
-        // THEN
+        // Then
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getId()).isEqualTo(TEST_USER_ID);
 
         // Verify
         then(userRepository).should().save(userCaptor.capture());
@@ -70,10 +71,10 @@ class UserServiceTest {
 
     @Test
     void shouldThrowExceptionWhenRegisteringWithExistingEmail() {
-        // GIVEN
+        // Given
         given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(true);
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME))
                 .isInstanceOf(UserAlreadyExistsException.class)
                 .hasMessageContaining("already exists");
@@ -84,27 +85,27 @@ class UserServiceTest {
 
     @Test
     void shouldGetUserByEmailSuccessfully() {
-        // GIVEN
+        // Given
         User mockUser = new User();
-        mockUser.setId(1L);
+        mockUser.setId(TEST_USER_ID);
         mockUser.setEmail(TEST_EMAIL);
 
         given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(mockUser));
 
-        // WHEN
+        // When
         User result = userService.getByEmail(TEST_EMAIL);
 
-        // THEN
+        // Then
         assertThat(result).isNotNull();
         assertThat(result.getEmail()).isEqualTo(TEST_EMAIL);
     }
 
     @Test
     void shouldThrowExceptionWhenGettingByNonExistentEmail() {
-        // GIVEN
+        // Given
         given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.empty());
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> userService.getByEmail(TEST_EMAIL))
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessageContaining("User not found");
@@ -112,17 +113,17 @@ class UserServiceTest {
 
     @Test
     void shouldLoadUserByUsernameSuccessfully() {
-        // GIVEN
+        // Given
         User mockUser = new User();
         mockUser.setEmail(TEST_EMAIL);
 
 
         given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(mockUser));
 
-        // WHEN
+        // When
         UserDetails result = userService.loadUserByUsername(TEST_EMAIL);
 
-        // THEN
+        // Then
         assertThat(result).isNotNull();
         assertThat(result.getUsername()).isEqualTo(TEST_EMAIL);
     }
