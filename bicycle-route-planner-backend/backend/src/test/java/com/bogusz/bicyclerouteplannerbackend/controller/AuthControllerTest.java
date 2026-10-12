@@ -76,9 +76,9 @@ class AuthControllerTest {
         then(authService).should(times(1)).register(registerCaptor.capture());
         
         RegisterRequest capturedRequest = registerCaptor.getValue();
-        assertThat(capturedRequest.getEmail()).isEqualTo(EMAIL);
-        assertThat(capturedRequest.getPassword()).isEqualTo(PASSWORD);
-        assertThat(capturedRequest.getFullName()).isEqualTo(FULL_NAME);
+        assertThat(capturedRequest.email()).isEqualTo(EMAIL);
+        assertThat(capturedRequest.password()).isEqualTo(PASSWORD);
+        assertThat(capturedRequest.fullName()).isEqualTo(FULL_NAME);
     }
 
     @Test
@@ -117,8 +117,8 @@ class AuthControllerTest {
         then(authService).should(times(1)).login(loginCaptor.capture());
         
         LoginRequest capturedRequest = loginCaptor.getValue();
-        assertThat(capturedRequest.getEmail()).isEqualTo(EMAIL);
-        assertThat(capturedRequest.getPassword()).isEqualTo(PASSWORD);
+        assertThat(capturedRequest.email()).isEqualTo(EMAIL);
+        assertThat(capturedRequest.password()).isEqualTo(PASSWORD);
     }
 
     @Test
