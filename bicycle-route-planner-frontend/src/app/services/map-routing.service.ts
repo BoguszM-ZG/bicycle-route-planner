@@ -3,7 +3,7 @@ import  * as L from 'leaflet';
 import 'leaflet-routing-machine';
 import { OrsService} from './ors.service';
 import { RouteCalculationService} from './route-calculation.service';
-import { RouteDraft, OrsGeoJsonResponse } from '../models/route.model';
+import { RouteDraft, OrsGeoJsonResponse, RouteType } from '../models/route.model';
 import * as wellknown from 'wellknown';
 import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 import { MAP_CONSTANTS } from '../constants/map.constants';
@@ -45,6 +45,10 @@ export class MapRoutingService {
   }
 
   public initRouting(map: L.Map): void {
+    if (this.routingControl || this.map) {
+      this.destroyRouting();
+    }
+
     this.map = map;
 
     this.setupRoutingControl(map);
@@ -223,7 +227,7 @@ export class MapRoutingService {
   private updateRouteData(
     coordinates: L.LatLng[],
     totalDistance: number,
-    routeType: string,
+    routeType: RouteType,
     targetDistance: number = 0,
   ): void {
     const stats = this.routeCalculationService.calculateRouteStats(coordinates);
@@ -254,5 +258,14 @@ export class MapRoutingService {
     }
 
     this.currentRouteDraft.set(null);
+  }
+
+  public destroyRouting(): void {
+    this.clearRoute();
+    if (this.routingControl) {
+      this.routingControl.remove();
+      this.routingControl = undefined;
+    }
+    this.map = undefined;
   }
 }

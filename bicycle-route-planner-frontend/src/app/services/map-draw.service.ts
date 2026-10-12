@@ -13,7 +13,7 @@ import { LoggerService } from './logger.service';
   providedIn: 'root',
 })
 export class MapDrawService {
-  private map!: L.Map;
+  private map?: L.Map;
 
   private readonly drawnItems: L.FeatureGroup = new L.FeatureGroup();
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
@@ -42,9 +42,19 @@ export class MapDrawService {
   }
 
   public init(mapInstance: L.Map): void {
+    if (this.map) {
+      this.destroy();
+    }
+
     this.map = mapInstance;
     this.map.addLayer(this.drawnItems);
-    this.setupDrawEvents();
+    this.setupDrawEvents(mapInstance);
+  }
+
+  public destroy(): void {
+    this.cancelDrawing();
+    this.drawnItems.clearLayers();
+    this.map = undefined;
   }
 
   public startDrawingPolygon(): void {
@@ -80,11 +90,11 @@ export class MapDrawService {
     }
   }
 
-  private setupDrawEvents(): void {
-    this.map.on(L.Draw.Event.CREATED, (e: any) => {
+  private setupDrawEvents(map: L.Map): void {
+    map.on(L.Draw.Event.CREATED, (e: any) => {
       this.ngZone.run(() => {
         this.tempDrawnLayer = e.layer;
-        this.map.addLayer(this.tempDrawnLayer!);
+        map.addLayer(this.tempDrawnLayer!);
 
         const layer = e.layer as L.Polygon;
         const geoJson = layer.toGeoJSON();

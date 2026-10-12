@@ -1,7 +1,9 @@
+export type RouteType = 'POINT_TO_POINT' | 'LOOP';
+
 export interface RouteDetailDto {
   id?: number;
   name: string;
-  routeType: string;
+  routeType: RouteType;
   targetDistance: number;
   distanceMeters: number;
   elevationGain: number;
@@ -21,7 +23,7 @@ export interface RouteSummaryDto {
 
 export interface CreateRouteRequestDto {
   name: string;
-  routeType: string;
+  routeType: RouteType;
   targetDistance: number;
   distanceMeters: number;
   elevationGain: number;
@@ -38,7 +40,7 @@ export interface RouteDraft {
   elevationGain?: number;
   elevationLoss?: number;
   name?: string;
-  routeType?: string;
+  routeType?: RouteType;
   startPoint?: string;
 }
 
