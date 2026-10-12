@@ -18,6 +18,10 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 class ExternalRoutingServiceTest {
 
+    private static final String BASE_URL = "https://api.openrouteservice.org";
+    private static final String API_URL = "https://api.openrouteservice.org/v2/directions/cycling-road/geojson";
+    private static final String JSON_RESPONSE_SUCCESS = "{\"routes\":[{\"geometry\":\"encoded_polyline\"}]}";
+
     private ExternalRoutingService externalRoutingService;
     private MockRestServiceServer mockServer;
 
@@ -26,40 +30,37 @@ class ExternalRoutingServiceTest {
         RestClient.Builder builder = RestClient.builder();
         mockServer = MockRestServiceServer.bindTo(builder).build();
 
-        RestClient restClient = builder.baseUrl("https://api.openrouteservice.org").build();
+        RestClient restClient = builder.baseUrl(BASE_URL).build();
         externalRoutingService = new ExternalRoutingService(restClient);
     }
 
 
     @Test
     void shouldGetDirectionsSuccessfully() {
-        // GIVEN
+        // Given
         OrsRouteRequestDto request = new OrsRouteRequestDto(List.of(), true, false, null);
-        String expectedJsonResponse = "{\"routes\":[{\"geometry\":\"encoded_polyline\"}]}";
-        String expectedUrl = "https://api.openrouteservice.org/v2/directions/cycling-road/geojson";
 
-        mockServer.expect(requestTo(expectedUrl))
-                .andRespond(withSuccess(expectedJsonResponse, MediaType.APPLICATION_JSON));
+        mockServer.expect(requestTo(API_URL))
+                .andRespond(withSuccess(JSON_RESPONSE_SUCCESS, MediaType.APPLICATION_JSON));
 
-        // WHEN
+        // When
         String result = externalRoutingService.getDirections(request);
 
-        // THEN
-        assertThat(result).isEqualTo(expectedJsonResponse);
+        // Then
+        assertThat(result).isEqualTo(JSON_RESPONSE_SUCCESS);
         mockServer.verify();
     }
 
 
     @Test
     void shouldThrowExceptionOnApiError() {
-        // GIVEN
+        // Given
         OrsRouteRequestDto request = new OrsRouteRequestDto(List.of(), true, false, null);
-        String expectedUrl = "https://api.openrouteservice.org/v2/directions/cycling-road/geojson";
 
-        mockServer.expect(requestTo(expectedUrl))
+        mockServer.expect(requestTo(API_URL))
                 .andRespond(withServerError()); // Simulating HTTP 500 from ORS
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> externalRoutingService.getDirections(request))
                 .isInstanceOf(ExternalRoutingException.class)
                 .hasMessageContaining("Failed to calculate route");

@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class RoutingControllerTest {
 
+    private static final String DIRECTIONS_URL = "/api/routing/directions";
     private static final String EXPECTED_GEOJSON_RESPONSE = "{\"type\": \"FeatureCollection\"}";
 
     @Autowired
@@ -52,7 +53,7 @@ class RoutingControllerTest {
         given(externalRoutingService.getDirections(any())).willReturn(EXPECTED_GEOJSON_RESPONSE);
 
         // When
-        mockMvc.perform(post("/api/routing/directions")
+        mockMvc.perform(post(DIRECTIONS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())

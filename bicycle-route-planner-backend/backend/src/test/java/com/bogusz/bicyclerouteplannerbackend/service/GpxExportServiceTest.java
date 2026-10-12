@@ -17,104 +17,106 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GpxExportServiceTest {
 
-    // No @Mock annotations are needed here, as the service has no external dependencies.
-    // We can instantiate it directly.
+    private static final String TEST_ROUTE_NAME = "Test Route";
+    private static final String ERROR_ROUTE_NAME = "Error Route";
+    private static final String TEMP_FILE_ERROR_ROUTE_NAME = "Temp File Error Route";
+    
+    private static final double LON_1 = 19.0;
+    private static final double LAT_1 = 50.0;
+    private static final double ELEVATION_1 = 200.0;
+    
+    private static final double LON_2 = 19.01;
+    private static final double LAT_2 = 50.01;
+
+    private static final String CREATOR_STRING = "creator=\"Bicycle Route Planner\"";
+    private static final String SIMULATED_DISK_ERROR = "Simulated Disk Full Exception";
+    private static final String SIMULATED_DELETE_ERROR = "Simulated Deletion Error";
+    private static final String GENERATION_ERROR_MSG = "Error during GPX file generation";
+
     private final GpxExportService gpxExportService = new GpxExportService();
-
     private final GeometryFactory geometryFactory = new GeometryFactory();
-
 
     @Test
     void shouldGenerateGpxFileSuccessfully() {
-        // GIVEN
+        // Given
         Route mockRoute = new Route();
-        mockRoute.setName("Test Route");
+        mockRoute.setName(TEST_ROUTE_NAME);
 
-        // JTS requires at least 2 points to create a LineString
         Coordinate[] coords = new Coordinate[]{
-                new Coordinate(19.0, 50.0, 200.0), // X=lon, Y=lat, Z=elevation
-                new Coordinate(19.01, 50.01, Double.NaN) // NaN means no elevation data
+                new Coordinate(LON_1, LAT_1, ELEVATION_1),
+                new Coordinate(LON_2, LAT_2, Double.NaN)
         };
 
         mockRoute.setRouteGeom(geometryFactory.createLineString(coords));
 
-        // WHEN
+        // When
         byte[] result = gpxExportService.generateGpxFile(mockRoute);
 
-        // THEN
+        // Then
         assertThat(result).isNotEmpty();
 
-        // Convert byte array to String to verify the internal XML structure of the GPX file
         String gpxContent = new String(result);
 
-        assertThat(gpxContent).contains("creator=\"Bicycle Route Planner\"");
-        assertThat(gpxContent).contains("<name>Test Route</name>");
+        assertThat(gpxContent).contains(CREATOR_STRING);
+        assertThat(gpxContent).contains("<name>" + TEST_ROUTE_NAME + "</name>");
 
-        // Verify first point (with elevation). JPX removes .0 for whole numbers
         assertThat(gpxContent).contains("lat=\"50\" lon=\"19\"");
         assertThat(gpxContent).contains("<ele>200</ele>");
 
-        // Verify second point (without elevation)
         assertThat(gpxContent).contains("lat=\"50.01\" lon=\"19.01\"");
     }
 
-
     @Test
     void shouldThrowExceptionWhenFileOperationsFail() {
-        // GIVEN
+        // Given
         Route mockRoute = new Route();
-        mockRoute.setName("Error Route");
+        mockRoute.setName(ERROR_ROUTE_NAME);
 
         mockRoute.setRouteGeom(geometryFactory.createLineString(
                 new Coordinate[]{
-                        new Coordinate(19.0, 50.0),
-                        new Coordinate(19.01, 50.01)
+                        new Coordinate(LON_1, LAT_1),
+                        new Coordinate(LON_2, LAT_2)
                 }
         ));
 
-        // Mock the static Files.class to simulate a hard drive failure (e.g. out of disk space)
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
 
             mockedFiles.when(() -> Files.createTempFile(Mockito.anyString(), Mockito.anyString()))
-                    .thenThrow(new IOException("Simulated Disk Full Exception"));
+                    .thenThrow(new IOException(SIMULATED_DISK_ERROR));
 
-            // WHEN & THEN
+            // When & THEN
             assertThatThrownBy(() -> gpxExportService.generateGpxFile(mockRoute))
                     .isInstanceOf(GpxExportException.class)
-                    .hasMessageContaining("Error during GPX file generation");
+                    .hasMessageContaining(GENERATION_ERROR_MSG);
         }
     }
 
     @Test
     void shouldNotThrowExceptionWhenDeletingTempFileFails() {
-        // GIVEN
+        // Given
         Route mockRoute = new Route();
-        mockRoute.setName("Temp File Error Route");
+        mockRoute.setName(TEMP_FILE_ERROR_ROUTE_NAME);
 
         mockRoute.setRouteGeom(geometryFactory.createLineString(
                 new Coordinate[]{
-                        new Coordinate(19.0, 50.0),
-                        new Coordinate(19.01, 50.01)
+                        new Coordinate(LON_1, LAT_1),
+                        new Coordinate(LON_2, LAT_2)
                 }
         ));
 
-        // Using CALLS_REAL_METHODS ensures that createTempFile and readAllBytes work normally,
-        // so the execution can successfully reach the finally block.
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class, Mockito.CALLS_REAL_METHODS)) {
 
-            // Mock ONLY the deletion part to fail
             mockedFiles.when(() -> Files.deleteIfExists(Mockito.any(Path.class)))
-                    .thenThrow(new IOException("Simulated Deletion Error"));
+                    .thenThrow(new IOException(SIMULATED_DELETE_ERROR));
 
-            // WHEN
+            // When
             byte[] result = gpxExportService.generateGpxFile(mockRoute);
 
-            // THEN
-            // The method should catch the IOException, log it, and still return the file successfully
+            // Then
             assertThat(result).isNotEmpty();
 
             String gpxContent = new String(result);
-            assertThat(gpxContent).contains("<name>Temp File Error Route</name>");
+            assertThat(gpxContent).contains("<name>" + TEMP_FILE_ERROR_ROUTE_NAME + "</name>");
         }
     }
 }

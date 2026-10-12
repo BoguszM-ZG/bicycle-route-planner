@@ -47,14 +47,14 @@ class JwtServiceTest {
 
     @Test
     void shouldGenerateAndExtractAccessTokenSuccessfully() {
-        // GIVEN
+        // Given
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
-        // WHEN
+        // When
         String token = jwtService.generateAccessToken(testUser);
 
-        // THEN
+        // Then
         assertThat(token).isNotBlank();
 
         // Verify
@@ -67,14 +67,14 @@ class JwtServiceTest {
 
     @Test
     void shouldGenerateAndExtractRefreshTokenSuccessfully() {
-        // GIVEN
+        // Given
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
         given(jwtConfig.getRefreshTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
-        // WHEN
+        // When
         String token = jwtService.generateRefreshToken(testUser);
 
-        // THEN
+        // Then
         assertThat(token).isNotBlank();
 
         Claims claims = jwtService.extractAllClaims(token);
@@ -86,11 +86,11 @@ class JwtServiceTest {
 
     @Test
     void shouldThrowExceptionWhenSecretIsTooShort() {
-        // GIVEN
+        // Given
         given(jwtConfig.getSecret()).willReturn(INVALID_SECRET);
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
-        // WHEN & THEN
+        // When & Then
         assertThatThrownBy(() -> jwtService.generateAccessToken(testUser))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must be at least 32 characters long");
@@ -98,20 +98,20 @@ class JwtServiceTest {
 
     @Test
     void shouldThrowExceptionWhenExtractingFromExpiredToken() {
-        // GIVEN
+        // Given
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
 
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(-1000L);
         String expiredToken = jwtService.generateAccessToken(testUser);
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> jwtService.extractAllClaims(expiredToken))
                 .isInstanceOf(ExpiredJwtException.class);
     }
 
     @Test
     void shouldThrowExceptionWhenExtractingFromManipulatedToken() {
-        // GIVEN
+        // Given
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
@@ -119,32 +119,32 @@ class JwtServiceTest {
 
         String manipulatedToken = validToken.substring(0, validToken.length() - 5) + "HACK";
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> jwtService.extractAllClaims(manipulatedToken))
                 .isInstanceOf(SignatureException.class);
     }
 
     @Test
     void shouldReturnAccessTokenExpirationMs() {
-        // GIVEN
+        // Given
         given(jwtConfig.getAccessTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
-        // WHEN
+        // When
         long result = jwtService.getAccessTokenExpirationMs();
 
-        // THEN
+        // Then
         assertThat(result).isEqualTo(EXPIRATION_MS);
     }
 
     @Test
     void shouldReturnRefreshTokenExpirationMs() {
-        // GIVEN
+        // Given
         given(jwtConfig.getRefreshTokenExpirationMs()).willReturn(EXPIRATION_MS);
 
-        // WHEN
+        // When
         long result = jwtService.getRefreshTokenExpirationMs();
 
-        // THEN
+        // Then
         assertThat(result).isEqualTo(EXPIRATION_MS);
     }
 }

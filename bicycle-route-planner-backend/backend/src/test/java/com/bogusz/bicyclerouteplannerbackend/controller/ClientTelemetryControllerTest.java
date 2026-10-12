@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ClientTelemetryControllerTest {
 
+    private static final String LOGS_URL = "/api/telemetry/logs";
     private static final String MESSAGE = "Frontend crashed";
     private static final String TIMESTAMP = "2026-10-06T23:00:00Z";
     private static final String DETAILS = "NullPointerException at line 42";
@@ -44,7 +45,7 @@ class ClientTelemetryControllerTest {
         ClientLogRequestDto requestDto = new ClientLogRequestDto(null, MESSAGE, TIMESTAMP, DETAILS);
 
         // When
-        mockMvc.perform(post("/api/telemetry/logs")
+        mockMvc.perform(post(LOGS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isAccepted());

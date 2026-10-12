@@ -32,6 +32,7 @@ import static org.mockito.Mockito.mock;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
+    private static final long TEST_USER_ID = 1L;
     private static final String TEST_EMAIL = "test@example.com";
     private static final String TEST_PASSWORD = "Test123";
     private static final String TEST_ENCODED_PASSWORD = "encodedPassword!@#";
@@ -61,16 +62,16 @@ class AuthServiceTest {
 
     @Test
     void shouldRegisterUserSuccessfully() {
-        // GIVEN
+        // Given
         RegisterRequest request = new RegisterRequest(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
 
         User mockSavedUser = new User();
-        mockSavedUser.setId(1L);
+        mockSavedUser.setId(TEST_USER_ID);
         mockSavedUser.setEmail(TEST_EMAIL);
         mockSavedUser.setFullName(TEST_FULL_NAME);
 
         UserDto mockUserDto = UserDto.builder()
-                .id(1L)
+                .id(TEST_USER_ID)
                 .email(TEST_EMAIL)
                 .fullName(TEST_FULL_NAME)
                 .build();
@@ -79,10 +80,10 @@ class AuthServiceTest {
         given(userService.registerUser(TEST_EMAIL, TEST_ENCODED_PASSWORD, TEST_FULL_NAME)).willReturn(mockSavedUser);
         mockTokenGeneration(mockSavedUser, mockUserDto);
 
-        // WHEN
+        // When
         AuthResponse response = authService.register(request);
 
-        // THEN
+        // Then
         assertThat(response).isNotNull();
         assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
         assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
@@ -95,15 +96,15 @@ class AuthServiceTest {
 
     @Test
     void shouldLoginUserSuccessfully() {
-        // GIVEN
+        // Given
         LoginRequest request = new LoginRequest(TEST_EMAIL, TEST_PASSWORD);
 
         User mockUser = new User();
-        mockUser.setId(1L);
+        mockUser.setId(TEST_USER_ID);
         mockUser.setEmail(TEST_EMAIL);
 
         UserDto mockUserDto = UserDto.builder()
-                .id(1L)
+                .id(TEST_USER_ID)
                 .email(TEST_EMAIL)
                 .build();
         Authentication mockAuthentication = mock(Authentication.class);
@@ -113,10 +114,10 @@ class AuthServiceTest {
         given(mockAuthentication.getPrincipal()).willReturn(mockUser);
         mockTokenGeneration(mockUser, mockUserDto);
 
-        // WHEN
+        // When
         AuthResponse response = authService.login(request);
 
-        // THEN
+        // Then
         assertThat(response).isNotNull();
         assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
         assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
@@ -134,14 +135,14 @@ class AuthServiceTest {
 
     @Test
     void shouldRefreshTokenSuccessfully() {
-        // GIVEN
+        // Given
         RefreshTokenRequest request = new RefreshTokenRequest(FAKE_REFRESH_TOKEN);
 
         User mockUser = new User();
-        mockUser.setId(1L);
+        mockUser.setId(TEST_USER_ID);
         mockUser.setEmail(TEST_EMAIL);
 
-        UserDto mockUserDto = UserDto.builder().id(1L).email(TEST_EMAIL).build();
+        UserDto mockUserDto = UserDto.builder().id(TEST_USER_ID).email(TEST_EMAIL).build();
 
         Claims mockClaims = mock(Claims.class);
         given(jwtService.extractAllClaims(FAKE_REFRESH_TOKEN)).willReturn(mockClaims);
@@ -153,10 +154,10 @@ class AuthServiceTest {
 
         mockTokenGeneration(mockUser, mockUserDto);
 
-        // WHEN
+        // When
         AuthResponse response = authService.refreshToken(request);
 
-        // THEN
+        // Then
         assertThat(response).isNotNull();
         assertThat(response.accessToken()).isEqualTo(FAKE_ACCESS_TOKEN);
         assertThat(response.refreshToken()).isEqualTo(FAKE_REFRESH_TOKEN);
@@ -164,14 +165,14 @@ class AuthServiceTest {
 
     @Test
     void shouldThrowExceptionWhenRefreshTokenIsInvalid() {
-        // GIVEN
+        // Given
         RefreshTokenRequest request = new RefreshTokenRequest("BROKEN_TOKEN");
         Claims mockBrokenClaims = mock(Claims.class);
         given(jwtService.extractAllClaims("BROKEN_TOKEN")).willReturn(mockBrokenClaims);
         given(mockBrokenClaims.get("type", String.class)).willReturn("REFRESH");
         given(mockBrokenClaims.getSubject()).willReturn(null);
 
-        // WHEN & THEN
+        // When & THEN
         assertThatThrownBy(() -> authService.refreshToken(request))
                 .isInstanceOf(RefreshTokenException.class)
                 .hasMessage("Invalid refresh token");

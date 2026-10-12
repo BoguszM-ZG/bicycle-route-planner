@@ -20,6 +20,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class GeocodingControllerTest {
 
+    private static final String SEARCH_URL = "/api/geocoding/search";
+    private static final String PARAM_Q = "q";
+    private static final String PARAM_LAT = "lat";
+    private static final String PARAM_LON = "lon";
+
     private static final String QUERY = "Berlin";
     private static final Double LAT = 52.52;
     private static final Double LON = 13.40;
@@ -40,10 +45,10 @@ class GeocodingControllerTest {
         given(geocodingService.searchLocation(QUERY, LAT, LON)).willReturn(EXPECTED_JSON_RESPONSE);
 
         // When & Then
-        mockMvc.perform(get("/api/geocoding/search")
-                        .param("q", QUERY)
-                        .param("lat", LAT.toString())
-                        .param("lon", LON.toString()))
+        mockMvc.perform(get(SEARCH_URL)
+                        .param(PARAM_Q, QUERY)
+                        .param(PARAM_LAT, LAT.toString())
+                        .param(PARAM_LON, LON.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(EXPECTED_JSON_RESPONSE));
 

@@ -47,6 +47,11 @@ class FolderControllerTest {
     private static final String FOLDER_NAME = "Weekend Trips";
     private static final Long PARENT_FOLDER_ID = null;
 
+    private static final String FOLDERS_URL = "/api/folders";
+    private static final String FOLDERS_URL_WITH_ID = "/api/folders/" + FOLDER_ID;
+    private static final String NEW_FOLDER_NAME = "Summer Trips 2026";
+    private static final String BLANK_STRING = "";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -75,7 +80,7 @@ class FolderControllerTest {
         given(folderService.getUserFolders(USER_ID)).willReturn(List.of(folderDto));
 
         // When & Then
-        mockMvc.perform(get("/api/folders"))
+        mockMvc.perform(get(FOLDERS_URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(1))
                 .andExpect(jsonPath("$[0].id").value(FOLDER_ID))
@@ -91,7 +96,7 @@ class FolderControllerTest {
         given(folderService.createFolder(any(), eq(USER_ID))).willReturn(response);
 
         // When
-        mockMvc.perform(post("/api/folders")
+        mockMvc.perform(post(FOLDERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -110,10 +115,10 @@ class FolderControllerTest {
     @Test
     void shouldReturn400BadRequestWhenCreatingFolderWithBlankName() throws Exception {
         // Given
-        CreateFolderRequestDto badRequest = new CreateFolderRequestDto("", PARENT_FOLDER_ID);
+        CreateFolderRequestDto badRequest = new CreateFolderRequestDto(BLANK_STRING, PARENT_FOLDER_ID);
 
         // When & Then
-        mockMvc.perform(post("/api/folders")
+        mockMvc.perform(post(FOLDERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
@@ -125,11 +130,10 @@ class FolderControllerTest {
     @Test
     void shouldReturn204WhenRenamingFolder() throws Exception {
         // Given
-        String newName = "Summer Trips 2026";
-        RenameFolderRequest request = new RenameFolderRequest(newName);
+        RenameFolderRequest request = new RenameFolderRequest(NEW_FOLDER_NAME);
 
         // When
-        mockMvc.perform(patch("/api/folders/" + FOLDER_ID)
+        mockMvc.perform(patch(FOLDERS_URL_WITH_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
@@ -139,16 +143,16 @@ class FolderControllerTest {
         then(folderService).should(times(1)).renameFolder(eq(FOLDER_ID), renameRequestCaptor.capture(), eq(USER_ID));
         
         RenameFolderRequest capturedRequest = renameRequestCaptor.getValue();
-        assertThat(capturedRequest.name()).isEqualTo(newName);
+        assertThat(capturedRequest.name()).isEqualTo(NEW_FOLDER_NAME);
     }
 
     @Test
     void shouldReturn400BadRequestWhenRenamingFolderWithBlankName() throws Exception {
         // Given
-        RenameFolderRequest badRequest = new RenameFolderRequest("");
+        RenameFolderRequest badRequest = new RenameFolderRequest(BLANK_STRING);
 
         // When & Then
-        mockMvc.perform(patch("/api/folders/" + FOLDER_ID)
+        mockMvc.perform(patch(FOLDERS_URL_WITH_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
@@ -160,7 +164,7 @@ class FolderControllerTest {
     @Test
     void shouldReturn204WhenDeletingFolder() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/folders/" + FOLDER_ID))
+        mockMvc.perform(delete(FOLDERS_URL_WITH_ID))
                 .andExpect(status().isNoContent());
 
         // Then
