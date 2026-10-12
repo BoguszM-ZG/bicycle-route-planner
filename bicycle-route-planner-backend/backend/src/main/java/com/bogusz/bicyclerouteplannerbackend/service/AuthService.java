@@ -29,8 +29,8 @@ public class AuthService {
     private final UserMapper userMapper;
 
     public AuthResponse register(RegisterRequest request) {
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
-        User user = userService.registerUser(request.getEmail(), encodedPassword, request.getFullName());
+        String encodedPassword = passwordEncoder.encode(request.password());
+        User user = userService.registerUser(request.email(), encodedPassword, request.fullName());
 
         log.info("Authentication response generated for new user with ID: {}", user.getId());
         return createAuthResponse(user);
@@ -38,7 +38,7 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
         User user = Objects.requireNonNull((User) authentication.getPrincipal());
         log.info("User logged in successfully with ID: {}", user.getId());
