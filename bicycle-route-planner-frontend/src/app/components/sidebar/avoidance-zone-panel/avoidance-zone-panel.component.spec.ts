@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { commonTestProviders } from '../../../testing/test-providers';
 
 import { AvoidanceZonePanelComponent } from './avoidance-zone-panel.component';
 
@@ -9,6 +10,7 @@ describe('AvoidanceZonePanelComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AvoidanceZonePanelComponent],
+      providers: [...commonTestProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AvoidanceZonePanelComponent);

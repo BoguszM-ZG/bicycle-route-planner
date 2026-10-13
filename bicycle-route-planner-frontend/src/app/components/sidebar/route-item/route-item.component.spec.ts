@@ -1,5 +1,5 @@
-import { describe, beforeEach, it, expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { commonTestProviders } from '../../../testing/test-providers';
 
 import { RouteItemComponent } from './route-item.component';
 
@@ -10,10 +10,17 @@ describe('RouteItemComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [RouteItemComponent],
+      providers: [...commonTestProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RouteItemComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('route', {
+      id: 1,
+      name: 'Test Route',
+      distanceMeters: 5000,
+      folderId: null,
+    });
     await fixture.whenStable();
   });
 

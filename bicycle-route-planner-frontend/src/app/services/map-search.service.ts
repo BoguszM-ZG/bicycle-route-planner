@@ -14,7 +14,7 @@ export class MapSearchService {
   private readonly translate = inject(TranslateService);
 
   public searchLocation(query: string, lat?: number, lng?: number): Observable<SearchResult[]> {
-    this.logger.info(`[MapSearch] Searching for address: ${query}`);
+    this.logger.debug('[MapSearch] Searching for address:', { query });
     const url = `${environment.apiUrl}/geocoding/search`;
 
     let params = new HttpParams().set('q', query);

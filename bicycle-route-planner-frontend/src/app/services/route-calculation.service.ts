@@ -65,10 +65,10 @@ export class RouteCalculationService {
     geometryWkt: string;
     startPoint: string;
   } {
-    const wktPoints = coordinates.map((pt) => `${pt.lng} ${pt.lat} ${pt.alt ?? 0}`).join(', ');
+    const validCoords = coordinates.length === 1 ? [coordinates[0], coordinates[0]] : coordinates;
+    const wktPoints = validCoords.map((pt) => `${pt.lng} ${pt.lat} ${pt.alt ?? 0}`).join(', ');
 
-
-    const start = coordinates[0];
+    const start = validCoords[0];
     const startPoint = `POINT(${start.lng.toFixed(5)} ${start.lat.toFixed(5)})`;
 
     return {

@@ -63,7 +63,11 @@ export class AvoidanceZoneStateService {
           this._zones.update((currentZones) => [...currentZones, savedZone]);
         },
         error: (err) => {
-          this.logger.error('Error saving zone', err);
+          if (err.status === 400 || err.status === 409) {
+            this.logger.debug('[AvoidanceZone] Zone creation validation error:', err.error);
+          } else {
+            this.logger.error('[AvoidanceZone] Error saving zone:', err);
+          }
           this.notificationService.error('ERRORS.SAVE_ZONE_FAILED');
         },
       });
@@ -82,7 +86,11 @@ export class AvoidanceZoneStateService {
           this._zones.update((currentZones) => currentZones.filter((z) => z.id !== id));
         },
         error: (err) => {
-          this.logger.error('Error deleting zone', err);
+          if (err.status === 404) {
+            this.logger.debug('[AvoidanceZone] Zone to delete not found:', { id });
+          } else {
+            this.logger.error('[AvoidanceZone] Error deleting zone:', err);
+          }
           this.notificationService.error('ERRORS.DELETE_ZONE_FAILED');
         },
       });
@@ -106,13 +114,17 @@ export class AvoidanceZoneStateService {
         });
       },
       error: (err) => {
-        this.logger.error('Error toggling zone status', err);
+        if (err.status === 404) {
+          this.logger.debug('[AvoidanceZone] Zone to toggle not found:', { zoneId: zone.id });
+        } else {
+          this.logger.error('[AvoidanceZone] Error toggling zone status', err);
+        }
         this._zones.update((currentZones) =>
           currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: zone.isActive } : z)),
         );
 
         this.notificationService.error('ERRORS.TOGGLE_ZONE_FAILED');
-        },
+      },
     });
   }
 }

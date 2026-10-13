@@ -1,0 +1,19 @@
+# Build outputs & caches
+target/
+*.class
+
+# Version control & IDEs
+.git/
+.idea/
+.vscode/
+*.iml
+
+# Environment & secrets (prevent leaking into image)
+.env
+.env.*
+*.pem
+*.key
+
+# Temporary & log files
+*.log
+HELP.md
