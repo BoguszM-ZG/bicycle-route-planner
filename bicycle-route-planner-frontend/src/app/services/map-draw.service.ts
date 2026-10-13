@@ -61,13 +61,21 @@ export class MapDrawService {
     if (!this.map) return;
     this.cancelDrawing();
 
+    const drawPolygonClass =
+      (L as any).Draw?.Polygon || (typeof window !== 'undefined' && (window as any).L?.Draw?.Polygon);
+
+    if (!drawPolygonClass) {
+      this.logger.error('Leaflet Draw Polygon constructor is not available');
+      return;
+    }
+
     const polygonOptions = {
       allowIntersection: false,
       showArea: false,
       shapeOptions: { color: 'red' },
     };
 
-    this.currentDrawer = new (L.Draw.Polygon as any)(this.map, polygonOptions);
+    this.currentDrawer = new drawPolygonClass(this.map, polygonOptions);
     this.currentDrawer.enable();
   }
 
@@ -91,7 +99,7 @@ export class MapDrawService {
   }
 
   private setupDrawEvents(map: L.Map): void {
-    map.on(L.Draw.Event.CREATED, (e: any) => {
+    map.on('draw:created', (e: any) => {
       this.ngZone.run(() => {
         this.tempDrawnLayer = e.layer;
         map.addLayer(this.tempDrawnLayer!);

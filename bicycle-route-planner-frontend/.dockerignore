@@ -1,0 +1,19 @@
+# Dependencies & local builds (must be built fresh inside container)
+node_modules/
+dist/
+.angular/
+coverage/
+
+# Version control & IDEs
+.git/
+.idea/
+.vscode/
+
+# Environment & secrets
+.env
+.env.*
+
+# Logs & temp files
+*.log
+npm-debug.log*
+yarn-debug.log*

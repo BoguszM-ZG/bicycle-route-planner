@@ -1,4 +1,4 @@
-name: Frontend Build (Angular)
+name: Frontend CI (Angular)
 
 on:
   push:
@@ -10,25 +10,36 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test-and-build:
+    name: Test & Build (Angular)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./bicycle-route-planner-frontend
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js (v24)
-      uses: actions/setup-node@v4
-      with:
-        node-version: '24'
-        cache: 'npm'
-        cache-dependency-path: './bicycle-route-planner-frontend/package-lock.json'
+      - name: Setup Node.js (v24)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: './bicycle-route-planner-frontend/package-lock.json'
 
-    - name: Install Dependencies
-      run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Build Project
-      run: npm run build
+      - name: Run Unit Tests
+        run: npm test -- --watch=false
+
+      - name: Build Production Bundle
+        run: npm run build
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: ./bicycle-route-planner-frontend/dist/bicycle-route-planner-frontend/browser/
+          retention-days: 7

@@ -1,5 +1,5 @@
-import { describe, beforeEach, it, expect } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { commonTestProviders } from '../../testing/test-providers';
 
 import { SaveRouteModalComponent } from './save-route-modal.component';
 
@@ -10,6 +10,7 @@ describe('SaveRouteModalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SaveRouteModalComponent],
+      providers: [...commonTestProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(SaveRouteModalComponent);

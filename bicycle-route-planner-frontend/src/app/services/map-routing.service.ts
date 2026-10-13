@@ -1,13 +1,11 @@
 import { Injectable, NgZone, inject, signal, computed, effect } from '@angular/core';
-import  * as L from 'leaflet';
-import 'leaflet-routing-machine';
-import { OrsService} from './ors.service';
-import { RouteCalculationService} from './route-calculation.service';
+import * as L from 'leaflet';
+import { OrsService } from './ors.service';
+import { RouteCalculationService } from './route-calculation.service';
 import { RouteDraft, OrsGeoJsonResponse, RouteType } from '../models/route.model';
 import * as wellknown from 'wellknown';
 import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 import { MAP_CONSTANTS } from '../constants/map.constants';
-
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -16,6 +14,9 @@ import { NotificationService } from './notification.service';
   providedIn: 'root',
 })
 export class MapRoutingService {
+  private static readonly DEFAULT_ROUND_TRIP_METERS = 20000;
+  private static readonly MIN_WAYPOINTS_FOR_ROUTE = 2;
+
   private readonly ngZone = inject(NgZone);
   private readonly orsService = inject(OrsService);
   private readonly routeCalculationService = inject(RouteCalculationService);
@@ -24,15 +25,17 @@ export class MapRoutingService {
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
 
-  private routingControl?: L.Routing.Control;
+  private map?: L.Map;
+  private waypoints: L.LatLng[] = [];
+  private waypointMarkers: L.Marker[] = [];
+  private directRouteLayer?: L.Polyline;
   private roundTripLayer?: L.Polyline;
   private roundTripMarker?: L.Marker;
-  private map?: L.Map;
 
-  public currentRouteDraft = signal<RouteDraft | null>(null);
-  public routingMode = signal<'direct' | 'roundTrip' | 'avoidanceZone'>('direct');
-  public roundTripDistanceMeters = signal<number>(20000);
-  public roundTripDistanceKm = computed(() => this.roundTripDistanceMeters() / 1000);
+  public readonly currentRouteDraft = signal<RouteDraft | null>(null);
+  public readonly routingMode = signal<'direct' | 'roundTrip' | 'avoidanceZone'>('direct');
+  public readonly roundTripDistanceMeters = signal<number>(MapRoutingService.DEFAULT_ROUND_TRIP_METERS);
+  public readonly roundTripDistanceKm = computed(() => this.roundTripDistanceMeters() / 1000);
 
   constructor() {
     effect(() => {
@@ -45,58 +48,12 @@ export class MapRoutingService {
   }
 
   public initRouting(map: L.Map): void {
-    if (this.routingControl || this.map) {
+    if (this.map) {
       this.destroyRouting();
     }
 
     this.map = map;
-
-    this.setupRoutingControl(map);
     this.setupMapEventListeners(map);
-  }
-
-  private setupRoutingControl(map: L.Map): void {
-    const customOrsRouter: L.Routing.IRouter = {
-      route: (waypoints: any[], callback: any, context: any, _options: any) => {
-        this.fetchRoute(waypoints, callback, context);
-      },
-    };
-
-    const routePlan = L.Routing.plan([], {
-      createMarker: (_i, waypoint, _n) => L.marker(waypoint.latLng, { draggable: true }),
-    });
-
-    this.routingControl = L.Routing.control({
-      router: customOrsRouter as any,
-      plan: routePlan,
-      lineOptions: {
-        styles: [MAP_CONSTANTS.STYLES.DRAFT_ROUTE],
-        extendToWaypoints: true,
-        missingRouteTolerance: 0,
-      },
-      waypointMode: 'snap',
-      addWaypoints: true,
-      routeWhileDragging: true,
-      show: false,
-    }).addTo(map);
-
-    this.routingControl.on('routingerror', (e: any) => {
-      this.logger.error('Route error', e);
-      this.ngZone.run(() => {
-        this.notificationService.error('ERRORS.ROUTE_NOT_FOUND');
-      });
-    });
-  }
-
-  private fetchRoute(waypoints: any[], callback: any, context: any): void {
-    const coords = waypoints.map((w: any) => [w.latLng.lng, w.latLng.lat]);
-    const avoidPolygonsGeoJson = this.getAvoidanceZones();
-    this.logger.debug('Fetching route from ORS with waypoints:', coords);
-
-    this.orsService.getRouteGeoJson(coords, avoidPolygonsGeoJson).subscribe({
-      next: (data) => this.handleRouteSuccess(data, waypoints, callback, context),
-      error: (err) => this.handleRouteError(err, callback, context),
-    });
   }
 
   private setupMapEventListeners(map: L.Map): void {
@@ -104,10 +61,10 @@ export class MapRoutingService {
     map.on('draw:drawstart', () => (isDrawingMode = true));
     map.on('draw:drawstop', () => (isDrawingMode = false));
 
-    map.on('click', (e: any) => this.handleMapClick(e, map, isDrawingMode));
+    map.on('click', (e: L.LeafletMouseEvent) => this.handleMapClick(e, map, isDrawingMode));
   }
 
-  private handleMapClick(e: any, map: L.Map, isDrawingMode: boolean): void {
+  private handleMapClick(e: L.LeafletMouseEvent, map: L.Map, isDrawingMode: boolean): void {
     if (isDrawingMode || this.routingMode() === 'avoidanceZone') {
       return;
     }
@@ -117,12 +74,84 @@ export class MapRoutingService {
       return;
     }
 
-    if (this.routingControl) {
-      const waypoints = this.routingControl.getWaypoints().filter((w: any) => w.latLng);
-      this.logger.debug('Adding new waypoint at:', e.latlng);
-      waypoints.push(L.Routing.waypoint(e.latlng));
-      this.routingControl.setWaypoints(waypoints);
+    this.addWaypoint(e.latlng, map);
+  }
+
+  public addWaypoint(latLng: L.LatLng, map: L.Map): void {
+    this.waypoints.push(latLng);
+    const index = this.waypoints.length - 1;
+
+    const marker = L.marker(latLng, {
+      draggable: true,
+      icon: MAP_CONSTANTS.DEFAULT_ICON,
+    }).addTo(map);
+
+    marker.on('dragend', (event: any) => {
+      const targetMarker = event.target as L.Marker;
+      this.waypoints[index] = targetMarker.getLatLng();
+
+      if (this.waypoints.length >= MapRoutingService.MIN_WAYPOINTS_FOR_ROUTE) {
+        this.recalculateDirectRoute();
+      }
+    });
+
+    this.waypointMarkers.push(marker);
+
+    if (this.waypoints.length >= MapRoutingService.MIN_WAYPOINTS_FOR_ROUTE) {
+      this.recalculateDirectRoute();
     }
+  }
+
+  private recalculateDirectRoute(): void {
+    if (!this.map || this.waypoints.length < MapRoutingService.MIN_WAYPOINTS_FOR_ROUTE) {
+      return;
+    }
+
+    const coords = this.waypoints.map((w) => [w.lng, w.lat]);
+    const avoidPolygonsGeoJson = this.getAvoidanceZones();
+    this.logger.debug('Fetching direct route from ORS with waypoints:', coords);
+
+    this.orsService.getRouteGeoJson(coords, avoidPolygonsGeoJson).subscribe({
+      next: (data) => this.handleDirectRouteSuccess(data),
+      error: (err) => this.handleDirectRouteError(err),
+    });
+  }
+
+  private handleDirectRouteSuccess(data: OrsGeoJsonResponse): void {
+    this.ngZone.run(() => {
+      if (!this.map || data.error || !data.features || data.features.length === 0) {
+        this.logger.error('No route data found from ORS');
+        this.notificationService.error('ERRORS.ROUTE_NOT_FOUND');
+        return;
+      }
+
+      const feature = data.features[0];
+      const geometry = feature.geometry.coordinates;
+      const summary = feature.properties?.summary;
+
+      const routeCoordinates = geometry.map((coord: number[]) =>
+        L.latLng(coord[1], coord[0], coord[2]),
+      );
+
+      this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'POINT_TO_POINT');
+
+      if (this.directRouteLayer) {
+        this.map.removeLayer(this.directRouteLayer);
+        this.directRouteLayer = undefined;
+      }
+
+      this.directRouteLayer = L.polyline(
+        routeCoordinates,
+        MAP_CONSTANTS.STYLES.DRAFT_ROUTE,
+      ).addTo(this.map);
+    });
+  }
+
+  private handleDirectRouteError(err: unknown): void {
+    this.logger.error('Route error from ORS', err);
+    this.ngZone.run(() => {
+      this.notificationService.error('ERRORS.ROUTE_NOT_FOUND');
+    });
   }
 
   public generateRoundTrip(startPoint: L.LatLng, distanceMeters: number, map: L.Map): void {
@@ -133,7 +162,6 @@ export class MapRoutingService {
       distanceMeters,
     );
     const coords = [[startPoint.lng, startPoint.lat]];
-
     const avoidPolygonsGeoJson = this.getAvoidanceZones() || undefined;
 
     this.orsService.getRoundTripGeoJson(coords[0], distanceMeters, avoidPolygonsGeoJson).subscribe({
@@ -161,15 +189,15 @@ export class MapRoutingService {
         this.roundTripLayer = L.polyline(routeCoordinates, MAP_CONSTANTS.STYLES.LOOP_ROUTE).addTo(
           map,
         );
-
-        this.roundTripMarker = L.marker(startPoint).addTo(map);
+        this.roundTripMarker = L.marker(startPoint, {
+          icon: MAP_CONSTANTS.DEFAULT_ICON,
+        }).addTo(map);
       },
       error: (err) => {
         this.logger.error('Round trip error', err);
         this.notificationService.error('ERRORS.ROUND_TRIP_NOT_FOUND');
       },
     });
-
   }
 
   private getAvoidanceZones(): any {
@@ -184,44 +212,6 @@ export class MapRoutingService {
       type: 'MultiPolygon',
       coordinates: activeZones.map((zone) => (wellknown.parse(zone.zoneGeom) as any).coordinates),
     };
-  }
-
-  private handleRouteSuccess(
-    data: OrsGeoJsonResponse,
-    waypoints: any[],
-    callback: any,
-    context: any,
-  ): void {
-    this.ngZone.run(() => {
-      if (data.error || !data.features || data.features.length === 0) {
-        callback.call(context, { status: -1, message: data.error?.message || 'Brak wyników.' });
-        return;
-      }
-      const feature = data.features[0];
-      const geometry = feature.geometry.coordinates;
-      const summary = feature.properties?.summary;
-
-      const routeCoordinates = geometry.map((coord: number[]) =>
-        L.latLng(coord[1], coord[0], coord[2]),
-      );
-
-      this.updateRouteData(routeCoordinates, summary?.distance ?? 0, 'POINT_TO_POINT');
-
-      callback.call(context, null, [
-        {
-          name: 'Trasa 3D',
-          summary: { totalDistance: summary?.distance ?? 0, totalTime: summary?.duration ?? 0 },
-          coordinates: routeCoordinates,
-          waypoints: waypoints,
-          inputWaypoints: waypoints,
-          instructions: [],
-        },
-      ]);
-    });
-  }
-
-  private handleRouteError(err: any, callback: any, context: any): void {
-    this.ngZone.run(() => callback.call(context, err));
   }
 
   private updateRouteData(
@@ -245,8 +235,15 @@ export class MapRoutingService {
   }
 
   public clearRoute(): void {
-    this.routingControl?.setWaypoints([]);
     if (this.map) {
+      if (this.directRouteLayer) {
+        this.map.removeLayer(this.directRouteLayer);
+        this.directRouteLayer = undefined;
+      }
+      this.waypointMarkers.forEach((marker) => this.map?.removeLayer(marker));
+      this.waypointMarkers = [];
+      this.waypoints = [];
+
       if (this.roundTripLayer) {
         this.map.removeLayer(this.roundTripLayer);
         this.roundTripLayer = undefined;
@@ -255,6 +252,12 @@ export class MapRoutingService {
         this.map.removeLayer(this.roundTripMarker);
         this.roundTripMarker = undefined;
       }
+    } else {
+      this.waypointMarkers = [];
+      this.waypoints = [];
+      this.directRouteLayer = undefined;
+      this.roundTripLayer = undefined;
+      this.roundTripMarker = undefined;
     }
 
     this.currentRouteDraft.set(null);
@@ -262,10 +265,6 @@ export class MapRoutingService {
 
   public destroyRouting(): void {
     this.clearRoute();
-    if (this.routingControl) {
-      this.routingControl.remove();
-      this.routingControl = undefined;
-    }
     this.map = undefined;
   }
 }

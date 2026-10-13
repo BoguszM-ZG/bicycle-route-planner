@@ -172,7 +172,7 @@ export class MapRenderService {
   }
 
   public locateUser(): void {
-    this.logger.info('[Geolocation] Requesting user GPS location...');
+    this.logger.debug('[Geolocation] Requesting user GPS location...');
     const map = this.map;
     if (!map) return;
 
@@ -198,7 +198,7 @@ export class MapRenderService {
 
     map.once('locationerror', (e) => {
       this.ngZone.run(() => {
-        this.logger.warn('GPS location access denied or failed:', e);
+        this.logger.debug('[Geolocation] GPS location access denied or failed:', { message: e.message });
         this.notificationService.error('MAP.LOCATION_ERROR');
       });
     });
