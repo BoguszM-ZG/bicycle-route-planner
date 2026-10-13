@@ -93,8 +93,8 @@ export class MapComponent implements AfterViewInit {
   public saveRoute(): void {
     const draft = this.mapRoutingService.currentRouteDraft();
 
-    if (!draft?.geometryWkt) {
-      this.logger.debug('[Map]User tried to save a route, but no route is drawn');
+    if (!draft?.geometryWkt || !draft.distanceMeters || draft.distanceMeters <= 0) {
+      this.logger.debug('[Map] User tried to save a route, but no route is drawn or distance is zero');
       this.notificationService.warning('MAP.DRAW_ROUTE_FIRST');
       return;
     }

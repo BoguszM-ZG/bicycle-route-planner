@@ -85,13 +85,17 @@ export class RouteStateService {
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
-        this.logger.info('[Route] Route successfully deleted', routeId);
+        this.logger.info('[Route] Route successfully deleted', { routeId });
         if (this._selectedRoute()?.id === routeId) {
           this._selectedRoute.set(null);
         }
       },
       error: (err) => {
-        this.logger.error('Error deleting route', err);
+        if (err.status === 404) {
+          this.logger.debug('[Route] Route to delete not found:', { routeId });
+        } else {
+          this.logger.error('[Route] Error deleting route:', err);
+        }
         this.notificationService.error('ERRORS.DELETE_ROUTE_FAILED');
       },
     });
@@ -117,11 +121,11 @@ export class RouteStateService {
           this.logger.info('[Route] Route successfully saved', newRouteDetails.name);
         },
         error: (err) => {
-          this.logger.error('Error saving route', err);
-
           if (err.status === 400) {
+            this.logger.debug('[Route] Route validation failed on server', err.error);
             this.notificationService.error('ERRORS.ROUTE_TOO_SHORT');
           } else {
+            this.logger.error('Error saving route', err);
             this.notificationService.error('ERRORS.SAVE_ROUTE_FAILED');
           }
         },
@@ -155,7 +159,11 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        this.logger.error('Error moving route', err);
+        if (err.status === 400 || err.status === 404) {
+          this.logger.debug('[Route] Route move validation error:', { routeId, folderId, error: err.error });
+        } else {
+          this.logger.error('[Route] Error moving route:', err);
+        }
         this.notificationService.error('ERRORS.MOVE_ROUTE_FAILED');
       },
     });
@@ -179,7 +187,11 @@ export class RouteStateService {
         );
       },
       error: (err) => {
-        this.logger.error('Error renaming route', err);
+        if (err.status === 400 || err.status === 404) {
+          this.logger.debug('[Route] Route rename validation error:', { routeId, newName, error: err.error });
+        } else {
+          this.logger.error('[Route] Error renaming route:', err);
+        }
         this.notificationService.error('ERRORS.RENAME_ROUTE_FAILED');
       },
     });

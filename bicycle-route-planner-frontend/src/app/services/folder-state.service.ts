@@ -68,7 +68,11 @@ export class FolderStateService {
           });
         },
         error: (err) => {
-          this.logger.error('Error occurred while creating folder.', err);
+          if (err.status === 400 || err.status === 409) {
+            this.logger.debug('[Folder] Folder creation validation error:', err.error);
+          } else {
+            this.logger.error('[Folder] Error occurred while creating folder:', err);
+          }
           this.notificationService.error('ERRORS.CREATE_FOLDER_FAILED');
         },
       });
@@ -83,7 +87,11 @@ export class FolderStateService {
         });
       },
       error: (err) => {
-        this.logger.error('Error deleting folder', err);
+        if (err.status === 404) {
+          this.logger.debug('[Folder] Folder to delete not found:', { folderId });
+        } else {
+          this.logger.error('[Folder] Error deleting folder:', err);
+        }
         this.notificationService.error('ERRORS.DELETE_FOLDER_FAILED');
       },
     });
@@ -98,8 +106,12 @@ export class FolderStateService {
         this.logger.info('[Folder] Folder renamed successfully.', { folderId, newName });
       },
       error: (err) => {
+        if (err.status === 400 || err.status === 404 || err.status === 409) {
+          this.logger.debug('[Folder] Folder rename validation error:', { folderId, newName, error: err.error });
+        } else {
+          this.logger.error('[Folder] Error renaming folder:', err);
+        }
         this.notificationService.error('ERRORS.RENAME_FOLDER_FAILED');
-        this.logger.error('Error renaming folder', err);
       },
     });
   }

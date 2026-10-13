@@ -12,7 +12,7 @@ public abstract class BaseIntegrationTest {
 
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgis/postgis:15-3.3-alpine")
+            DockerImageName.parse("postgis/postgis:15-3.4")
                     .asCompatibleSubstituteFor("postgres")
     );
 

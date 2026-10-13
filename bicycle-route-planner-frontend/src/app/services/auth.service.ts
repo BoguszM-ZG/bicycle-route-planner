@@ -68,7 +68,11 @@ export class AuthService {
         this.handleAuthSuccess(response);
       }),
       catchError((error: HttpErrorResponse) => {
-        this.logger.error('Failed to refresh session. Logging out.', error);
+        if (error.status === 401 || error.status === 403) {
+          this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out.');
+        } else {
+          this.logger.error('[Auth] Failed to refresh session due to server error:', error);
+        }
         this.logout();
         return throwError(() => error);
       }),
@@ -129,7 +133,11 @@ export class AuthService {
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {
-    this.logger.error('Auth error:', error);
+    if (error.status === 401 || error.status === 400) {
+      this.logger.debug('[Auth] Authentication failed with client error:', { status: error.status });
+    } else {
+      this.logger.error('[Auth] Authentication server failure:', error);
+    }
     const errorMsg =
       error.error?.message || 'Invalid authentication credentials. Please try again.';
     this._error.set(errorMsg);

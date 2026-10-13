@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { commonTestProviders } from '../../testing/test-providers';
 import { MapSearchComponent } from './map-search.component';
 
 
@@ -9,6 +10,7 @@ describe('MapSearchComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MapSearchComponent],
+      providers: [...commonTestProviders],
     })
     .compileComponents();
 

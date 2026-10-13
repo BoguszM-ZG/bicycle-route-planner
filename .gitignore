@@ -1,0 +1,52 @@
+# ========================================================
+# Bicycle Route Planner - Global Git Ignore
+# ========================================================
+
+# --- Environment & Secret Configuration ---
+*.env
+*.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Operating System & Temporary Files ---
+.DS_Store
+Thumbs.db
+*.tmp
+**/tmp/
+
+# --- IDEs & Editors ---
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+*.sublime-workspace
+
+# --- Backend (Java / Spring Boot / Maven) ---
+**/target/
+**/*.jar
+**/*.war
+**/.mvn/wrapper/maven-wrapper.jar
+**/HELP.md
+
+# --- Frontend (Node.js / Angular) ---
+**/node_modules/
+**/dist/
+**/.angular/
+**/coverage/
+/.sass-cache/
+/connect.lock
+/typings/
+__screenshots__/
+out-tsc/
+bazel-out/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
