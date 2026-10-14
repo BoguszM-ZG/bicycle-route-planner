@@ -110,12 +110,9 @@ docker compose up postgis_db -d
 ```
 
 ### 2. Uruchomienie aplikacji Spring Boot
-```bash
+```cmd
 # Z poziomu katalogu bicycle-route-planner-backend/backend:
-# Dla systemów Linux / macOS:
-./mvnw clean spring-boot:run
 
-# Dla systemu Windows:
 mvnw clean spring-boot:run
 ```
 
@@ -133,11 +130,7 @@ Projekt pokryty jest **123 zautomatyzowanymi testami**, podzielonymi na trzy war
 3. **Testy Jednostkowe:** Weryfikacja logiki domenowej, algorytmów i transformacji danych (GPX) z użyciem JUnit 5 oraz Mockito.
 
 ### Uruchomienie zestawu testów:
-```bash
-# Dla systemów Linux / macOS:
-./mvnw clean verify
-
-# Dla systemu Windows:
+```cmd
 mvnw clean verify
 ```
 
