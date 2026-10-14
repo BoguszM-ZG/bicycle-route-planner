@@ -34,7 +34,7 @@
 | Warstwa | Technologia | Zastosowanie |
 |---|---|---|
 | **Backend** | Java 21, Spring Boot 4.1.x | Logika biznesowa REST API, Spring Security, Spring Data JPA |
-| **Baza Danych** | PostgreSQL 15, PostGIS 3.4 | Składowanie geometrii `LineString Z` |
+| **Baza Danych** | PostgreSQL 15, PostGIS 3.4, Flyway | Składowanie geometrii `LineString Z` oraz wersjonowanie schematu bazy danych|
 | **Frontend** | TypeScript, Angular 22 | Interfejs klienta, reaktywne zarządzanie stanem (RxJS, Signals) |
 | **Moduł Mapowy** | Leaflet, Leaflet-Draw | Wizualizacja wektorowa, interakcja przestrzenna i obsługa zdarzeń mapy |
 | **Nawigacja** | OpenRouteService API | Zewnętrzny silnik wyznaczania geometrii tras i omijania stref |
