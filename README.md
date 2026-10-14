@@ -86,14 +86,14 @@ docker compose up postgis_db -d
 
 ### 2. Backend (Spring Boot 4.1.0)
 Wymagane: **JDK 21**.
-```bash
+```cmd
 cd bicycle-route-planner-backend/backend
-./mvnw clean spring-boot:run
+mvnw clean spring-boot:run
 ```
 
 ### 3. Frontend (Angular 22)
 Wymagane: **Node.js 22+**.
-```bash
+```cmd
 cd bicycle-route-planner-frontend
 npm ci
 npm start
@@ -110,9 +110,10 @@ Wszystkie testy są automatycznie weryfikowane przez pipeline CI/CD na GitHub Ac
 *   **Testy integracyjne (Integration Tests):** Kompleksowa weryfikacja pełnych procesów biznesowych i persystencji danych przy użyciu biblioteki **Testcontainers**, podnoszącej na czas testów rzeczywisty kontener z bazą PostGIS.
 
 ### Uruchomienie zestawu testów:
-```bash
+```cmd
 cd bicycle-route-planner-backend/backend
-./mvnw clean verify
+mvnw clean verify
+
   ```
 
 ---
