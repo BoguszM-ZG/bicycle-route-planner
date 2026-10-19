@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, finalize } from 'rxjs';
+import { Observable, tap, catchError, throwError, finalize, shareReplay } from 'rxjs';
 
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
 import { environment } from '../../environments/environment';
@@ -27,6 +27,14 @@ export class AuthService {
   public readonly error = this._error.asReadonly();
 
   public readonly isAuthenticated = computed(() => this._currentUser() !== null);
+
+  private static readonly ACCESS_TOKEN_KEY = 'accessToken';
+  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
+  private static readonly CURRENT_USER_KEY = 'currentUser';
+  private static readonly CLOCK_SKEW_MS = 30_000;
+  private static readonly LOGIN_ROUTE = '/login';
+
+  private refreshInProgress$: Observable<AuthResponse> | null = null;
 
   constructor() {
     this.hydrateAuthState();
@@ -55,6 +63,10 @@ export class AuthService {
   }
 
   public refreshToken(): Observable<AuthResponse> {
+    if (this.refreshInProgress$) {
+      return this.refreshInProgress$;
+    }
+
     const refreshToken = this.getRefreshToken();
 
     if (!refreshToken) {
@@ -62,60 +74,139 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
 
-    return this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
+    this.refreshInProgress$ = this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
       tap((response) => {
+        if (!this.refreshInProgress$ || !this.getRefreshToken()) {
+          return;
+        }
         this.logger.debug('Session successfully refreshed in AuthService');
         this.handleAuthSuccess(response);
       }),
       catchError((error: HttpErrorResponse) => {
         if (error.status === 401 || error.status === 403) {
           this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out.');
+          this.logout();
         } else {
-          this.logger.error('[Auth] Failed to refresh session due to server error:', error);
+          this.logger.error(
+            '[Auth] Failed to refresh session due to server or network error:',
+            error,
+          );
         }
-        this.logout();
         return throwError(() => error);
       }),
+      finalize(() => {
+        this.refreshInProgress$ = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
     );
+
+    return this.refreshInProgress$;
+  }
+
+  public clearSession(): void {
+    this._currentUser.set(null);
+    this._error.set(null);
+    this.refreshInProgress$ = null;
+    this.clearAuthStorage();
   }
 
   public logout(): void {
-    this._currentUser.set(null);
+    this.clearSession();
     this.logger.info('User logged out');
-    this._error.set(null);
-
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('currentUser');
-    }
-
-    void this.router.navigate(['/login']);
+    void this.router.navigate([AuthService.LOGIN_ROUTE]);
   }
 
   public getAccessToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('accessToken');
+      return localStorage.getItem(AuthService.ACCESS_TOKEN_KEY);
     }
     return null;
   }
 
   public getRefreshToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('refreshToken');
+      return localStorage.getItem(AuthService.REFRESH_TOKEN_KEY);
     }
     return null;
   }
 
+  public decodeJwtPayload<T = { exp?: number; [key: string]: unknown }>(
+    token: string | null,
+  ): T | null {
+    if (!token) {
+      return null;
+    }
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+
+      let base64 = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      while (base64.length % 4 !== 0) {
+        base64 += '=';
+      }
+
+      const binaryStr = atob(base64);
+      const bytes = Uint8Array.from(binaryStr, (c) => c.codePointAt(0) ?? 0);
+      const jsonStr = new TextDecoder('utf-8').decode(bytes);
+
+      return JSON.parse(jsonStr) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  public isTokenExpired(token: string | null): boolean {
+    const payload = this.decodeJwtPayload<{ exp?: number }>(token);
+    if (!payload || typeof payload.exp !== 'number') {
+      return true;
+    }
+    return Date.now() >= payload.exp * 1000 - AuthService.CLOCK_SKEW_MS;
+  }
+
+  public hasValidSession(): boolean {
+    if (!this.isAuthenticated()) {
+      return false;
+    }
+
+    const accessToken = this.getAccessToken();
+    const refreshToken = this.getRefreshToken();
+
+    const isAccessValid = !!accessToken && !this.isTokenExpired(accessToken);
+    const isRefreshValid = !!refreshToken && !this.isTokenExpired(refreshToken);
+
+    return isAccessValid || isRefreshValid;
+  }
+
+  private clearAuthStorage(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
+      localStorage.removeItem(AuthService.REFRESH_TOKEN_KEY);
+      localStorage.removeItem(AuthService.CURRENT_USER_KEY);
+    }
+  }
+
   private hydrateAuthState(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const userStr = localStorage.getItem('currentUser');
-      if (userStr) {
-        try {
-          this._currentUser.set(JSON.parse(userStr));
-        } catch {
-          this.logout();
-        }
+      const userStr = localStorage.getItem(AuthService.CURRENT_USER_KEY);
+      const accessToken = this.getAccessToken();
+      const refreshToken = this.getRefreshToken();
+
+      if (!userStr || (!accessToken && !refreshToken)) {
+        this.clearSession();
+        return;
+      }
+
+      if (this.isTokenExpired(accessToken) && this.isTokenExpired(refreshToken)) {
+        this.clearSession();
+        return;
+      }
+
+      try {
+        this._currentUser.set(JSON.parse(userStr));
+      } catch {
+        this.clearSession();
       }
     }
   }
@@ -124,17 +215,19 @@ export class AuthService {
     this._currentUser.set(response.user);
 
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('accessToken', response.accessToken);
+      localStorage.setItem(AuthService.ACCESS_TOKEN_KEY, response.accessToken);
       if (response.refreshToken) {
-        localStorage.setItem('refreshToken', response.refreshToken);
+        localStorage.setItem(AuthService.REFRESH_TOKEN_KEY, response.refreshToken);
       }
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
+      localStorage.setItem(AuthService.CURRENT_USER_KEY, JSON.stringify(response.user));
     }
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {
     if (error.status === 401 || error.status === 400) {
-      this.logger.debug('[Auth] Authentication failed with client error:', { status: error.status });
+      this.logger.debug('[Auth] Authentication failed with client error:', {
+        status: error.status,
+      });
     } else {
       this.logger.error('[Auth] Authentication server failure:', error);
     }
