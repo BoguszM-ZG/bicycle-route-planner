@@ -1,6 +1,6 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
-import { AvoidanceZoneDto} from '../../../models/avoidance-zone.model';
-
+import { Component, input, inject, ChangeDetectionStrategy } from '@angular/core';
+import { AvoidanceZoneDto } from '../../../models/avoidance-zone.model';
+import { AvoidanceZoneStateService } from '../../../services/avoidance-zone-state.service';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -12,19 +12,18 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AvoidanceZoneItemComponent {
-  public zone = input.required<AvoidanceZoneDto>();
+  private readonly zoneStateService = inject(AvoidanceZoneStateService);
 
-  public toggleActive = output<AvoidanceZoneDto>();
-  public deleteZone = output<number>();
+  public readonly zone = input.required<AvoidanceZoneDto>();
 
   public onToggleClick(): void {
-    this.toggleActive.emit(this.zone());
+    this.zoneStateService.toggleActive(this.zone());
   }
 
   public onDeleteClick(): void {
     const id = this.zone().id;
     if (id !== undefined && id !== null) {
-      this.deleteZone.emit(id);
+      this.zoneStateService.deleteZone(id);
     }
   }
 }

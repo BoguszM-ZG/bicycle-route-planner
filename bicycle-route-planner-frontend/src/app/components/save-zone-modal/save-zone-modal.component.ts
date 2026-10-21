@@ -11,7 +11,7 @@ import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { NotificationService } from '../../services/notification.service';
 import { AvoidanceZoneStateService } from '../../services/avoidance-zone-state.service';
 import { MapDrawService } from '../../services/map-draw.service';
-import { MapRoutingService } from '../../services/map-routing.service';
+import { RoutePlanningStateService } from '../../services/route-planning-state.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoggerService } from '../../services/logger.service';
 
@@ -26,7 +26,7 @@ import { LoggerService } from '../../services/logger.service';
 export class SaveZoneModalComponent {
   private readonly zoneStateService = inject(AvoidanceZoneStateService);
   private readonly mapDrawService = inject(MapDrawService);
-  private readonly routingService = inject(MapRoutingService);
+  private readonly routePlanningStateService = inject(RoutePlanningStateService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
   private readonly logger = inject(LoggerService);
@@ -63,7 +63,7 @@ export class SaveZoneModalComponent {
     this.zoneNameControl.reset();
     this.wktStringToSave = null;
     this.mapDrawService.cancelDrawing();
-    this.routingService.routingMode.set('direct');
+    this.routePlanningStateService.routingMode.set('direct');
   }
 
   public saveZone(): void {
@@ -82,7 +82,6 @@ export class SaveZoneModalComponent {
 
     const name = this.zoneNameControl.value.trim();
     this.zoneStateService.saveZone(name, this.wktStringToSave);
-    this.mapDrawService.cancelDrawing();
     this.close();
   }
 }

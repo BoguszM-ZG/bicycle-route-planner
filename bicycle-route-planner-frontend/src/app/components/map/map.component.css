@@ -2,3 +2,43 @@
   height: 100vh;
   width: 100%;
 }
+
+:host ::ng-deep .waypoint-popup-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px;
+  align-items: stretch;
+  min-width: 120px;
+}
+
+:host ::ng-deep .waypoint-popup-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: center;
+}
+
+:host ::ng-deep .waypoint-popup-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+:host ::ng-deep .waypoint-popup-delete-btn:hover {
+  background-color: #dc2626;
+}
+
+:host ::ng-deep .waypoint-popup-delete-btn:active {
+  background-color: #b91c1c;
+}
+

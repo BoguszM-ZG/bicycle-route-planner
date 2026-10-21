@@ -5,7 +5,10 @@
     "LOCATION_FOUND": "You are here!",
     "LOCATION_ERROR": "Failed to get location. Make sure your browser has the necessary permissions.",
     "MAP_CLICK_START": "Click on the map to set the start point",
-    "MAP_REGION_LABEL": "Interactive route map"
+    "MAP_REGION_LABEL": "Interactive route map",
+    "WAYPOINT_POPUP_TITLE": "Waypoint",
+    "DELETE_WAYPOINT": "Delete waypoint",
+    "WAYPOINT_TOOLTIP": "Click to manage • Right-click to delete"
   },
   "MAP_MODE_PANEL": {
     "DIRECT": "Point to Point",
@@ -143,7 +146,8 @@
     "LOAD_ZONES_FAILED": "Failed to load avoidance zones.",
     "SAVE_ZONE_FAILED": "Failed to save avoidance zone.",
     "DELETE_ZONE_FAILED": "Failed to delete avoidance zone.",
-    "TOGGLE_ZONE_FAILED": "Failed to toggle zone status."
+    "TOGGLE_ZONE_FAILED": "Failed to toggle zone status.",
+    "WAYPOINT_IN_AVOIDANCE_ZONE": "A route waypoint is located inside an avoidance zone. Move the waypoint outside the zone."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "Lubusz Province",

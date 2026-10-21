@@ -55,7 +55,7 @@ src
 
 Interaktywna obsługa danych przestrzennych została podzielona na wyspecjalizowane serwisy mapowe:
 
-### 1. Wizualizacja i Trasowanie (`MapRenderService`, `MapRoutingService`)
+### 1. Wizualizacja i Trasowanie (`MapRenderService`, `MapRouteLayerService`, `RoutePlanningStateService`)
 - Wyświetlanie kafelków OpenStreetMap z płynnym skalowaniem.
 - Interaktywne dodawanie punktów trasy (waypointów) z obsługą przeciągania (drag-and-drop markerów) i automatycznym przeliczaniem geometrii w czasie rzeczywistym.
 - Rysowanie geometrii tras w formacie wektorowym `L.polyline` z podziałem na kolory i podświetlenia.
@@ -79,11 +79,12 @@ Interaktywna obsługa danych przestrzennych została podzielona na wyspecjalizow
 | Serwis | Kategoria | Odpowiedzialność |
 |---|---|---|
 | `RouteStateService` | Stan (Signals) | Centralny stan załadowanych tras, aktywnej trasy i parametrów kalkulacji |
+| `RoutePlanningStateService` | Stan (Signals) | Centralny stan punktów trasy (waypointów), trybu routingu i komunikacji z ORS API |
 | `FolderStateService` | Stan (Signals) | Zarządzanie listą folderów, filtrowaniem i relacjami tras |
 | `AvoidanceZoneStateService` | Stan (Signals) | Stan zdefiniowanych poligonów unikania i ich aktywności |
-| `MapRoutingService` | Mapa | Zarządzanie markerami trasy, nasłuch zdarzeń przeciągania, rysowanie geometrii |
-| `MapDrawService` | Mapa | Obsługa narzędzi rysowania poligonów stref omijanych (Leaflet-Draw) |
-| `MapRenderService` | Mapa | Inicjalizacja instancji mapy, warstwy kafelkowe, centrowanie i GPS |
+| `MapRouteLayerService` | Mapa (Leaflet) | Warstwy interaktywne trasy: markery waypointów, zdarzenia przeciągania (drag), linie polilinii roboczych |
+| `MapDrawService` | Mapa (Leaflet-Draw) | Narzędzie do interaktywnego rysowania wielokątów stref omijanych (`L.Draw.Polygon`) |
+| `MapRenderService` | Mapa (Leaflet) | Inicjalizacja instancji mapy, warstwy kafelkowe, centrowanie, marker GPS i renderowanie tras zapisanych |
 | `MapSearchService` | Mapa / API | Autouzupełnianie i geokodowanie zapytań adresowych |
 | `RouteCalculationService` | Logika GIS |Formatowanie geometrii WKT (LineString Z), uzupełnianie brakujących wysokości i kalkulacja sumy przewyższeń |
 | `AuthService` | Bezpieczeństwo | Logowanie, rejestracja, zarządzanie tokenami JWT w `localStorage` |

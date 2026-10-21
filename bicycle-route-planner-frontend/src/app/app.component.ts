@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd, Event } from '@angular/router';
 import { ToastComponent } from './components/toast/toast.component';
 import { TranslateService } from '@ngx-translate/core';
-import { LoggerService } from './services/logger.service'; // dopasuj ścieżkę
+import { LoggerService } from './services/logger.service';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -24,15 +24,9 @@ export class AppComponent {
     this.setupNavigationLogging();
   }
 
-  /**
-   * Konfiguruje i18n.
-   * Na czas developmentu wymuszamy język angielski.
-   */
   private setupTranslations(): void {
-    // 1. Ustawiamy język zapasowy
     this.translate.setFallbackLang('en');
 
-    // 2. Tymczasowo wymuszamy angielski (do testów)
     this.translate.use('en');
 
     /*

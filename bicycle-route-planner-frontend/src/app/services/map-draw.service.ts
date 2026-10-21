@@ -2,9 +2,11 @@ import { Injectable, inject, effect, NgZone, signal } from "@angular/core";
 import * as L from 'leaflet';
 import 'leaflet-draw';
 import * as wellknown from 'wellknown';
+import type { GeoJSONGeometry } from 'wellknown';
+import type { Polygon, MultiPolygon } from 'geojson';
 import { Subject } from 'rxjs';
 import { AvoidanceZoneStateService } from "./avoidance-zone-state.service";
-import { AvoidanceZoneDto} from '../models/avoidance-zone.model';
+import { AvoidanceZoneDto } from '../models/avoidance-zone.model';
 import { AuthService } from './auth.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LoggerService } from './logger.service';
@@ -24,7 +26,7 @@ export class MapDrawService {
 
   public currentZoneDraft = signal<string | null>(null);
   private tempDrawnLayer?: L.Layer;
-  private currentDrawer?: any;
+  private currentDrawer?: L.Draw.Polygon;
   public zoneDrawn$ = new Subject<string>();
 
   constructor() {
@@ -53,6 +55,10 @@ export class MapDrawService {
 
   public destroy(): void {
     this.cancelDrawing();
+    if (this.map) {
+      this.map.off(L.Draw.Event.CREATED, this.onDrawCreated);
+      this.map.removeLayer(this.drawnItems);
+    }
     this.drawnItems.clearLayers();
     this.map = undefined;
   }
@@ -62,7 +68,8 @@ export class MapDrawService {
     this.cancelDrawing();
 
     const drawPolygonClass =
-      (L as any).Draw?.Polygon || (typeof window !== 'undefined' && (window as any).L?.Draw?.Polygon);
+      (L as typeof L & { Draw?: typeof L.Draw }).Draw?.Polygon ??
+      (typeof window !== 'undefined' ? (window as unknown as { L?: typeof L }).L?.Draw?.Polygon : undefined);
 
     if (!drawPolygonClass) {
       this.logger.error('Leaflet Draw Polygon constructor is not available');
@@ -75,7 +82,7 @@ export class MapDrawService {
       shapeOptions: { color: 'red' },
     };
 
-    this.currentDrawer = new drawPolygonClass(this.map, polygonOptions);
+    this.currentDrawer = new drawPolygonClass(this.map as unknown as L.DrawMap, polygonOptions);
     this.currentDrawer.enable();
   }
 
@@ -98,20 +105,25 @@ export class MapDrawService {
     }
   }
 
-  private setupDrawEvents(map: L.Map): void {
-    map.on('draw:created', (e: any) => {
-      this.ngZone.run(() => {
-        this.tempDrawnLayer = e.layer;
-        map.addLayer(this.tempDrawnLayer!);
+  private readonly onDrawCreated = (event: L.LeafletEvent): void => {
+    const e = event as L.DrawEvents.Created;
+    this.ngZone.run(() => {
+      this.tempDrawnLayer = e.layer;
+      if (this.map) {
+        this.map.addLayer(this.tempDrawnLayer);
+      }
 
-        const layer = e.layer as L.Polygon;
-        const geoJson = layer.toGeoJSON();
-        this.logger.debug('[AvoidanceZone] New polygon drawn on map.');
-        const wktString = wellknown.stringify(geoJson.geometry as any);
+      const layer = e.layer as L.Polygon;
+      const geoJson = layer.toGeoJSON();
+      this.logger.debug('[AvoidanceZone] New polygon drawn on map.');
+      const wktString = wellknown.stringify(geoJson.geometry as unknown as GeoJSONGeometry);
 
-        this.currentZoneDraft.set(wktString);
-      });
+      this.currentZoneDraft.set(wktString);
     });
+  };
+
+  private setupDrawEvents(map: L.Map): void {
+    map.on(L.Draw.Event.CREATED, this.onDrawCreated);
   }
 
   private renderZones(zones: AvoidanceZoneDto[]): void {
@@ -120,10 +132,10 @@ export class MapDrawService {
     this.drawnItems.clearLayers();
     const activeZones = zones.filter((z) => z.isActive);
     activeZones.forEach((zone) => {
-      const geoJsonGeom = wellknown.parse(zone.zoneGeom);
+      const geoJsonGeom = wellknown.parse(zone.zoneGeom) as (Polygon | MultiPolygon) | null;
 
       if (geoJsonGeom) {
-        const polygonLayer = L.geoJSON(geoJsonGeom as any, {
+        const polygonLayer = L.geoJSON<unknown, Polygon | MultiPolygon>(geoJsonGeom, {
           style: { color: 'red', weight: 2, fillColor: '#ff0000', fillOpacity: 0.2 },
         });
 

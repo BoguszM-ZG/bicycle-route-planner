@@ -2,25 +2,25 @@ import { LatLngTuple } from 'leaflet';
 import * as L from 'leaflet';
 
 export const MAP_CONSTANTS = {
-  // Początkowy widok mapy (Polska)
+  // Initial map view (Poland)
   DEFAULT_CENTER: [52.069, 19.47] as LatLngTuple,
   DEFAULT_ZOOM: 6,
 
-  // Konfiguracja kafelków (OpenStreetMap)
+  // Tile layer configuration (OpenStreetMap)
   TILE_LAYER: {
     URL: 'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
     MAX_ZOOM: 19,
     ATTRIBUTION: '@ OpenStreetMap'
   },
 
-  // Style rysowanych tras i linii
+  // Styles for rendered routes and lines
   STYLES: {
     SAVED_ROUTE: { color: '#e74c3c', weight: 6, opacity: 0.9 },
     DRAFT_ROUTE: { color: '#e74c3c', weight: 5, opacity: 0.8 },
     LOOP_ROUTE:  { color: '#8e44ad', weight: 6 }
   },
 
-  // Domyślna ikona znacznika (nadpisuje błędne linki lokalne Leafleta w aplikacjach z bundlerem)
+  // Default marker icon (overrides Leaflet default local asset paths in bundler environments)
   DEFAULT_ICON: L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -31,7 +31,7 @@ export const MAP_CONSTANTS = {
     shadowSize: [41, 41],
   }),
 
-  // Ikona markera z wyszukiwarki (Niebieska pinezka SVG)
+  // Search pin marker icon (SVG pin)
   SEARCH_PIN: L.divIcon({
     className: 'search-pin',
     html: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3" fill="white"></circle></svg>`,
@@ -39,7 +39,7 @@ export const MAP_CONSTANTS = {
     iconAnchor: [16, 32],
   }),
 
-  // Markery początku, końca trasy oraz pętli
+  // Start, end, and loop route markers
   MARKERS: {
     LOOP_ICON: L.divIcon({
       className: 'route-marker-loop',

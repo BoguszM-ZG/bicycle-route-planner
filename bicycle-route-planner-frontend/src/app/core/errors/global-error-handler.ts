@@ -8,17 +8,20 @@ export class GlobalErrorHandler implements ErrorHandler {
   private readonly injector = inject(Injector);
   private readonly zone = inject(NgZone);
 
-  public handleError(error: any): void {
+  public handleError(error: unknown): void {
     const unwrappedError = this.findOriginalError(error);
 
     const logger = this.injector.get(LoggerService);
     const notificationService = this.injector.get(NotificationService);
 
-    const message = unwrappedError.message ? unwrappedError.message : unwrappedError.toString();
-
+    const message =
+      unwrappedError instanceof Error
+        ? unwrappedError.message
+        : typeof unwrappedError === 'object' && unwrappedError !== null && 'message' in unwrappedError
+          ? String((unwrappedError as { message: unknown }).message)
+          : String(unwrappedError);
 
     logger.error('Unhandled application error:', message, unwrappedError);
-
 
     if (unwrappedError instanceof HttpErrorResponse) {
       return;
@@ -29,13 +32,24 @@ export class GlobalErrorHandler implements ErrorHandler {
     });
   }
 
-  private findOriginalError(error: any): any {
-    while (error?.originalError) {
-      error = error.originalError;
+  private findOriginalError(error: unknown): unknown {
+    let currentError: unknown = error;
+    while (
+      typeof currentError === 'object' &&
+      currentError !== null &&
+      'originalError' in currentError &&
+      (currentError as { originalError: unknown }).originalError
+    ) {
+      currentError = (currentError as { originalError: unknown }).originalError;
     }
-    if (error?.rejection) {
-      return error.rejection;
+    if (
+      typeof currentError === 'object' &&
+      currentError !== null &&
+      'rejection' in currentError &&
+      (currentError as { rejection: unknown }).rejection
+    ) {
+      return (currentError as { rejection: unknown }).rejection;
     }
-    return error;
+    return currentError;
   }
 }

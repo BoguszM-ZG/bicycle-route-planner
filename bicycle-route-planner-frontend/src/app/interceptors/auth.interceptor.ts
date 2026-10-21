@@ -11,28 +11,37 @@ const BEARER_PREFIX = 'Bearer ';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const token = authService.getAccessToken();
 
   const isApiUrl = req.url.startsWith(environment.apiUrl);
   const isExcludedEndpoint = req.url.includes(AUTH_ENDPOINT) || req.url.includes(TELEMETRY_ENDPOINT);
 
-  let authReq = req;
-
-  if (token && isApiUrl && !isExcludedEndpoint) {
-    authReq = addTokenHeader(req, token);
+  if (!isApiUrl || isExcludedEndpoint) {
+    return next(req);
   }
 
-  return next(authReq).pipe(
-    catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && isApiUrl && !isExcludedEndpoint) {
-        return authService.refreshToken().pipe(
-          switchMap((res) => next(addTokenHeader(req, res.accessToken))),
-        );
-      }
+  const token = authService.getAccessToken();
+  const refreshToken = authService.getRefreshToken();
 
-      return throwError(() => error);
-    }),
-  );
+  if (token && !authService.isTokenExpired(token)) {
+    return next(addTokenHeader(req, token)).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          return authService.refreshToken().pipe(
+            switchMap((res) => next(addTokenHeader(req, res.accessToken))),
+          );
+        }
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  if (refreshToken && !authService.isTokenExpired(refreshToken)) {
+    return authService.refreshToken().pipe(
+      switchMap((res) => next(addTokenHeader(req, res.accessToken))),
+    );
+  }
+
+  return next(req);
 };
 
 function addTokenHeader(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {

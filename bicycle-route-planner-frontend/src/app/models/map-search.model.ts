@@ -1,16 +1,16 @@
-export interface GeoFeature {
-  properties: {
-    name?: string;
-    street?: string;
-    city?: string;
-    state?: string;
-  };
-  geometry: {
-    coordinates: [number, number];
-  };
+import type { Feature, FeatureCollection, Point } from 'geojson';
+
+export interface GeoFeatureProperties {
+  name?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  [key: string]: unknown;
 }
 
-export interface GeoResponse {
+export type GeoFeature = Feature<Point, GeoFeatureProperties>;
+
+export interface GeoResponse extends Partial<FeatureCollection<Point, GeoFeatureProperties>> {
   features?: GeoFeature[];
 }
 

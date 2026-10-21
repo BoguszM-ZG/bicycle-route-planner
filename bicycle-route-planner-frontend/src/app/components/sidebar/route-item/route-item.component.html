@@ -1,7 +1,7 @@
 <div class="route-item">
   <div class="route-item-header">
     @if (!isConfirmingDelete() && !isMoving() && !isRenaming()) {
-      <button class="route-info-btn" (click)="onSelect()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate">
+      <button class="route-info-btn" (click)="selectRoute()" [title]="'SIDEBAR.ROUTE_ITEM_VIEW_ROUTE' | translate">
         <span class="route-name" [class.expanded]="isSelected()">{{ route().name }}</span>
         <span class="route-distance">{{ (route().distanceMeters / 1000 )| number:'1.0-2' }} km</span>
       </button>
@@ -20,7 +20,7 @@
           </svg>
         </button>
 
-        <button class="icon-btn download-icon" (click)="onExportGpx($event)" [title]="'SIDEBAR.ROUTE_ITEM_DOWNLOAD_GPX' | translate">
+        <button class="icon-btn download-icon" (click)="exportGpx($event)" [title]="'SIDEBAR.ROUTE_ITEM_DOWNLOAD_GPX' | translate">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line>
           </svg>
@@ -37,7 +37,7 @@
         <span class="warning-text">{{ 'SIDEBAR.ROUTE_ITEM_CONFIRM_DELETE' | translate }}</span>
         <div class="action-buttons">
           <button class="confirm-btn cancel" (click)="cancelDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_NO' | translate }}</button>
-          <button class="confirm-btn danger" (click)="confirmDelete($event)">{{ 'SIDEBAR.ROUTE_ITEM_YES' | translate }}</button>
+          <button class="confirm-btn danger" (click)="deleteRoute($event)">{{ 'SIDEBAR.ROUTE_ITEM_YES' | translate }}</button>
         </div>
       </div>
     } @else if (isMoving()) {
@@ -53,7 +53,7 @@
             <option [value]="f.id" [selected]="f.id === route().folderId">{{ f.name }}</option>
           }
         </select>
-        <button class="confirm-btn danger" (click)="confirmMove($event, folderSelect.value === 'null' ? null : +folderSelect.value)">OK</button>
+        <button class="confirm-btn danger" (click)="moveToFolder(folderSelect.value === 'null' ? null : +folderSelect.value, $event)">OK</button>
         <button class="confirm-btn cancel" (click)="toggleMove($event)">X</button>
       </div>
     } @else if (isRenaming()) {
@@ -66,9 +66,9 @@
           class="route-name-input"
           (click)="$event.stopPropagation()"
           (keydown)="$event.stopPropagation()"
-          (keyup.enter)="confirmRename($event)"
+          (keyup.enter)="saveRename($event)"
         />
-        <button class="confirm-btn danger" (click)="confirmRename($event)" [disabled]="renameControl.invalid">OK</button>
+        <button class="confirm-btn danger" (click)="saveRename($event)" [disabled]="renameControl.invalid">OK</button>
         <button class="confirm-btn cancel" (click)="toggleRename($event)">X</button>
       </div>
     }

@@ -1,7 +1,6 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AvoidanceZoneItemComponent } from '../avoidance-zone-item/avoidance-zone-item.component';
 import { AvoidanceZoneStateService } from '../../../services/avoidance-zone-state.service';
-import { AvoidanceZoneDto } from '../../../models/avoidance-zone.model';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -10,26 +9,12 @@ import { TranslatePipe } from '@ngx-translate/core';
   imports: [AvoidanceZoneItemComponent, TranslatePipe],
   templateUrl: './avoidance-zone-panel.component.html',
   styleUrl: './avoidance-zone-panel.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AvoidanceZonePanelComponent implements OnInit {
-
+export class AvoidanceZonePanelComponent {
   private readonly zoneStateService = inject(AvoidanceZoneStateService);
 
-  public zones = this.zoneStateService.zones;
-  public isLoading = this.zoneStateService.isLoading;
-
-  ngOnInit(): void {
-    this.zoneStateService.fetchZones();
-  }
-
-  public onToggleZone(zone: AvoidanceZoneDto): void {
-    this.zoneStateService.toggleActive(zone);
-  }
-
-  public onDeleteZone(id: number): void {
-    this.zoneStateService.deleteZone(id);
-  }
-
+  public readonly zones = this.zoneStateService.zones;
+  public readonly isLoading = this.zoneStateService.isLoading;
 }
 
