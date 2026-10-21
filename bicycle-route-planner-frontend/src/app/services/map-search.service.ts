@@ -1,29 +1,27 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map as rxMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { GeoFeature, GeoResponse, SearchResult } from '../models/map-search.model';
+import { GeoFeature, SearchResult } from '../models/map-search.model';
+import { GeocodingService } from './geocoding.service';
 import { LoggerService } from './logger.service';
-import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class MapSearchService {
-  private readonly http = inject(HttpClient);
+  private readonly geocodingService = inject(GeocodingService);
   private readonly logger = inject(LoggerService);
   private readonly translate = inject(TranslateService);
 
   public searchLocation(query: string, lat?: number, lng?: number): Observable<SearchResult[]> {
-    this.logger.debug('[MapSearch] Searching for address:', { query });
-    const url = `${environment.apiUrl}/geocoding/search`;
-
-    let params = new HttpParams().set('q', query);
-    if (lat != null && lng != null) {
-      params = params.set('lat', lat).set('lon', lng);
+    const trimmed = (query ?? '').trim();
+    if (!trimmed) {
+      return of([]);
     }
 
-    return this.http.get<GeoResponse>(url, { params }).pipe(
-      rxMap((response) => this.mapToSearchResults(response.features || [])),
+    this.logger.debug('[MapSearch] Searching for address:', { query: trimmed });
+
+    return this.geocodingService.search(trimmed, lat, lng).pipe(
+      rxMap((response) => this.mapToSearchResults(response?.features || [])),
       catchError((err) => {
         this.logger.error('[MapSearch] Error in Geocoding (Backend Proxy):', err);
         return of([]);
@@ -32,13 +30,16 @@ export class MapSearchService {
   }
 
   private mapToSearchResults(features: GeoFeature[]): SearchResult[] {
-    const mappedResults = features.map((f) => this.mapSingleFeature(f));
+    const validFeatures = features.filter(
+      (f) => Boolean(f?.geometry?.coordinates && f.geometry.coordinates.length >= 2),
+    );
+    const mappedResults = validFeatures.map((f) => this.mapSingleFeature(f));
     return this.deduplicateResults(mappedResults);
   }
 
   private mapSingleFeature(feature: GeoFeature): SearchResult {
-    const { properties: props, geometry } = feature;
-    const [x, y] = geometry.coordinates;
+    const props = feature.properties ?? {};
+    const [x, y] = feature.geometry.coordinates;
 
     const mainName = props.name || props.street || props.city || this.getFallbackName();
     const details: string[] = [];

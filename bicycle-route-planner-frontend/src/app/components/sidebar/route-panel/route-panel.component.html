@@ -46,12 +46,7 @@
     <app-route-item
       [route]="route"
       [isSelected]="route.id === selectedRouteId()"
-      [allFolders]="folders()"
-      (routeSelected)="selectRoute($event)"
-      (routeDeleted)="deleteRoute($event)"
-      (exportGpx)="exportRoute($event)"
-      (routeMoved)="moveRoute($event)"
-      (routeRenamed)="renameRoute($event)">
+      [allFolders]="folders()">
     </app-route-item>
   }
 }

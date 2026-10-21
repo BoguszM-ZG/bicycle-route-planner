@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import {
   CreateRouteRequestDto,
   ElevationPointDto,
@@ -9,7 +9,7 @@ import {
   RouteSummaryDto,
   UpdateRouteFolderDto,
 } from '../models/route.model';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { LoggerService } from './logger.service';
 
 @Injectable({
@@ -20,11 +20,11 @@ export class RouteService {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
 
-  getRoutes(): Observable<RouteSummaryDto[]> {
+  public getRoutes(): Observable<RouteSummaryDto[]> {
     return this.http.get<RouteSummaryDto[]>(this.apiUrl);
   }
 
-  getRouteDetails(id: number): Observable<RouteDetailDto> {
+  public getRouteDetails(id: number): Observable<RouteDetailDto> {
     return this.http.get<RouteDetailDto>(`${this.apiUrl}/${id}`);
   }
 
@@ -32,55 +32,14 @@ export class RouteService {
     return this.http.post<RouteDetailDto>(this.apiUrl, routeData);
   }
 
-  public deleteRoute(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' });
+  public deleteRoute(id: number): Observable<void> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { responseType: 'text' }).pipe(map(() => void 0));
   }
 
-  public downloadGpx(routeId: number, routeName: string): Observable<void> {
-    return this.http
-      .get(`${this.apiUrl}/${routeId}/export/gpx`, { observe: 'response', responseType: 'blob' })
-      .pipe(
-        tap((response) => {
-          const polishMap: { [key: string]: string } = {
-            ą: 'a',
-            ć: 'c',
-            ę: 'e',
-            ł: 'l',
-            ń: 'n',
-            ó: 'o',
-            ś: 's',
-            ź: 'z',
-            ż: 'z',
-            Ą: 'A',
-            Ć: 'C',
-            Ę: 'E',
-            Ł: 'L',
-            Ń: 'N',
-            Ó: 'O',
-            Ś: 'S',
-            Ź: 'Z',
-            Ż: 'Z',
-          };
-          const asciiName = routeName.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, (match) => polishMap[match]);
-          const safeName = asciiName.replace(/[^a-zA-Z0-9-]/g, '_');
-          const fileName = `${safeName}.gpx`;
-
-          const blobUrl = window.URL.createObjectURL(response.body!);
-          const anchor = document.createElement('a');
-          anchor.href = blobUrl;
-          anchor.download = fileName;
-
-          document.body.appendChild(anchor);
-          anchor.click();
-          anchor.remove();
-          window.URL.revokeObjectURL(blobUrl);
-        }),
-        map(() => void 0),
-        catchError((err) => {
-          this.logger.error('Error during downloading GPX file:', err);
-          return throwError(() => err);
-        }),
-      );
+  public exportGpx(routeId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${routeId}/export/gpx`, {
+      responseType: 'blob',
+    });
   }
 
   public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {

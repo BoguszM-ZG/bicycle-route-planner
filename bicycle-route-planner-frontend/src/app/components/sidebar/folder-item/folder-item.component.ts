@@ -4,7 +4,6 @@ import { FolderStateService } from '../../../services/folder-state.service';
 import { RouteStateService } from '../../../services/route-state.service';
 import { RouteItemComponent } from '../route-item/route-item.component';
 import { TranslatePipe } from '@ngx-translate/core';
-import { RouteSummaryDto } from '../../../models/route.model';
 
 
 @Component({
@@ -50,6 +49,7 @@ export class FolderItemComponent {
     this.routeStateService.handleFolderDeleted(this.folderId());
 
     this.folderStateService.deleteFolder(this.folderId());
+    this.isConfirmingDelete.set(false);
   }
 
   public toggleRename(event: Event): void {
@@ -63,15 +63,14 @@ export class FolderItemComponent {
   public confirmRename(event: Event): void {
     event.stopPropagation();
     if (this.renameControl.valid && this.renameControl.value) {
-
       const newName = this.renameControl.value.trim();
       const oldName = this.folderData()?.name;
-      if (newName === oldName) {
+      if (!newName || newName === oldName) {
         this.isRenaming.set(false);
         return;
       }
 
-      this.folderStateService.renameFolder(this.folderId(), this.renameControl.value);
+      this.folderStateService.renameFolder(this.folderId(), newName);
       this.isRenaming.set(false);
     }
   }
@@ -90,26 +89,4 @@ export class FolderItemComponent {
   public selectedRouteId = computed(() => {
     return this.routeStateService.selectedRoute()?.id;
   });
-
-  public onRouteSelected(route: RouteSummaryDto): void {
-    if (route.id !== undefined) {
-      this.routeStateService.selectRoute(route.id);
-    }
-  }
-
-  public onRouteDeleted(routeId: number): void {
-    this.routeStateService.deleteRoute(routeId);
-  }
-
-  public onRouteExported(routeId: number): void {
-    this.routeStateService.exportGpx(routeId);
-  }
-
-  public onRouteMoved(event: { routeId: number; folderId: number | null }): void {
-    this.routeStateService.moveRouteToFolder(event.routeId, event.folderId);
-  }
-
-  public onRouteRenamed(event: { routeId: number; newName: string }): void {
-    this.routeStateService.renameRoute(event.routeId, event.newName);
-  }
 }

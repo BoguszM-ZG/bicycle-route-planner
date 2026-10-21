@@ -18,11 +18,7 @@
   } @else {
     <div class="zones-list">
       @for (zone of zones(); track zone.id) {
-        <app-avoidance-zone-item
-          [zone]="zone"
-          (toggleActive)="onToggleZone($event)"
-          (deleteZone)="onDeleteZone($event)">
-        </app-avoidance-zone-item>
+        <app-avoidance-zone-item [zone]="zone"></app-avoidance-zone-item>
       }
     </div>
   }

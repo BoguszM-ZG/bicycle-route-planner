@@ -64,7 +64,28 @@
 }
 
 .btn-clear:hover {
-
   background: rgba(239, 68, 68, 0.1);
   transform: translateY(-2px);
+}
+
+.control-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.control-btn.locating svg {
+  animation: pulse-locate 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-locate {
+  from {
+    transform: scale(0.9);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1.15);
+    opacity: 1;
+  }
 }

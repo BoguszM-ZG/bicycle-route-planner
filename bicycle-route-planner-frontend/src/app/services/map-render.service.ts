@@ -1,8 +1,10 @@
-import { Injectable, inject, effect, NgZone } from '@angular/core';
+import { Injectable, inject, effect, untracked, NgZone, signal } from '@angular/core';
 import * as L from 'leaflet';
 import { parse } from 'wellknown';
+import type { Position } from 'geojson';
 import { RouteStateService } from './route-state.service';
-import { RouteDetailDto, RouteType } from '../models/route.model';
+import { MapRouteLayerService } from './map-route-layer.service';
+import { RouteDetailDto, RouteGeometry, RouteType } from '../models/route.model';
 import { MAP_CONSTANTS } from '../constants/map.constants';
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
@@ -14,14 +16,17 @@ import { AuthService } from './auth.service';
 })
 export class MapRenderService {
   private readonly routeStateService = inject(RouteStateService);
+  private readonly mapRouteLayerService = inject(MapRouteLayerService);
   private readonly authService = inject(AuthService);
   private readonly ngZone = inject(NgZone);
   private readonly logger = inject(LoggerService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
 
+  public readonly isLocating = signal(false);
+
   private map?: L.Map;
-  private currentGeoJsonLayer?: L.GeoJSON;
+  private currentGeoJsonLayer?: L.GeoJSON<unknown, RouteGeometry>;
   private searchMarker?: L.Marker;
   private userLocationMarker?: L.Marker;
 
@@ -37,6 +42,9 @@ export class MapRenderService {
     effect(() => {
       const routeState = this.routeStateService.selectedRoute();
       if (routeState) {
+        untracked(() => {
+          this.mapRouteLayerService.clearRoute();
+        });
         this.renderSavedRoute(routeState);
       } else {
         this.clearRenderedRoute();
@@ -60,12 +68,16 @@ export class MapRenderService {
 
     const currentRoute = this.routeStateService.selectedRoute();
     if (currentRoute) {
+      this.mapRouteLayerService.clearRoute();
       this.renderSavedRoute(currentRoute);
     }
   }
 
   public destroyMap(): void {
+    this.isLocating.set(false);
     if (this.map) {
+      this.map.stopLocate();
+      this.map.off('locationfound').off('locationerror');
       this.clearRenderedRoute();
       this.clearSearchMarker();
       this.clearUserLocationMarker();
@@ -78,33 +90,47 @@ export class MapRenderService {
     return this.map;
   }
 
-  private renderSavedRoute(routeState: RouteDetailDto) {
+  private renderSavedRoute(routeState: RouteDetailDto): void {
     if (!this.map) return;
 
     this.clearRenderedRoute();
 
-    const geoJsonGeometry = parse(routeState.routeGeom);
+    const geoJsonGeometry = parse(routeState.routeGeom) as RouteGeometry | null;
 
     if (geoJsonGeometry) {
-      this.currentGeoJsonLayer = L.geoJson(geoJsonGeometry as any, {
+      this.currentGeoJsonLayer = L.geoJson<unknown, RouteGeometry>(geoJsonGeometry, {
         style: MAP_CONSTANTS.STYLES.SAVED_ROUTE,
       }).addTo(this.map);
 
       this.addRouteMarkers(geoJsonGeometry, routeState.routeType);
 
-      this.map.fitBounds(this.currentGeoJsonLayer.getBounds(), { padding: [50, 50] });
+      const bounds = this.currentGeoJsonLayer.getBounds();
+      if (bounds.isValid()) {
+        this.map.fitBounds(bounds, { padding: [50, 50] });
+      }
     }
   }
 
-  private addRouteMarkers(geoJsonGeometry: any, routeType: RouteType): void {
-    if (geoJsonGeometry.type !== 'LineString') return;
+  private addRouteMarkers(geoJsonGeometry: RouteGeometry, routeType: RouteType): void {
+    let startCoords: Position | undefined;
+    let endCoords: Position | undefined;
 
-    const coords = geoJsonGeometry.coordinates as number[][];
-    if (coords.length === 0) return;
+    if (geoJsonGeometry.type === 'LineString') {
+      const coords = geoJsonGeometry.coordinates;
+      if (coords.length > 0) {
+        startCoords = coords[0];
+        endCoords = coords[coords.length - 1];
+      }
+    } else if (geoJsonGeometry.type === 'MultiLineString') {
+      const validLines = geoJsonGeometry.coordinates.filter((line) => line.length > 0);
+      if (validLines.length > 0) {
+        startCoords = validLines[0][0];
+        const lastLine = validLines[validLines.length - 1];
+        endCoords = lastLine[lastLine.length - 1];
+      }
+    }
 
-    const startCoords = coords[0];
-    const endCoords = coords[coords.length - 1];
-    if (!startCoords || !endCoords) return;
+    if (!startCoords || !endCoords || startCoords.length < 2 || endCoords.length < 2) return;
 
     if (routeType === 'LOOP') {
       const loopMarker = L.marker([startCoords[1], startCoords[0]], {
@@ -128,8 +154,11 @@ export class MapRenderService {
   }
 
   public clearRenderedRoute(): void {
-    if (this.currentGeoJsonLayer && this.map) {
-      this.map.removeLayer(this.currentGeoJsonLayer);
+    if (this.currentGeoJsonLayer) {
+      if (this.map) {
+        this.map.removeLayer(this.currentGeoJsonLayer);
+      }
+      this.currentGeoJsonLayer.clearLayers();
       this.currentGeoJsonLayer = undefined;
     }
   }
@@ -172,19 +201,26 @@ export class MapRenderService {
   }
 
   public locateUser(): void {
+    if (this.isLocating()) {
+      return;
+    }
     this.logger.debug('[Geolocation] Requesting user GPS location...');
     const map = this.map;
     if (!map) return;
 
-    map.locate({ setView: true, maxZoom: 15 });
+    this.isLocating.set(true);
 
-    map.once('locationfound', (e) => {
+    map.off('locationfound').off('locationerror');
+
+    const onLocationFound = (e: L.LocationEvent): void => {
       this.ngZone.run(() => {
+        map.off('locationerror', onLocationError);
+        this.isLocating.set(false);
         if (this.userLocationMarker && map.hasLayer(this.userLocationMarker)) {
           this.userLocationMarker.setLatLng(e.latlng);
         } else {
           this.clearUserLocationMarker();
-          this.userLocationMarker = L.marker(e.latlng)
+          this.userLocationMarker = L.marker(e.latlng, { icon: MAP_CONSTANTS.DEFAULT_ICON })
             .addTo(map)
             .bindPopup(this.translate.instant('MAP.LOCATION_FOUND'));
 
@@ -194,13 +230,29 @@ export class MapRenderService {
         }
         this.userLocationMarker?.openPopup();
       });
-    });
+    };
 
-    map.once('locationerror', (e) => {
+    const onLocationError = (e: L.ErrorEvent): void => {
       this.ngZone.run(() => {
+        map.off('locationfound', onLocationFound);
+        this.isLocating.set(false);
         this.logger.debug('[Geolocation] GPS location access denied or failed:', { message: e.message });
         this.notificationService.error('MAP.LOCATION_ERROR');
       });
-    });
+    };
+
+    map.once('locationfound', onLocationFound);
+    map.once('locationerror', onLocationError);
+
+    try {
+      map.locate({ setView: true, maxZoom: 15 });
+    } catch (err) {
+      this.ngZone.run(() => {
+        map.off('locationfound', onLocationFound).off('locationerror', onLocationError);
+        this.isLocating.set(false);
+        this.logger.error('[Geolocation] Failed to initiate locate:', { error: err });
+        this.notificationService.error('MAP.LOCATION_ERROR');
+      });
+    }
   }
 }

@@ -4,7 +4,11 @@
     "LOGIN_REQUIRED": "Musisz być zalogowany, aby zapisać trasę.",
     "LOCATION_FOUND": "Tu jesteś!",
     "LOCATION_ERROR": "Nie udało się pobrać lokalizacji. Upewnij się, że przeglądarka ma odpowiednie uprawnienia.",
-    "MAP_REGION_LABEL": "Interaktywna mapa trasy"
+    "MAP_CLICK_START": "Kliknij na mapie, aby wybrać punkt startowy",
+    "MAP_REGION_LABEL": "Interaktywna mapa trasy",
+    "WAYPOINT_POPUP_TITLE": "Punkt trasy",
+    "DELETE_WAYPOINT": "Usuń punkt",
+    "WAYPOINT_TOOLTIP": "Kliknij, aby zarządzać • Prawy przycisk, aby usunąć"
   },
   "ROUTE": {
     "ENTER_NAME": "Proszę wpisać nazwę trasy",
@@ -15,8 +19,8 @@
     "ZONE_POPUP_TITLE": "Strefa omijana:"
   },
   "GPX": {
-    "MAP_CLICK_START": "Kliknij na mapie, aby ustawić punkt startowy",
-    "LOCATION_ERROR": "Nie udało się pobrać lokalizacji"
+    "DOWNLOAD_START": "Rozpoczęto pobieranie pliku GPX",
+    "DOWNLOAD_ERROR": "Nie udało się pobrać pliku GPX"
   },
   "MAP_MODE_PANEL": {
     "DIRECT": "Trasa Punktowa",
@@ -142,7 +146,8 @@
     "LOAD_ZONES_FAILED": "Nie udało się załadować stref wykluczeń.",
     "SAVE_ZONE_FAILED": "Nie udało się zapisać strefy wykluczeń.",
     "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy wykluczeń.",
-    "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy."
+    "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy.",
+    "WAYPOINT_IN_AVOIDANCE_ZONE": "Punkt trasy znajduje się wewnątrz strefy omijanej. Przesuń punkt poza strefę."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "woj. lubuskie",

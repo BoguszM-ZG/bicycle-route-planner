@@ -16,7 +16,7 @@ export class NotificationService {
     messageKey: string, 
     type: NotificationType = 'info', 
     durationMs: number = 4000,
-    translationParams?: Record<string, string | number>
+    translationParams?: Record<string, unknown>
   ) {
     const id = this.idCounter++;
     
@@ -36,19 +36,19 @@ export class NotificationService {
     }
   }
 
-  success(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+  success(messageKey: string, params?: Record<string, unknown>, durationMs?: number) {
     this.show(messageKey, 'success', durationMs, params);
   }
   
-  error(messageKey: string, params?: Record<string, any>, durationMs: number = 6000) {
+  error(messageKey: string, params?: Record<string, unknown>, durationMs: number = 6000) {
     this.show(messageKey, 'error', durationMs, params);
   }
   
-  info(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+  info(messageKey: string, params?: Record<string, unknown>, durationMs?: number) {
     this.show(messageKey, 'info', durationMs, params);
   }
   
-  warning(messageKey: string, params?: Record<string, any>, durationMs?: number) {
+  warning(messageKey: string, params?: Record<string, unknown>, durationMs?: number) {
     this.show(messageKey, 'warning', durationMs, params);
   }
 

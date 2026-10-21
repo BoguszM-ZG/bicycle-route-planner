@@ -1,10 +1,17 @@
-import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
-import { DecimalPipe} from '@angular/common';
+import {
+  Component,
+  input,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { RouteSummaryDto } from '../../../models/route.model';
-import { RouteDetailsComponent} from '../route-details/route-details.component';
+import { RouteDetailsComponent } from '../route-details/route-details.component';
 import { FolderDto } from '../../../models/folder.model';
 import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
+import { RouteStateService } from '../../../services/route-state.service';
 
 @Component({
   selector: 'app-route-item',
@@ -15,27 +22,25 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RouteItemComponent {
+  private readonly routeStateService = inject(RouteStateService);
+
   public route = input.required<RouteSummaryDto>();
   public isSelected = input<boolean>(false);
-
-  public routeSelected = output<RouteSummaryDto>();
-  public routeDeleted = output<number>();
-  public exportGpx = output<number>();
-
   public allFolders = input<FolderDto[]>([]);
-  public routeMoved = output<{ routeId: number; folderId: number | null }>();
+
   public isMoving = signal<boolean>(false);
-
   public isConfirmingDelete = signal<boolean>(false);
-
   public isRenaming = signal<boolean>(false);
   public renameControl = new FormControl('', [Validators.required, Validators.maxLength(50)]);
-  public routeRenamed = output<{ routeId: number; newName: string }>();
+
+  public selectRoute(): void {
+    if (!this.isConfirmingDelete() && this.route().id !== undefined && this.route().id !== null) {
+      this.routeStateService.selectRoute(this.route().id);
+    }
+  }
 
   public onSelect(): void {
-    if (!this.isConfirmingDelete()) {
-      this.routeSelected.emit(this.route());
-    }
+    this.selectRoute();
   }
 
   public promptDelete(event: Event): void {
@@ -48,29 +53,47 @@ export class RouteItemComponent {
     this.isConfirmingDelete.set(false);
   }
 
-  public confirmDelete(event: Event): void {
-    event.stopPropagation();
+  public deleteRoute(event?: Event): void {
+    event?.stopPropagation();
     const id = this.route().id;
     if (id !== undefined && id !== null) {
-      this.routeDeleted.emit(id);
+      this.routeStateService.deleteRoute(id);
+    }
+    this.isConfirmingDelete.set(false);
+  }
+
+  public confirmDelete(event: Event): void {
+    this.deleteRoute(event);
+  }
+
+  public exportGpx(event?: Event): void {
+    event?.stopPropagation();
+    const id = this.route().id;
+    if (id !== undefined && id !== null) {
+      this.routeStateService.downloadGpx(id, this.route().name);
     }
   }
 
   public onExportGpx(event: Event): void {
-    event.stopPropagation();
-    if (this.route()?.id) {
-      this.exportGpx.emit(this.route().id!);
-    }
+    this.exportGpx(event);
   }
 
   public toggleMove(event: Event): void {
     event.stopPropagation();
-    this.isMoving.set(!this.isMoving());
+    this.isMoving.update((v) => !v);
   }
-  public confirmMove(event: Event, targetFolderId: number | null): void {
-    event.stopPropagation();
-    this.routeMoved.emit({ routeId: this.route().id!, folderId: targetFolderId });
+
+  public moveToFolder(targetFolderId: number | null, event?: Event): void {
+    event?.stopPropagation();
+    const id = this.route().id;
+    if (id !== undefined && id !== null) {
+      this.routeStateService.moveRouteToFolder(id, targetFolderId);
+    }
     this.isMoving.set(false);
+  }
+
+  public confirmMove(event: Event, targetFolderId: number | null): void {
+    this.moveToFolder(targetFolderId, event);
   }
 
   public toggleRename(event: Event): void {
@@ -78,20 +101,27 @@ export class RouteItemComponent {
     if (!this.isRenaming()) {
       this.renameControl.setValue(this.route().name);
     }
-    this.isRenaming.set(!this.isRenaming());
+    this.isRenaming.update((v) => !v);
   }
 
-  public confirmRename(event: Event): void {
-    event.stopPropagation();
+  public saveRename(event?: Event): void {
+    event?.stopPropagation();
     if (this.renameControl.valid && this.renameControl.value) {
       const newName = this.renameControl.value.trim();
       const oldName = this.route().name;
-      if (newName === oldName) {
+      if (!newName || newName === oldName) {
         this.isRenaming.set(false);
         return;
       }
-      this.routeRenamed.emit({ routeId: this.route().id!, newName: this.renameControl.value });
+      const id = this.route().id;
+      if (id !== undefined && id !== null) {
+        this.routeStateService.renameRoute(id, newName);
+      }
       this.isRenaming.set(false);
     }
+  }
+
+  public confirmRename(event: Event): void {
+    this.saveRename(event);
   }
 }

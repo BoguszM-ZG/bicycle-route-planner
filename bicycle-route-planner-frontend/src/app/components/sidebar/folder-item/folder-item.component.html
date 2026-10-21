@@ -52,12 +52,7 @@
         <app-route-item
           [route]="route"
           [isSelected]="route.id === selectedRouteId()"
-          [allFolders]="allFolders()"
-          (routeSelected)="onRouteSelected($event)"
-          (routeDeleted)="onRouteDeleted($event)"
-          (exportGpx)="onRouteExported($event)"
-          (routeMoved)="onRouteMoved($event)"
-          (routeRenamed)="onRouteRenamed($event)">
+          [allFolders]="allFolders()">
         </app-route-item>
       }
     </div>

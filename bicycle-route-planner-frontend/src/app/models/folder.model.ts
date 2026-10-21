@@ -1,7 +1,7 @@
 export interface FolderDto {
   id: number;
   name: string;
-  parentFolderId: number;
+  parentFolderId?: number | null;
 }
 
 export interface CreateFolderRequestDto {
