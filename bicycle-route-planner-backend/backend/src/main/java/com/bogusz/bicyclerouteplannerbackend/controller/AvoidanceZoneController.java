@@ -1,7 +1,7 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
 
-import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
+import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.UpdateAvoidanceZoneStatusDto;

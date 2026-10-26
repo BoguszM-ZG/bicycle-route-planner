@@ -17,11 +17,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RenameRouteRequestDto;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +37,6 @@ import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
 class RouteServiceTest {
-
     private static final Long USER_ID = 1L;
     private static final Long FOLDER_ID = 10L;
     private static final Long ROUTE_ID = 100L;
@@ -45,35 +47,21 @@ class RouteServiceTest {
     private static final Double ELEVATION_GAIN = 100.0;
     private static final Double ELEVATION_LOSS = 50.0;
     private static final String START_POINT = "POINT(1 1)";
-    private static final String ROUTE_GEOM = "\"LINESTRING(1 1, 2 2)\"";
-
-    private static final String OLD_ROUTE_NAME = "Old name";
-    private static final String NEW_ROUTE_NAME = "New name";
-    private static final String GPX_MOCK_DATA = "<gpx>Route</gpx>";
-    
-    private static final double LON_1 = 19.0;
-    private static final double LAT_1 = 50.0;
-    private static final double LAT_2 = 50.01;
-    private static final double ELEV_1 = 200.0;
-    private static final double ELEV_2 = 210.0;
-    private static final double DISTANCE_START = 0.0;
-    private static final double DISTANCE_MIN = 1000.0;
-    private static final int EXPECTED_SIZE = 2;
-    private static final int EXPECTED_SIZE_ONE = 1;
+    private static final String ROUTE_GEOM = "LINESTRING(1 1, 2 2)";
 
     @Mock private RouteRepository routeRepository;
     @Mock private UserRepository userRepository;
     @Mock private GpxExportService gpxExportService;
     @Mock private FolderRepository folderRepository;
     @Mock private RouteMapper routeMapper;
+    @Spy private ElevationProfileDownsampler elevationProfileDownsampler = new ElevationProfileDownsampler();
 
     @InjectMocks
     private RouteService routeService;
 
-
     @Test
     void shouldSaveRouteForUserWithoutFolder() {
-        // Given
+        // GIVEN
         CreateRouteRequestDto request = new CreateRouteRequestDto(
                 ROUTE_NAME, ROUTE_TYPE, TARGET_DISTANCE, DISTANCE_METERS,
                 ELEVATION_GAIN, ELEVATION_LOSS, START_POINT, ROUTE_GEOM, null
@@ -87,21 +75,20 @@ class RouteServiceTest {
         given(routeRepository.save(mockRoute)).willReturn(mockRoute);
         given(routeMapper.toRouteDetailDto(mockRoute)).willReturn(mockResponseDto);
 
-        // When
+        // WHEN
         RouteDetailDto result = routeService.saveRouteForUser(request, USER_ID);
 
-        // Then
+        // THEN
         assertThat(result).isNotNull();
         assertThat(result.id()).isEqualTo(ROUTE_ID);
 
-        //Verify
         then(folderRepository).shouldHaveNoInteractions();
         then(routeRepository).should().save(mockRoute);
     }
 
     @Test
     void shouldThrowExceptionWhenSavingRouteToNonExistentFolder() {
-        // Given
+        // GIVEN
         CreateRouteRequestDto request = new CreateRouteRequestDto(
                 ROUTE_NAME, ROUTE_TYPE, TARGET_DISTANCE, DISTANCE_METERS,
                 ELEVATION_GAIN, ELEVATION_LOSS, START_POINT, ROUTE_GEOM, FOLDER_ID
@@ -109,58 +96,53 @@ class RouteServiceTest {
 
         given(folderRepository.findByIdAndUserId(FOLDER_ID, USER_ID)).willReturn(Optional.empty());
 
-        // When & Then
+        // WHEN & THEN
         assertThatThrownBy(() -> routeService.saveRouteForUser(request, USER_ID))
                 .isInstanceOf(FolderNotFoundException.class)
                 .hasMessageContaining("Folder not found");
 
-        //Verify
         then(routeRepository).shouldHaveNoInteractions();
     }
 
     @Test
-    void shouldGetRoutesForUserWithoutFolderId() {
-        // Given
+    void shouldGetRoutesForUser() {
+        // GIVEN
         RouteSummaryDto summaryDto = mock(RouteSummaryDto.class);
         given(routeRepository.findAllByUserIdOrderByCreatedAtDesc(USER_ID))
                 .willReturn(List.of(summaryDto));
 
-        // When
-        List<RouteSummaryDto> result = routeService.getRoutesForUser(USER_ID, null);
+        // WHEN
+        List<RouteSummaryDto> result = routeService.getRoutesForUser(USER_ID);
 
-        // Then
-        assertThat(result).hasSize(EXPECTED_SIZE_ONE);
+        // THEN
+        assertThat(result).hasSize(1);
         then(routeRepository).should().findAllByUserIdOrderByCreatedAtDesc(USER_ID);
     }
 
     @Test
-    void shouldGetRoutesForUserWithFolderId() {
-        // Given
-        RouteSummaryDto summaryDto = mock(RouteSummaryDto.class);
+    void shouldReturnEmptyListWhenUserHasNoRoutes() {
+        // GIVEN
+        given(routeRepository.findAllByUserIdOrderByCreatedAtDesc(USER_ID))
+                .willReturn(List.of());
 
-        given(routeRepository.findAllByUserIdAndFolderIdOrderByCreatedAtDesc(USER_ID, FOLDER_ID))
-                .willReturn(List.of(summaryDto));
+        // WHEN
+        List<RouteSummaryDto> result = routeService.getRoutesForUser(USER_ID);
 
-        // When
-        List<RouteSummaryDto> result = routeService.getRoutesForUser(USER_ID, FOLDER_ID);
-
-        // Then
-        assertThat(result).hasSize(EXPECTED_SIZE_ONE);
-
-        then(routeRepository).should().findAllByUserIdAndFolderIdOrderByCreatedAtDesc(USER_ID, FOLDER_ID);
+        // THEN
+        assertThat(result).isEmpty();
+        then(routeRepository).should().findAllByUserIdOrderByCreatedAtDesc(USER_ID);
     }
-
 
     @Test
     void shouldDeleteRouteForUserSuccessfully() {
-        // Given
+        // GIVEN
         Route mockRoute = new Route();
         given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
 
-        // When
+        // WHEN
         routeService.deleteRouteForUser(ROUTE_ID, USER_ID);
 
-        // Then
+        // THEN
         then(routeRepository).should().delete(mockRoute);
     }
 
@@ -174,7 +156,6 @@ class RouteServiceTest {
                 .isInstanceOf(RouteNotFoundException.class)
                 .hasMessageContaining("Route not found");
 
-
         then(routeRepository).shouldHaveNoMoreInteractions();
     }
 
@@ -185,29 +166,28 @@ class RouteServiceTest {
         mockRoute.setName(ROUTE_NAME);
         given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
 
-        byte[] fakeGpxData = GPX_MOCK_DATA.getBytes();
+        byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
         // WHEN
         GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
         // THEN
         assertThat(result).isNotNull();
-        assertThat(result.routeName()).isEqualTo(ROUTE_NAME);
+        assertThat(result.fileName()).isEqualTo("Route.gpx");
         assertThat(result.gpxData()).isEqualTo(fakeGpxData);
     }
-
 
     @Test
     void shouldRenameRouteSuccessfully() {
         // GIVEN
         Route mockRoute = new Route();
-        mockRoute.setName(OLD_ROUTE_NAME);
+        mockRoute.setName("Old name");
 
-        RenameRouteRequestDto request = new RenameRouteRequestDto(NEW_ROUTE_NAME);
+        RenameRouteRequestDto request = new RenameRouteRequestDto("New name");
         given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
         // WHEN
         routeService.renameRoute(ROUTE_ID, request, USER_ID);
         // THEN
-        assertThat(mockRoute.getName()).isEqualTo(NEW_ROUTE_NAME);
+        assertThat(mockRoute.getName()).isEqualTo("New name");
     }
     @Test
     void shouldUpdateRouteFolderSuccessfully() {
@@ -236,35 +216,123 @@ class RouteServiceTest {
         then(folderRepository).shouldHaveNoInteractions();
     }
 
-
     @Test
     void shouldCalculateElevationPointsSuccessfully() {
         // GIVEN
         Route mockRoute = new Route();
 
-
         Coordinate[] coords = new Coordinate[]{
-                new Coordinate(LON_1, LAT_1, ELEV_1),
-                new Coordinate(LON_1, LAT_2, ELEV_2)
+                new Coordinate(19.0, 50.0, 200.0),
+                new Coordinate(19.0, 50.01, 210.0)
         };
 
-        org.locationtech.jts.geom.GeometryFactory factory = new org.locationtech.jts.geom.GeometryFactory();
+        GeometryFactory factory = new GeometryFactory();
         mockRoute.setRouteGeom(factory.createLineString(coords));
         given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
         // WHEN
-        List<com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto> result =
+        List<ElevationPointDto> result =
                 routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
         // THEN
-        assertThat(result).hasSize(EXPECTED_SIZE);
+        assertThat(result).hasSize(2);
 
-        assertThat(result.get(0).distance()).isEqualTo(DISTANCE_START);
-        assertThat(result.get(0).elevation()).isEqualTo(ELEV_1);
+        assertThat(result.get(0).distance()).isEqualTo(0.0);
+        assertThat(result.get(0).elevation()).isEqualTo(200.0);
 
-
-        assertThat(result.get(1).distance()).isGreaterThan(DISTANCE_MIN);
-        assertThat(result.get(1).elevation()).isEqualTo(ELEV_2);
+assertThat(result.get(1).distance()).isGreaterThan(1000.0);
+        assertThat(result.get(1).elevation()).isEqualTo(210.0);
     }
 
+    @Test
+    void shouldDownsampleWhenElevationPointsExceedDefaultMaxPoints() {
+        // GIVEN
+        Route mockRoute = new Route();
+        Coordinate[] coords = new Coordinate[300];
+        for (int i = 0; i < 300; i++) {
+            coords[i] = new Coordinate(19.0 + (i * 0.001), 50.0 + (i * 0.001), 100.0 + i);
+        }
+
+        GeometryFactory factory = new GeometryFactory();
+        mockRoute.setRouteGeom(factory.createLineString(coords));
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+
+        // WHEN
+        List<ElevationPointDto> result =
+                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result).hasSizeLessThanOrEqualTo(250);
+        assertThat(result.getFirst().distance()).isEqualTo(0.0);
+        assertThat(result.getFirst().elevation()).isEqualTo(100.0);
+        assertThat(result.getLast().elevation()).isEqualTo(100.0 + 300 - 1);
+        for (int i = 1; i < result.size(); i++) {
+            assertThat(result.get(i).distance()).isGreaterThan(result.get(i - 1).distance());
+        }
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenRouteGeometryIsNull() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setRouteGeom(null);
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+
+        // WHEN
+        List<ElevationPointDto> result =
+                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void shouldFilterOutNaNZCoordinates() {
+        // GIVEN
+        Route mockRoute = new Route();
+        Coordinate[] coords = new Coordinate[]{
+                new Coordinate(19.0, 50.0, 200.0),
+                new Coordinate(19.0, 50.01, Double.NaN),
+                new Coordinate(19.0 + 0.001, 50.01, 210.0)
+        };
+
+        GeometryFactory factory = new GeometryFactory();
+        mockRoute.setRouteGeom(factory.createLineString(coords));
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+
+        // WHEN
+        List<ElevationPointDto> result =
+                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).elevation()).isEqualTo(200.0);
+        assertThat(result.get(1).elevation()).isEqualTo(210.0);
+    }
+
+    @Test
+    void shouldHandleAntipodalAndIdenticalCoordinatesWithoutNaN() {
+        // GIVEN
+        Route mockRoute = new Route();
+        Coordinate[] coords = new Coordinate[]{
+                new Coordinate(0.0, 90.0, 100.0),
+                new Coordinate(0.0, 90.0, 150.0),
+                new Coordinate(0.0, -90.0, 200.0)
+        };
+
+        GeometryFactory factory = new GeometryFactory();
+        mockRoute.setRouteGeom(factory.createLineString(coords));
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+
+        // WHEN
+        List<ElevationPointDto> result =
+                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).distance()).isEqualTo(0.0);
+        assertThat(result.get(1).distance()).isEqualTo(0.0);
+        assertThat(result.get(2).distance()).isGreaterThan(0.0);
+        assertThat(Double.isNaN(result.get(2).distance())).isFalse();
+    }
 
     @Test
     void shouldGetRouteDetailSuccessfully() {
@@ -287,7 +355,6 @@ class RouteServiceTest {
         assertThat(result.name()).isEqualTo(ROUTE_NAME);
     }
 
-
     @Test
     void shouldThrowExceptionWhenUpdatingToNonExistentFolder() {
         // GIVEN
@@ -303,5 +370,134 @@ class RouteServiceTest {
                 .hasMessageContaining("Folder not found");
 
         assertThat(mockRoute.getFolder()).isNull();
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenRenamingNonExistentRoute() {
+        // GIVEN
+        RenameRouteRequestDto request = new RenameRouteRequestDto("New name");
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.renameRoute(ROUTE_ID, request, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(routeRepository).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenExportingNonExistentRouteToGpx() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.exportRouteToGpx(ROUTE_ID, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(gpxExportService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenGettingDetailForNonExistentRoute() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.getRouteDetail(ROUTE_ID, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(routeMapper).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenGettingElevationPointsForNonExistentRoute() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenUpdatingFolderForNonExistentRoute() {
+        // GIVEN
+        UpdateRouteFolderDto request = new UpdateRouteFolderDto(FOLDER_ID);
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.updateRouteFolder(ROUTE_ID, request, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(folderRepository).shouldHaveNoInteractions();
+    }
+
+    @Test
+    void shouldResolveDefaultFileNameWhenRouteNameIsNull() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setName(null);
+        byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
+
+        // WHEN
+        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result.fileName()).isEqualTo("route.gpx");
+    }
+
+    @Test
+    void shouldResolveDefaultFileNameWhenRouteNameIsBlank() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setName("   ");
+        byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
+
+        // WHEN
+        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result.fileName()).isEqualTo("route.gpx");
+    }
+
+    @Test
+    void shouldSanitizeIllegalCharactersInExportFileName() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setName("route/test:name");
+        byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
+
+        // WHEN
+        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result.fileName()).isEqualTo("route_test_name.gpx");
+    }
+
+    @Test
+    void shouldResolveDefaultFileNameWhenRouteNameContainsOnlyUnderscores() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setName("____");
+        byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
+
+        // WHEN
+        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result.fileName()).isEqualTo("route.gpx");
     }
 }

@@ -27,18 +27,10 @@ public class Folder {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "parent_folder_id")
-    private Folder parentFolder;
-
     @Size(max = 100)
     @NotNull
     @Column(name = "name", nullable = false, length = 100)
     private String name;
-
-    @OneToMany(mappedBy = "parentFolder")
-    private Set<Folder> folders = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "folder")
     private Set<Route> routes = new LinkedHashSet<>();

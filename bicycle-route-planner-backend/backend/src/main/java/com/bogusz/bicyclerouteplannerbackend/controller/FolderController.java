@@ -1,9 +1,8 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
-import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
+import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.service.FolderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +34,13 @@ public class FolderController {
     @PostMapping
     @Operation(summary = "Create folder", description = "Creates a new folder for the authenticated user.")
     public ResponseEntity<FolderDto> createFolder(
-            @Valid @RequestBody CreateFolderRequestDto request, @AuthenticationPrincipal UserPrincipal principal){
+            @Valid @RequestBody FolderRequestDto request, @AuthenticationPrincipal UserPrincipal principal){
         FolderDto savedFolder = folderService.createFolder(request, principal.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedFolder);
     }
 
     @DeleteMapping("/{folderId}")
-    @Operation(summary = "Delete folder", description = "Deletes a specific folder and all its routes.")
+    @Operation(summary = "Delete folder", description = "Deletes a specific folder and all its routes id sets to NULL.")
     public ResponseEntity<Void> deleteFolder(@PathVariable Long folderId, @AuthenticationPrincipal UserPrincipal principal) {
         folderService.deleteFolder(folderId, principal.id());
         return ResponseEntity.noContent().build();
@@ -51,7 +50,7 @@ public class FolderController {
     @Operation(summary = "Rename folder", description = "Updates the name of an existing folder.")
     public ResponseEntity<Void> renameFolder(
             @PathVariable Long folderId,
-            @Valid @RequestBody RenameFolderRequest request,
+            @Valid @RequestBody FolderRequestDto request,
             @AuthenticationPrincipal UserPrincipal principal) {
         folderService.renameFolder(folderId, request, principal.id());
         return ResponseEntity.noContent().build();

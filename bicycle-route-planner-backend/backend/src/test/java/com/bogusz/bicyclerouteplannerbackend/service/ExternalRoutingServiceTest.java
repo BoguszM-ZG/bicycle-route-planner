@@ -4,6 +4,7 @@ import com.bogusz.bicyclerouteplannerbackend.dto.routing.OrsRouteRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.ExternalRoutingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -12,6 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -34,33 +37,35 @@ class ExternalRoutingServiceTest {
         externalRoutingService = new ExternalRoutingService(restClient);
     }
 
-
     @Test
     void shouldGetDirectionsSuccessfully() {
-        // Given
+        // GIVEN
         OrsRouteRequestDto request = new OrsRouteRequestDto(List.of(), true, false, null);
 
         mockServer.expect(requestTo(API_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json("{\"coordinates\":[],\"elevation\":true,\"instructions\":false}"))
                 .andRespond(withSuccess(JSON_RESPONSE_SUCCESS, MediaType.APPLICATION_JSON));
 
-        // When
+        // WHEN
         String result = externalRoutingService.getDirections(request);
 
-        // Then
+        // THEN
         assertThat(result).isEqualTo(JSON_RESPONSE_SUCCESS);
         mockServer.verify();
     }
 
-
     @Test
     void shouldThrowExceptionOnApiError() {
-        // Given
+        // GIVEN
         OrsRouteRequestDto request = new OrsRouteRequestDto(List.of(), true, false, null);
 
         mockServer.expect(requestTo(API_URL))
-                .andRespond(withServerError()); // Simulating HTTP 500 from ORS
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json("{\"coordinates\":[],\"elevation\":true,\"instructions\":false}"))
+                .andRespond(withServerError());
 
-        // When & THEN
+        // WHEN & THEN
         assertThatThrownBy(() -> externalRoutingService.getDirections(request))
                 .isInstanceOf(ExternalRoutingException.class)
                 .hasMessageContaining("Failed to calculate route");

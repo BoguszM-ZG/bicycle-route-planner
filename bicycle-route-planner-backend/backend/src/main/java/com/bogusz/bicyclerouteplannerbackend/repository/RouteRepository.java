@@ -17,11 +17,4 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             "r.id, r.name, r.distanceMeters, r.folder.id) " +
             "FROM Route r WHERE r.user.id = :userId ORDER BY r.createdAt DESC")
     List<RouteSummaryDto> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
-
-    @Query("SELECT new com.bogusz.bicyclerouteplannerbackend.dto.route.RouteSummaryDto(" +
-            "r.id, r.name, r.distanceMeters, r.folder.id) " +
-            "FROM Route r WHERE r.user.id = :userId " +
-            "AND r.folder.id = :folderId ORDER BY r.createdAt DESC")
-    List<RouteSummaryDto> findAllByUserIdAndFolderIdOrderByCreatedAtDesc(@Param("userId") Long userId,
-                                                                         @Param("folderId") Long folderId);
 }

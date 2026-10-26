@@ -1,6 +1,7 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.telemetry.ClientLogRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.model.ClientLogLevel;
 import com.bogusz.bicyclerouteplannerbackend.service.ClientTelemetryService;
 import com.bogusz.bicyclerouteplannerbackend.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +15,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -42,7 +45,7 @@ class ClientTelemetryControllerTest {
     @Test
     void shouldReturn202AcceptedWhenLoggingClientEvent() throws Exception {
         // Given
-        ClientLogRequestDto requestDto = new ClientLogRequestDto(null, MESSAGE, TIMESTAMP, DETAILS);
+        ClientLogRequestDto requestDto = new ClientLogRequestDto(ClientLogLevel.ERROR, MESSAGE, TIMESTAMP, DETAILS);
 
         // When
         mockMvc.perform(post(LOGS_URL)
@@ -55,8 +58,37 @@ class ClientTelemetryControllerTest {
         then(telemetryService).should(times(1)).processClientLog(captor.capture());
 
         ClientLogRequestDto captured = captor.getValue();
+        assertThat(captured.level()).isEqualTo(ClientLogLevel.ERROR);
         assertThat(captured.message()).isEqualTo(MESSAGE);
         assertThat(captured.timestamp()).isEqualTo(TIMESTAMP);
         assertThat(captured.details()).isEqualTo(DETAILS);
+    }
+
+    @Test
+    void shouldReturn400BadRequestWhenLogLevelIsNull() throws Exception {
+        // Given
+        ClientLogRequestDto requestDto = new ClientLogRequestDto(null, MESSAGE, TIMESTAMP, DETAILS);
+
+        // When & Then
+        mockMvc.perform(post(LOGS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        then(telemetryService).should(never()).processClientLog(any());
+    }
+
+    @Test
+    void shouldReturn400BadRequestWhenMessageIsBlank() throws Exception {
+        // Given
+        ClientLogRequestDto requestDto = new ClientLogRequestDto(ClientLogLevel.WARN, "   ", TIMESTAMP, DETAILS);
+
+        // When & Then
+        mockMvc.perform(post(LOGS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        then(telemetryService).should(never()).processClientLog(any());
     }
 }

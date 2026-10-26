@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -29,15 +30,12 @@ public class RouteService {
     private final GpxExportService gpxExportService;
     private final FolderRepository folderRepository;
     private final RouteMapper routeMapper;
+    private final ElevationProfileDownsampler elevationProfileDownsampler;
 
 
     @Transactional(readOnly = true)
-    public List<RouteSummaryDto> getRoutesForUser(Long userId, Long folderId) {
-        if (folderId == null){
-            return routeRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
-        } else {
-            return routeRepository.findAllByUserIdAndFolderIdOrderByCreatedAtDesc(userId, folderId);
-        }
+    public List<RouteSummaryDto> getRoutesForUser(Long userId) {
+        return routeRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
     }
 
     @Transactional(readOnly = true)
@@ -64,23 +62,25 @@ public class RouteService {
     @Transactional
     public void deleteRouteForUser(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
-        log.info("Deleting route with ID: {} for user ID: {}", route.getId(), userId);
         routeRepository.delete(route);
+        log.info("Deleted route with ID: {} for user ID: {}", routeId, userId);
     }
 
-    @Transactional(readOnly = true)
     public GpxExportDto exportRouteToGpx(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
         byte[] gpxData = gpxExportService.generateGpxFile(route);
-        return new GpxExportDto(gpxData, route.getName());
+        String fileName = resolveFileName(route.getName());
+        return new GpxExportDto(gpxData, fileName);
     }
 
-
     @Transactional(readOnly = true)
-    public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, Long userId){
+    public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
+        if (route.getRouteGeom() == null) {
+            return List.of();
+        }
         Coordinate[] coordinates = route.getRouteGeom().getCoordinates();
-        List<ElevationPointDto> elevationProfile = new ArrayList<>();
+        List<ElevationPointDto> elevationProfile = new ArrayList<>(coordinates.length);
         double totalDistance = 0.0;
 
         for (int i = 0; i < coordinates.length; i++) {
@@ -99,7 +99,7 @@ public class RouteService {
             }
         }
 
-        return elevationProfile;
+        return elevationProfileDownsampler.downsample(elevationProfile, 250);
     }
 
     @Transactional
@@ -108,37 +108,45 @@ public class RouteService {
 
         if (request.folderId() == null) {
             route.setFolder(null);
-            log.info("Removed route ID: {} from folder for user ID: {}", routeId, userId);
         } else {
             route.setFolder(folderRepository.findByIdAndUserId(request.folderId(), userId).orElseThrow(
                     () -> new FolderNotFoundException("Folder not found or access denied")));
-
-            log.info("Moved route ID: {} to folder ID: {} for user ID: {}", routeId,
-                    request.folderId(), userId);
         }
     }
 
     @Transactional
     public void renameRoute(Long routeId, RenameRouteRequestDto request, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
-        log.info("Renamed route ID: {} from '{}' to '{}' for user ID: {}", routeId, route.getName(), request.name(), userId);
         route.setName(request.name());
     }
 
     private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371000;
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+        double clampedA = Math.clamp(a, 0.0, 1.0);
+        double c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
+        return 6371000.0 * c;
     }
 
     private Route getValidRouteForUser(Long routeId, Long userId){
         return routeRepository.findByIdAndUserId(routeId, userId)
                 .orElseThrow(() -> new RouteNotFoundException("Route not found or access denied"));
+    }
+
+    private String resolveFileName(String routeName) {
+        if (routeName == null || routeName.isBlank()) {
+            return "route.gpx";
+        }
+        String sanitized = Pattern.compile("[\\\\/:*?\"<>|\\x00-\\x1F]").matcher(routeName).replaceAll("_")
+                .replace("..", "_")
+                .trim();
+        if (sanitized.isEmpty() || sanitized.replace("_", "").isBlank()) {
+            return "route.gpx";
+        }
+        return sanitized + ".gpx";
     }
 
 }

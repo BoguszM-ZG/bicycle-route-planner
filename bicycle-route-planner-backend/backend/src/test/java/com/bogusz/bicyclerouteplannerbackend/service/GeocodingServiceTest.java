@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.geocoding.GeocodingSearchRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.ExternalGeocodingException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,17 +19,14 @@ class GeocodingServiceTest {
     private static final String BASE_URL = "https://photon.komoot.io";
     private static final String API_URL_WARSZAWA = "https://photon.komoot.io/api/?q=Warszawa&limit=5";
     private static final String API_URL_KRAKOW = "https://photon.komoot.io/api/?q=Krakow&limit=5&lat=50.06&lon=19.94";
-    private static final String API_URL_ERROR = "https://photon.komoot.io/api/?q=ErrorCity&limit=5";
 
     private static final String QUERY_WARSZAWA = "Warszawa";
     private static final String QUERY_KRAKOW = "Krakow";
-    private static final String QUERY_ERROR = "ErrorCity";
     
     private static final Double LAT_KRAKOW = 50.06;
     private static final Double LON_KRAKOW = 19.94;
 
     private static final String JSON_RESPONSE_WARSZAWA = "{\"features\":[{\"properties\":{\"name\":\"Warszawa\"}}]}";
-    private static final String JSON_RESPONSE_EMPTY = "{\"features\":[]}";
 
     private GeocodingService geocodingService;
     private MockRestServiceServer mockServer;
@@ -45,7 +43,6 @@ class GeocodingServiceTest {
         geocodingService = new GeocodingService(restClient);
     }
 
-
     @Test
     void shouldSearchLocationWithoutCoordinates() {
         // Given
@@ -53,7 +50,7 @@ class GeocodingServiceTest {
                 .andRespond(withSuccess(JSON_RESPONSE_WARSZAWA, MediaType.APPLICATION_JSON));
 
         // When
-        String result = geocodingService.searchLocation(QUERY_WARSZAWA, null, null);
+        String result = geocodingService.searchLocation(new GeocodingSearchRequestDto(QUERY_WARSZAWA, null, null));
 
         // Then
         assertThat(result).isEqualTo(JSON_RESPONSE_WARSZAWA);
@@ -64,25 +61,53 @@ class GeocodingServiceTest {
     void shouldSearchLocationWithCoordinates() {
         // Given
         mockServer.expect(requestTo(API_URL_KRAKOW))
-                .andRespond(withSuccess(JSON_RESPONSE_EMPTY, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess("{\"features\":[]}", MediaType.APPLICATION_JSON));
 
         // When
-        String result = geocodingService.searchLocation(QUERY_KRAKOW, LAT_KRAKOW, LON_KRAKOW);
+        String result = geocodingService.searchLocation(new GeocodingSearchRequestDto(QUERY_KRAKOW, LAT_KRAKOW, LON_KRAKOW));
 
         // Then
-        assertThat(result).isEqualTo(JSON_RESPONSE_EMPTY);
+        assertThat(result).isEqualTo("{\"features\":[]}");
         mockServer.verify();
     }
 
+    @Test
+    void shouldSearchLocationWithOnlyLatitudeIgnoringCoordinates() {
+        // Given
+        mockServer.expect(requestTo(API_URL_WARSZAWA))
+                .andRespond(withSuccess(JSON_RESPONSE_WARSZAWA, MediaType.APPLICATION_JSON));
+
+        // When
+        String result = geocodingService.searchLocation(new GeocodingSearchRequestDto(QUERY_WARSZAWA, LAT_KRAKOW, null));
+
+        // Then
+        assertThat(result).isEqualTo(JSON_RESPONSE_WARSZAWA);
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldSearchLocationWithOnlyLongitudeIgnoringCoordinates() {
+        // Given
+        mockServer.expect(requestTo(API_URL_WARSZAWA))
+                .andRespond(withSuccess(JSON_RESPONSE_WARSZAWA, MediaType.APPLICATION_JSON));
+
+        // When
+        String result = geocodingService.searchLocation(new GeocodingSearchRequestDto(QUERY_WARSZAWA, null, LON_KRAKOW));
+
+        // Then
+        assertThat(result).isEqualTo(JSON_RESPONSE_WARSZAWA);
+        mockServer.verify();
+    }
 
     @Test
     void shouldThrowExceptionOnExternalApiError() {
         // Given
-        mockServer.expect(requestTo(API_URL_ERROR))
+        GeocodingSearchRequestDto request = new GeocodingSearchRequestDto("ErrorCity", null, null);
+        mockServer.expect(requestTo("https://photon.komoot.io/api/?q=ErrorCity&limit=5"))
                 .andRespond(withServerError());
 
         // When & Then
-        assertThatThrownBy(() -> geocodingService.searchLocation(QUERY_ERROR, null, null))
+        assertThatThrownBy(() -> geocodingService.searchLocation(request))
                 .isInstanceOf(ExternalGeocodingException.class)
                 .hasMessageContaining("Failed to fetch geocoding data");
 

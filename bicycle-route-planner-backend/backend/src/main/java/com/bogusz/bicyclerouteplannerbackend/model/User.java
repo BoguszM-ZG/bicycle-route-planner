@@ -5,17 +5,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.jspecify.annotations.NonNull;
 import lombok.Setter;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 @NoArgsConstructor
@@ -23,7 +17,7 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -45,7 +39,7 @@ public class User implements UserDetails {
     @Size(max = 50)
     @NotNull
     @Column(name = "role", nullable = false, length = 50)
-    private String role ="ROLE_USER";
+    private String role = "ROLE_USER";
 
     @Column(name = "is_active")
     private Boolean isActive = true;
@@ -63,39 +57,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     private Set<Route> routes = new LinkedHashSet<>();
 
-    @Override
-    @NonNull
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
-    }
-
-    @Override
-    @NonNull
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
     public boolean isEnabled() {
         return Boolean.TRUE.equals(isActive);
     }
-
-
-
-
 }

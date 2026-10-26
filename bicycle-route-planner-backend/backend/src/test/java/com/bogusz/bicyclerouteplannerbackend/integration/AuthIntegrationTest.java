@@ -24,17 +24,9 @@ class AuthIntegrationTest extends BaseIntegrationTest {
 
     private static final String TEST_EMAIL = "integration@test.com";
     private static final String TEST_PASSWORD = "HardPassword123!";
-    private static final String TEST_WRONG_PASSWORD = "WrongPassword123!";
-    private static final String TEST_FULL_NAME = "Integration Test User";
-    private static final String TEST_INVALID_TOKEN = "invalid.jwt.token";
-    
     private static final String REGISTER_URL = "/api/auth/register";
     private static final String LOGIN_URL = "/api/auth/login";
     private static final String REFRESH_URL = "/api/auth/refresh";
-    
-    private static final String ERROR_USER_ALREADY_EXISTS = "User already exists";
-    private static final String ERROR_AUTHORIZATION = "Authorization Error";
-    private static final String ERROR_TOKEN_REFRESH = "Token Refresh Error";
 
     @Autowired
     private MockMvc mockMvc;
@@ -75,9 +67,8 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                         .content(jsonMapper.writeValueAsString(request)))
                 // Then
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.title").value(ERROR_USER_ALREADY_EXISTS));
+                .andExpect(jsonPath("$.title").value("User already exists"));
     }
-
 
     @Test
     void shouldReturn200AndTokensWhenLoggingInWithValidCredentials() throws Exception {
@@ -104,7 +95,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
         RegisterRequest registerRequest = createRegisterRequest();
         registerUserViaApi(registerRequest);
 
-        LoginRequest loginRequest = new LoginRequest(TEST_EMAIL, TEST_WRONG_PASSWORD);
+        LoginRequest loginRequest = new LoginRequest(TEST_EMAIL, "WrongPassword123!");
 
         // When
         mockMvc.perform(post(LOGIN_URL)
@@ -112,7 +103,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                         .content(jsonMapper.writeValueAsString(loginRequest)))
                 // Then
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.title").value(ERROR_AUTHORIZATION));
+                .andExpect(jsonPath("$.title").value("Authorization Error"));
     }
 
     @Test
@@ -135,7 +126,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldReturnErrorWhenRefreshingWithInvalidToken() throws Exception {
         // Given
-        RefreshTokenRequest refreshRequest = new RefreshTokenRequest(TEST_INVALID_TOKEN);
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest("invalid.jwt.token");
 
         // When
         mockMvc.perform(post(REFRESH_URL)
@@ -143,7 +134,7 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                         .content(jsonMapper.writeValueAsString(refreshRequest)))
                 // Then
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.title").value(ERROR_TOKEN_REFRESH));
+                .andExpect(jsonPath("$.title").value("Token Refresh Error"));
     }
 
     @Test
@@ -165,12 +156,28 @@ class AuthIntegrationTest extends BaseIntegrationTest {
                         .content(jsonMapper.writeValueAsString(refreshRequest)))
                 // Then
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.title").value(ERROR_TOKEN_REFRESH));
+                .andExpect(jsonPath("$.title").value("Token Refresh Error"));
     }
 
+    @Test
+    void shouldReturn401WhenRefreshingTokenForDeletedUser() throws Exception {
+        // Given
+        RegisterRequest registerRequest = createRegisterRequest();
+        String refreshToken = registerUserAndGetRefreshToken(registerRequest);
+        userRepository.deleteAll();
+
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest(refreshToken);
+
+        // When & Then
+        mockMvc.perform(post(REFRESH_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.title").value("Token Refresh Error"));
+    }
 
     private RegisterRequest createRegisterRequest() {
-        return new RegisterRequest(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
+        return new RegisterRequest(TEST_EMAIL, TEST_PASSWORD, "Integration Test User");
     }
 
     private void registerUserViaApi(RegisterRequest request) throws Exception {

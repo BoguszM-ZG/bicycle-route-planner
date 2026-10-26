@@ -8,6 +8,15 @@ import { ElevationPointDto } from '../../../models/route.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoggerService } from '../../../services/logger.service';
 
+const METERS_PER_KILOMETER = 1000;
+const CHART_BORDER_COLOR = '#3b82f6';
+const CHART_BACKGROUND_COLOR = 'rgba(59, 130, 246, 0.2)';
+const CHART_AXIS_COLOR = '#aaa';
+const CHART_LINE_BORDER_WIDTH = 2;
+const CHART_LINE_TENSION = 0.4;
+const CHART_POINT_RADIUS = 0;
+const CHART_POINT_HIT_RADIUS = 10;
+
 @Component({
   selector: 'app-elevation-chart',
   standalone: true,
@@ -32,19 +41,19 @@ export class ElevationChartComponent {
     responsive: true,
     maintainAspectRatio: false,
     elements: {
-      point: { radius: 0, hitRadius: 10 },
-      line: { borderWidth: 2, tension: 0.4 },
+      point: { radius: CHART_POINT_RADIUS, hitRadius: CHART_POINT_HIT_RADIUS },
+      line: { borderWidth: CHART_LINE_BORDER_WIDTH, tension: CHART_LINE_TENSION },
     },
     scales: {
       x: {
         type: 'linear',
-        title: { display: true, text: '', color: '#aaa' },
-        ticks: { color: '#aaa', autoSkip: false },
+        title: { display: true, text: '', color: CHART_AXIS_COLOR },
+        ticks: { color: CHART_AXIS_COLOR, autoSkip: false },
         grid: { display: false },
       },
       y: {
-        title: { display: true, text: '', color: '#aaa' },
-        ticks: { color: '#aaa' },
+        title: { display: true, text: '', color: CHART_AXIS_COLOR },
+        ticks: { color: CHART_AXIS_COLOR },
       },
     },
     plugins: {
@@ -63,13 +72,15 @@ export class ElevationChartComponent {
       .pipe(
         tap(() => {
           this.isLoading.set(true);
+          this.chartData.set(null);
           this.updateChartLabels();
         }),
 
         switchMap((id) =>
           this.routeService.getElevationProfile(id).pipe(
-            catchError((err) => {
+            catchError(() => {
               this.isLoading.set(false);
+              this.chartData.set(null);
               return EMPTY;
             }),
           ),
@@ -82,24 +93,27 @@ export class ElevationChartComponent {
   }
 
   private renderChart(points: ElevationPointDto[]): void {
-    this.logger.debug('Received elevation profile. Data points count:', points.length);
-    const step = Math.max(1, Math.ceil(points.length / 200));
+    this.logger.debug('[ElevationChartComponent] Received elevation profile', {
+      pointsCount: points.length,
+    });
 
-    const dataPoints = points
-      .filter((_, index) => index % step === 0 || index === points.length - 1)
-      .map((p) => ({
-        x: p.distance / 1000,
-        y: p.elevation,
-      }));
+    const dataPoints = points.map((point) => ({
+      x: point.distance / METERS_PER_KILOMETER,
+      y: point.elevation,
+    }));
 
     const currentOptions = this.chartOptions();
+    const hasPoints = dataPoints.length > 0;
+    const lastPoint = hasPoints ? dataPoints.at(-1) : undefined;
+    const maxX = lastPoint && lastPoint.x > 0 ? lastPoint.x : undefined;
+
     this.chartOptions.set({
       ...currentOptions,
       scales: {
         ...currentOptions.scales,
         x: {
           ...currentOptions.scales!['x']!,
-          max: dataPoints.length > 0 ? dataPoints.at(-1)!.x : 0,
+          max: maxX,
         },
       },
     });
@@ -110,8 +124,8 @@ export class ElevationChartComponent {
           type: 'scatter',
           showLine: true,
           data: dataPoints,
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+          borderColor: CHART_BORDER_COLOR,
+          backgroundColor: CHART_BACKGROUND_COLOR,
           fill: true,
         },
       ],

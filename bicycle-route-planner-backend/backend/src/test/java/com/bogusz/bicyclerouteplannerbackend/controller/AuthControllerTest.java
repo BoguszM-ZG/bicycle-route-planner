@@ -31,13 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
 
     private static final String EMAIL = "test@example.com";
-    private static final String INVALID_EMAIL = "invalid-email";
-    private static final String BLANK_STRING = "";
     private static final String PASSWORD = "StrongPassword123!";
-    private static final String FULL_NAME = "Test User";
     private static final String ACCESS_TOKEN = "access.token.string";
     private static final String REFRESH_TOKEN = "refresh.token.string";
-    private static final long EXPIRES_IN_MS = 3600000L;
     private static final String TOKEN_TYPE = "Bearer";
 
     private static final String REGISTER_URL = "/api/auth/register";
@@ -58,7 +54,7 @@ class AuthControllerTest {
     @Test
     void shouldReturn201WhenRegisteringValidUser() throws Exception {
         // Given
-        RegisterRequest request = new RegisterRequest(EMAIL, PASSWORD, FULL_NAME);
+        RegisterRequest request = new RegisterRequest(EMAIL, PASSWORD, "Test User");
         AuthResponse response = createAuthResponse();
 
         given(authService.register(any())).willReturn(response);
@@ -78,13 +74,13 @@ class AuthControllerTest {
         RegisterRequest capturedRequest = registerCaptor.getValue();
         assertThat(capturedRequest.email()).isEqualTo(EMAIL);
         assertThat(capturedRequest.password()).isEqualTo(PASSWORD);
-        assertThat(capturedRequest.fullName()).isEqualTo(FULL_NAME);
+        assertThat(capturedRequest.fullName()).isEqualTo("Test User");
     }
 
     @Test
     void shouldReturn400BadRequestWhenRegisteringWithInvalidEmail() throws Exception {
         // Given
-        RegisterRequest badRequest = new RegisterRequest(INVALID_EMAIL, PASSWORD, FULL_NAME);
+        RegisterRequest badRequest = new RegisterRequest("invalid-email", PASSWORD, "Test User");
 
         // When & Then
         mockMvc.perform(post(REGISTER_URL)
@@ -124,7 +120,7 @@ class AuthControllerTest {
     @Test
     void shouldReturn400BadRequestWhenLoggingInWithBlankPassword() throws Exception {
         // Given
-        LoginRequest badRequest = new LoginRequest(EMAIL, BLANK_STRING);
+        LoginRequest badRequest = new LoginRequest(EMAIL, "");
 
         // When & Then
         mockMvc.perform(post(LOGIN_URL)
@@ -163,7 +159,7 @@ class AuthControllerTest {
     @Test
     void shouldReturn400BadRequestWhenRefreshingWithBlankToken() throws Exception {
         // Given
-        RefreshTokenRequest badRequest = new RefreshTokenRequest(BLANK_STRING);
+        RefreshTokenRequest badRequest = new RefreshTokenRequest("");
 
         // When & Then
         mockMvc.perform(post(REFRESH_URL)
@@ -179,8 +175,8 @@ class AuthControllerTest {
         return new AuthResponse(
                 ACCESS_TOKEN,
                 REFRESH_TOKEN,
-                EXPIRES_IN_MS,
-                EXPIRES_IN_MS,
+                3600000L,
+                3600000L,
                 TOKEN_TYPE,
                 null
         );
