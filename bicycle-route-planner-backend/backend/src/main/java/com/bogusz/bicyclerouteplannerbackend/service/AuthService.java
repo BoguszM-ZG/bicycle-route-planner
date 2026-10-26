@@ -4,18 +4,18 @@ import com.bogusz.bicyclerouteplannerbackend.dto.auth.AuthResponse;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.LoginRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RefreshTokenRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
+import com.bogusz.bicyclerouteplannerbackend.dto.user.UserDto;
 import com.bogusz.bicyclerouteplannerbackend.exception.RefreshTokenException;
-import com.bogusz.bicyclerouteplannerbackend.mapper.UserMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
+import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,14 +25,9 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
-    private final UserMapper userMapper;
 
     public AuthResponse register(RegisterRequest request) {
-        String encodedPassword = passwordEncoder.encode(request.password());
-        User user = userService.registerUser(request.email(), encodedPassword, request.fullName());
-
-        log.info("Authentication response generated for new user with ID: {}", user.getId());
+        User user = userService.registerUser(request.email(), request.password(), request.fullName());
         return createAuthResponse(user);
     }
 
@@ -40,9 +35,11 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
-        User user = Objects.requireNonNull((User) authentication.getPrincipal());
-        log.info("User logged in successfully with ID: {}", user.getId());
-        return createAuthResponse(user);
+        if (!(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new BadCredentialsException("Unexpected authentication principal type");
+        }
+        log.info("User logged in successfully with ID: {}", principal.getId());
+        return createAuthResponse(principal);
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -50,32 +47,22 @@ public class AuthService {
             throw new RefreshTokenException("Invalid refresh token");
         }
 
-        String refreshToken = request.refreshToken();
-        String userEmail;
-
+        String userEmail = jwtService.extractEmailFromRefreshToken(request.refreshToken());
+        User user;
         try {
-            io.jsonwebtoken.Claims claims = jwtService.extractAllClaims(refreshToken);
-            if (!"REFRESH".equals(claims.get("type", String.class))) {
-                log.warn("Attempt to use non-refresh token as a refresh token");
-                throw new RefreshTokenException("Invalid token type");
-            }
-            userEmail = claims.getSubject();
-        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
-            log.warn("Failed to parse refresh token: {}", e.getMessage());
-            throw new RefreshTokenException("Invalid refresh token");
+            user = userService.getByEmail(userEmail);
+        } catch (UsernameNotFoundException e) {
+            throw new RefreshTokenException("User not found or refresh token invalid", e);
         }
-
-        if (userEmail == null) {
-            throw new RefreshTokenException("Invalid refresh token");
+        if (!user.isEnabled()) {
+            throw new RefreshTokenException("User account is disabled");
         }
-
-        User user = userService.getByEmail(userEmail);
         return createAuthResponse(user);
     }
 
-    private AuthResponse createAuthResponse(User user) {
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+    private AuthResponse createAuthResponse(UserPrincipal principal) {
+        String accessToken = jwtService.generateAccessToken(principal);
+        String refreshToken = jwtService.generateRefreshToken(principal);
 
         return new AuthResponse(
                 accessToken,
@@ -83,7 +70,11 @@ public class AuthService {
                 jwtService.getAccessTokenExpirationMs(),
                 jwtService.getRefreshTokenExpirationMs(),
                 "Bearer",
-                userMapper.toDto(user)
+                UserDto.from(principal)
         );
+    }
+
+    private AuthResponse createAuthResponse(User user) {
+        return createAuthResponse(UserPrincipal.fromUser(user));
     }
 }

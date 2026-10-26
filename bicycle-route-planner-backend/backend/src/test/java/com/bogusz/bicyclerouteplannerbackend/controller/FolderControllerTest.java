@@ -1,9 +1,8 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
-import com.bogusz.bicyclerouteplannerbackend.dto.folder.CreateFolderRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.folder.RenameFolderRequest;
+import com.bogusz.bicyclerouteplannerbackend.dto.folder.FolderRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.service.FolderService;
 import com.bogusz.bicyclerouteplannerbackend.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,12 +44,10 @@ class FolderControllerTest {
     private static final long FOLDER_ID = 10L;
     private static final long USER_ID = 99L;
     private static final String FOLDER_NAME = "Weekend Trips";
-    private static final Long PARENT_FOLDER_ID = null;
-
+    private static final String NEW_FOLDER_NAME = "Summer Trips 2026";
     private static final String FOLDERS_URL = "/api/folders";
     private static final String FOLDERS_URL_WITH_ID = "/api/folders/" + FOLDER_ID;
-    private static final String NEW_FOLDER_NAME = "Summer Trips 2026";
-    private static final String BLANK_STRING = "";
+    private static final String USER_EMAIL = "test@test.com";
 
     @Autowired
     private MockMvc mockMvc;
@@ -76,7 +73,7 @@ class FolderControllerTest {
     @Test
     void shouldReturn200AndFolderListWhenGettingUserFolders() throws Exception {
         // Given
-        FolderDto folderDto = new FolderDto(FOLDER_ID, FOLDER_NAME, PARENT_FOLDER_ID);
+        FolderDto folderDto = new FolderDto(FOLDER_ID, FOLDER_NAME);
         given(folderService.getUserFolders(USER_ID)).willReturn(List.of(folderDto));
 
         // When & Then
@@ -84,14 +81,15 @@ class FolderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(1))
                 .andExpect(jsonPath("$[0].id").value(FOLDER_ID))
-                .andExpect(jsonPath("$[0].name").value(FOLDER_NAME));
+                .andExpect(jsonPath("$[0].name").value(FOLDER_NAME))
+                .andExpect(jsonPath("$[0].parentFolderId").doesNotExist());
     }
 
     @Test
     void shouldReturn201WhenCreatingValidFolder() throws Exception {
         // Given
-        CreateFolderRequestDto request = new CreateFolderRequestDto(FOLDER_NAME, PARENT_FOLDER_ID);
-        FolderDto response = new FolderDto(FOLDER_ID, FOLDER_NAME, PARENT_FOLDER_ID);
+        FolderRequestDto request = new FolderRequestDto(FOLDER_NAME);
+        FolderDto response = new FolderDto(FOLDER_ID, FOLDER_NAME);
 
         given(folderService.createFolder(any(), eq(USER_ID))).willReturn(response);
 
@@ -101,21 +99,21 @@ class FolderControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(FOLDER_ID))
-                .andExpect(jsonPath("$.name").value(FOLDER_NAME));
+                .andExpect(jsonPath("$.name").value(FOLDER_NAME))
+                .andExpect(jsonPath("$.parentFolderId").doesNotExist());
 
         // Then
-        ArgumentCaptor<CreateFolderRequestDto> createRequestCaptor = ArgumentCaptor.forClass(CreateFolderRequestDto.class);
+        ArgumentCaptor<FolderRequestDto> createRequestCaptor = ArgumentCaptor.forClass(FolderRequestDto.class);
         then(folderService).should(times(1)).createFolder(createRequestCaptor.capture(), eq(USER_ID));
         
-        CreateFolderRequestDto capturedRequest = createRequestCaptor.getValue();
+        FolderRequestDto capturedRequest = createRequestCaptor.getValue();
         assertThat(capturedRequest.name()).isEqualTo(FOLDER_NAME);
-        assertThat(capturedRequest.parentFolderId()).isEqualTo(PARENT_FOLDER_ID);
     }
 
     @Test
     void shouldReturn400BadRequestWhenCreatingFolderWithBlankName() throws Exception {
         // Given
-        CreateFolderRequestDto badRequest = new CreateFolderRequestDto(BLANK_STRING, PARENT_FOLDER_ID);
+        FolderRequestDto badRequest = new FolderRequestDto("");
 
         // When & Then
         mockMvc.perform(post(FOLDERS_URL)
@@ -130,7 +128,7 @@ class FolderControllerTest {
     @Test
     void shouldReturn204WhenRenamingFolder() throws Exception {
         // Given
-        RenameFolderRequest request = new RenameFolderRequest(NEW_FOLDER_NAME);
+        FolderRequestDto request = new FolderRequestDto(NEW_FOLDER_NAME);
 
         // When
         mockMvc.perform(patch(FOLDERS_URL_WITH_ID)
@@ -139,17 +137,17 @@ class FolderControllerTest {
                 .andExpect(status().isNoContent());
 
         // Then
-        ArgumentCaptor<RenameFolderRequest> renameRequestCaptor = ArgumentCaptor.forClass(RenameFolderRequest.class);
+        ArgumentCaptor<FolderRequestDto> renameRequestCaptor = ArgumentCaptor.forClass(FolderRequestDto.class);
         then(folderService).should(times(1)).renameFolder(eq(FOLDER_ID), renameRequestCaptor.capture(), eq(USER_ID));
         
-        RenameFolderRequest capturedRequest = renameRequestCaptor.getValue();
+        FolderRequestDto capturedRequest = renameRequestCaptor.getValue();
         assertThat(capturedRequest.name()).isEqualTo(NEW_FOLDER_NAME);
     }
 
     @Test
     void shouldReturn400BadRequestWhenRenamingFolderWithBlankName() throws Exception {
         // Given
-        RenameFolderRequest badRequest = new RenameFolderRequest(BLANK_STRING);
+        FolderRequestDto badRequest = new FolderRequestDto("");
 
         // When & Then
         mockMvc.perform(patch(FOLDERS_URL_WITH_ID)
@@ -172,7 +170,7 @@ class FolderControllerTest {
     }
 
     private Authentication getMockAuthentication() {
-        UserPrincipal principal = new UserPrincipal(USER_ID, "test@test.com");
+        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL);
         return new UsernamePasswordAuthenticationToken(
                 principal, null, Collections.emptyList()
         );

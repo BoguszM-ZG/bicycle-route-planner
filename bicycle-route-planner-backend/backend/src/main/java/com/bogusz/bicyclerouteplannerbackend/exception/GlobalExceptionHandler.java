@@ -1,19 +1,31 @@
 package com.bogusz.bicyclerouteplannerbackend.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
-import org.springframework.http.*;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.http.HttpTimeoutException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,10 +46,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Invalid email or password", "bad-credentials");
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
-    public ProblemDetail handleUsernameNotFoundException(UsernameNotFoundException ex) {
-        log.warn("User not found: {}", ex.getMessage());
-        return createProblemDetail(HttpStatus.NOT_FOUND, "User Not Found", ex.getMessage(), "user-not-found");
+    @ExceptionHandler(DisabledException.class)
+    public ProblemDetail handleDisabledException() {
+        log.warn("Access attempt on disabled user account");
+        return createProblemDetail(HttpStatus.UNAUTHORIZED, "Account Disabled",
+                "User account is disabled.", "account-disabled");
     }
 
     @ExceptionHandler(InvalidGeometryException.class)
@@ -68,9 +81,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ProblemDetail handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
-        log.warn("User already exists: {}", ex.getMessage());
+        log.warn("User registration conflict: email already exists");
         return createProblemDetail(HttpStatus.CONFLICT, "User already exists",
                 ex.getMessage(), "user-already-exists");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.warn("Database integrity violation: {}", ex.getMostSpecificCause().getClass().getSimpleName());
+        return createProblemDetail(HttpStatus.CONFLICT, "Data Conflict",
+                "The requested operation could not be completed due to a data conflict.", "data-conflict");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
@@ -99,14 +119,84 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpStatusCode statusCode,
             @NonNull WebRequest request
     ) {
-        log.warn("Validation error: {}", ex.getMessage());
-        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
-                "Invalid request parameters", "validation-failure");
-
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
+        log.warn("Validation failed for field(s): {}", errors.keySet());
+
+        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
+                "Invalid request parameters", "validation-failure");
+        problemDetail.setProperty(ERRORS_PROPERTY, errors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
+    @Override
+    protected ResponseEntity<@NonNull Object> handleHandlerMethodValidationException(
+            @NonNull HandlerMethodValidationException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode statusCode,
+            @NonNull WebRequest request
+    ) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getParameterValidationResults().forEach(result -> {
+            String paramName = result.getMethodParameter().getParameterName();
+            if (paramName == null) {
+                RequestParam requestParam = result.getMethodParameter().getParameterAnnotation(RequestParam.class);
+                if (requestParam != null && !requestParam.value().isBlank()) {
+                    paramName = requestParam.value();
+                } else if (requestParam != null && !requestParam.name().isBlank()) {
+                    paramName = requestParam.name();
+                }
+            }
+            String key = (paramName != null && !paramName.isBlank()) ? paramName : "parameter";
+            result.getResolvableErrors().forEach(error ->
+                    errors.put(key, error.getDefaultMessage())
+            );
+        });
+        log.warn("Validation failed for parameter(s): {}", errors.keySet());
+
+        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
+                "Invalid request parameters", "validation-failure");
+        problemDetail.setProperty(ERRORS_PROPERTY, errors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ProblemDetail> handleConstraintViolationException(ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation -> {
+            String propertyPath = violation.getPropertyPath().toString();
+            int lastDotIndex = propertyPath.lastIndexOf('.');
+            String field = (lastDotIndex >= 0) ? propertyPath.substring(lastDotIndex + 1) : propertyPath;
+            String key = !field.isBlank() ? field : "parameter";
+            errors.put(key, violation.getMessage());
+        });
+        log.warn("Validation failed for constraint violation(s): {}", errors.keySet());
+
+        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
+                "Invalid request parameters", "validation-failure");
+        problemDetail.setProperty(ERRORS_PROPERTY, errors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
+    }
+
+    @Override
+    protected ResponseEntity<@NonNull Object> handleTypeMismatch(
+            @NonNull TypeMismatchException ex,
+            @NonNull HttpHeaders headers,
+            @NonNull HttpStatusCode statusCode,
+            @NonNull WebRequest request
+    ) {
+        String name = ex.getPropertyName();
+        String paramName = (name != null && !name.isBlank()) ? name : "parameter";
+        Map<String, String> errors = Map.of(paramName, "Invalid format or type for parameter '" + paramName + "'");
+        log.warn("Type mismatch for parameter: {}", paramName);
+
+        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
+                "Invalid request parameters", "validation-failure");
         problemDetail.setProperty(ERRORS_PROPERTY, errors);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
@@ -119,12 +209,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpStatusCode statusCode,
             @NonNull WebRequest request
     ) {
-        log.warn("Unreadable request: {}", ex.getMessage());
+        log.warn("Malformed HTTP request body received: {}", ex.getMostSpecificCause().getClass().getSimpleName());
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Unreadable request",
                 "Invalid request body", "unreadable-request");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
     }
 
+    @ExceptionHandler(ResourceAccessException.class)
+    public ProblemDetail handleResourceAccessException(ResourceAccessException ex) {
+        log.error("External service communication error: {}", ex.getMessage(), ex);
+        if (ex.getCause() instanceof SocketTimeoutException || ex.getCause() instanceof HttpTimeoutException) {
+            return createProblemDetail(HttpStatus.GATEWAY_TIMEOUT, "Gateway Timeout",
+                    "External service timed out. Please try again later.", "gateway-timeout");
+        }
+        return createProblemDetail(HttpStatus.BAD_GATEWAY, "Bad Gateway",
+                "External service is temporarily unavailable. Please try again later.", "bad-gateway");
+    }
 
     @ExceptionHandler(ExternalRoutingException.class)
     public ProblemDetail handleExternalRoutingException(ExternalRoutingException ex) {

@@ -43,7 +43,6 @@ class AvoidanceZoneServiceTest {
     @InjectMocks
     private AvoidanceZoneService avoidanceZoneService;
 
-
     @Test
     void shouldGetAvoidanceZonesForUserSuccessfully() {
         // Given
@@ -60,7 +59,6 @@ class AvoidanceZoneServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(mockDto);
     }
-
 
     @Test
     void shouldSaveAvoidanceZoneForUserSuccessfully() {
@@ -84,7 +82,6 @@ class AvoidanceZoneServiceTest {
 
         then(avoidanceZoneRepository).should().save(mockZone);
     }
-
 
     @Test
     void shouldDeleteAvoidanceZoneSuccessfully() {
@@ -111,7 +108,6 @@ class AvoidanceZoneServiceTest {
 
         then(avoidanceZoneRepository).shouldHaveNoMoreInteractions();
     }
-
 
     @Test
     void shouldToggleAvoidanceActiveStatusSuccessfully() {

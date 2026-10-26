@@ -28,21 +28,10 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
 
     private static final String TEST_USER_EMAIL = "avoidance.integration@example.com";
     private static final String TEST_USER_PASSWORD = "StrongPassword123!";
-    private static final String TEST_USER_FULL_NAME = "Avoidance Tester";
-
-    private static final String TEST_USER_2_EMAIL = "avoidance.thief@example.com";
-    private static final String TEST_USER_2_PASSWORD = "ThiefPassword123!";
-    private static final String TEST_USER_2_FULL_NAME = "Avoidance Thief";
-
     private static final String AUTH_REGISTER_URL = "/api/auth/register";
     private static final String AVOIDANCE_ZONES_URL = "/api/avoidance-zones";
-    private static final String ACTIVE_ENDPOINT_SUFFIX = "/active";
-
     private static final String TEST_ZONE_NAME = "Construction Site";
-    
-    // Valid WKT polygon (must be closed - first point = last point)
     private static final String VALID_WKT_POLYGON = "POLYGON ((19.945 50.064, 19.946 50.064, 19.946 50.065, 19.945 50.065, 19.945 50.064))";
-    private static final String INVALID_WKT = "POLYGON (NOT A VALID GEOM)";
 
     @Autowired
     private MockMvc mockMvc;
@@ -52,7 +41,7 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        userAccessToken = registerUserAndGetAccessToken(TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_FULL_NAME);
+        userAccessToken = registerUserAndGetAccessToken(TEST_USER_EMAIL, TEST_USER_PASSWORD, "Avoidance Tester");
     }
 
     @Test
@@ -82,7 +71,7 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldReturnBadRequestWhenCreatingZoneWithInvalidGeometry() throws Exception {
         // Given
-        CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto(TEST_ZONE_NAME, INVALID_WKT);
+        CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto(TEST_ZONE_NAME, "POLYGON (NOT A VALID GEOM)");
 
         // When & Then
         mockMvc.perform(post(AVOIDANCE_ZONES_URL)
@@ -99,7 +88,7 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
         UpdateAvoidanceZoneStatusDto updateRequest = new UpdateAvoidanceZoneStatusDto(false);
 
         // When
-        mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + zoneId + ACTIVE_ENDPOINT_SUFFIX)
+        mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + zoneId + "/active")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(updateRequest)))
@@ -133,14 +122,13 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
     void shouldReturn404WhenDeletingAvoidanceZoneOfAnotherUser() throws Exception {
         // Given
         Long zoneId = createDefaultAvoidanceZone(userAccessToken);
-        String thiefAccessToken = registerUserAndGetAccessToken(TEST_USER_2_EMAIL, TEST_USER_2_PASSWORD, TEST_USER_2_FULL_NAME);
+        String thiefAccessToken = registerUserAndGetAccessToken("avoidance.thief@example.com", "ThiefPassword123!", "Avoidance Thief");
 
         // When & Then
         mockMvc.perform(delete(AVOIDANCE_ZONES_URL + "/" + zoneId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + thiefAccessToken))
                 .andExpect(status().isNotFound());
     }
-
 
     private String registerUserAndGetAccessToken(String email, String password, String fullName) throws Exception {
         RegisterRequest request = new RegisterRequest(email, password, fullName);

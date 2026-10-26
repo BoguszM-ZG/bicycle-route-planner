@@ -37,24 +37,11 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
 
     private static final String TEST_USER_EMAIL = "routing.integration@example.com";
     private static final String TEST_USER_PASSWORD = "StrongPassword123!";
-    private static final String TEST_USER_FULL_NAME = "Routing Tester";
-
     private static final String AUTH_REGISTER_URL = "/api/auth/register";
     private static final String ROUTING_DIRECTIONS_URL = "/api/routing/directions";
-
-    private static final String ORS_API_URL_PROPERTY = "ors.api-url";
-    private static final String ORS_API_KEY_PROPERTY = "ors.api-key";
-    
-    private static final double ROUTE_START_LON = 19.945;
-    private static final double ROUTE_START_LAT = 50.0647;
-    private static final double ROUTE_END_LON = 19.946;
-    private static final double ROUTE_END_LAT = 50.0648;
-
     private static final String TEST_API_KEY = "dummy-ors-test-key";
     private static final String ORS_API_PATH = "/v2/directions/cycling-road/geojson";
-
-    private static final String MOCK_ROUTE_RESPONSE = "{\"features\":[{\"geometry\":{\"coordinates\":[[" + ROUTE_START_LON + "," + ROUTE_START_LAT + "],[" + ROUTE_END_LON + "," + ROUTE_END_LAT + "]]}}]}";
-    private static final String MOCK_ERROR_RESPONSE = "{\"error\":{\"code\":2004,\"message\":\"Request parameters exceed limits\"}}";
+    private static final String MOCK_ROUTE_RESPONSE = "{\"features\":[{\"geometry\":{\"coordinates\":[[19.945,50.0647],[19.946,50.0648]]}}]}";
 
     @Autowired
     private MockMvc mockMvc;
@@ -69,8 +56,8 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add(ORS_API_URL_PROPERTY, wireMockServer::baseUrl);
-        registry.add(ORS_API_KEY_PROPERTY, () -> TEST_API_KEY);
+        registry.add("ors.api-url", wireMockServer::baseUrl);
+        registry.add("ors.api-key", () -> TEST_API_KEY);
     }
 
     @BeforeEach
@@ -78,12 +65,11 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
         userAccessToken = registerUserAndGetAccessToken();
     }
 
-
     @Test
     void shouldCalculateRouteSuccessfully() throws Exception {
         // Given
         OrsRouteRequestDto request = new OrsRouteRequestDto(
-                List.of(List.of(ROUTE_START_LON, ROUTE_START_LAT), List.of(ROUTE_END_LON, ROUTE_END_LAT)),
+                List.of(List.of(19.945, 50.0647), List.of(19.946, 50.0648)),
                 false,
                 false,
                 null
@@ -105,14 +91,14 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().json(MOCK_ROUTE_RESPONSE));
         wireMockServer.verify(1, postRequestedFor(urlPathEqualTo(ORS_API_PATH))
-                .withRequestBody(containing(String.valueOf(ROUTE_START_LON))));
+                .withRequestBody(containing("19.945")));
     }
 
     @Test
     void shouldHandleExternalApiException() throws Exception {
         // Given
         OrsRouteRequestDto request = new OrsRouteRequestDto(
-                List.of(List.of(ROUTE_START_LON, ROUTE_START_LAT), List.of(ROUTE_END_LON, ROUTE_END_LAT)),
+                List.of(List.of(19.945, 50.0647), List.of(19.946, 50.0648)),
                 false,
                 false,
                 null
@@ -122,7 +108,7 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
                 .withHeader(HttpHeaders.AUTHORIZATION, equalTo(TEST_API_KEY))
                 .willReturn(aResponse()
                         .withStatus(500)
-                        .withBody(MOCK_ERROR_RESPONSE)));
+                        .withBody("{\"error\":{\"code\":2004,\"message\":\"Request parameters exceed limits\"}}")));
 
         // When & Then
         mockMvc.perform(post(ROUTING_DIRECTIONS_URL)
@@ -133,7 +119,7 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
     }
 
     private String registerUserAndGetAccessToken() throws Exception {
-        RegisterRequest request = new RegisterRequest(TEST_USER_EMAIL, TEST_USER_PASSWORD, TEST_USER_FULL_NAME);
+        RegisterRequest request = new RegisterRequest(TEST_USER_EMAIL, TEST_USER_PASSWORD, "Routing Tester");
         String responseContent = mockMvc.perform(post(AUTH_REGISTER_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonMapper.writeValueAsString(request)))

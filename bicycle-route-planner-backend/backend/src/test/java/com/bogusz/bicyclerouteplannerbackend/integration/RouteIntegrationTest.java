@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -41,23 +42,11 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     private static final double TEST_DISTANCE_METERS = 1500.5;
     private static final double TEST_ELEVATION_GAIN = 50.0;
     private static final double TEST_ELEVATION_LOSS = 20.0;
-    
     private static final String VALID_WKT_POINT = "POINT(15.0 50.0)";
     private static final String VALID_WKT_LINESTRING = "LINESTRING Z(15.0 50.0 100.0, 15.1 50.1 110.0)";
-    private static final String INVALID_GEOMETRY = "NOT_A_GEOMETRY";
-    
     private static final String TEST_EMAIL = "routeuser@test.com";
     private static final String TEST_PASSWORD = "Password123!";
-    private static final String TEST_FULL_NAME = "Route User";
 
-    private static final String OTHER_USER_EMAIL = "other@test.com";
-    private static final String OTHER_USER_PASSWORD = "Password123!";
-    private static final String OTHER_USER_FULL_NAME = "Other User";
-    
-    private static final String NEW_TEST_ROUTE_NAME = "New Awesome Route";
-    private static final String ERROR_INVALID_GEOMETRY = "Invalid Geometry Parsing Error";
-    private static final String ERROR_ROUTE_NOT_FOUND = "Route Not Found";
-    
     @Autowired
     private MockMvc mockMvc;
 
@@ -66,12 +55,11 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private RouteRepository routeRepository;
 
-
     private String userAccessToken;
 
     @BeforeEach
     void setUp() throws Exception {
-        userAccessToken = registerUserAndGetAccessToken(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
+        userAccessToken = registerUserAndGetAccessToken(TEST_EMAIL, TEST_PASSWORD, "Route User");
     }
 
     @Test
@@ -98,8 +86,8 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     void shouldReturn400WhenSavingRouteWithInvalidGeometry() throws Exception {
         // Given
         CreateRouteRequestDto request = new CreateRouteRequestDto(
-                TEST_ROUTE_NAME, TEST_ROUTE_TYPE, TEST_TARGET_DISTANCE, TEST_DISTANCE_METERS, 
-                TEST_ELEVATION_GAIN, TEST_ELEVATION_LOSS, INVALID_GEOMETRY, VALID_WKT_LINESTRING, null
+                TEST_ROUTE_NAME, TEST_ROUTE_TYPE, TEST_TARGET_DISTANCE, TEST_DISTANCE_METERS,
+                TEST_ELEVATION_GAIN, TEST_ELEVATION_LOSS, "NOT_A_GEOMETRY", VALID_WKT_LINESTRING, null
         );
 
         // When
@@ -109,13 +97,12 @@ class RouteIntegrationTest extends BaseIntegrationTest {
                         .content(jsonMapper.writeValueAsString(request)))
                 // Then
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value(ERROR_INVALID_GEOMETRY));
+                .andExpect(jsonPath("$.title").value("Validation Failure"));
     }
 
     @Test
     void shouldGetAllRoutesForUser() throws Exception {
         // Given
-
         createRouteAndGetId();
         createRouteAndGetId();
 
@@ -146,16 +133,15 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     void shouldReturn404WhenDeletingRouteOfAnotherUser() throws Exception {
         // Given
         long routeId = createRouteAndGetId();
-        String otherUserToken = registerUserAndGetAccessToken(OTHER_USER_EMAIL, OTHER_USER_PASSWORD, OTHER_USER_FULL_NAME);
+        String otherUserToken = registerUserAndGetAccessToken("other@test.com", "Password123!", "Other User");
 
         // When
         mockMvc.perform(delete(ROUTES_URL + "/" + routeId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherUserToken))
                 // Then
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.title").value(ERROR_ROUTE_NOT_FOUND));
+                .andExpect(jsonPath("$.title").value("Route Not Found"));
     }
-
 
     @Test
     void shouldGetRouteDetail() throws Exception {
@@ -185,6 +171,48 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldDownsampleLongRouteElevationPoints() throws Exception {
+        // Given
+        StringBuilder linestring = new StringBuilder("LINESTRING Z(");
+        for (int i = 0; i < 300; i++) {
+            if (i > 0) {
+                linestring.append(", ");
+            }
+            linestring.append(15.0 + (i * 0.001)).append(" ")
+                    .append(50.0 + (i * 0.001)).append(" ")
+                    .append(100.0 + (i % 50));
+        }
+        linestring.append(")");
+
+        CreateRouteRequestDto request = new CreateRouteRequestDto(
+                TEST_ROUTE_NAME,
+                TEST_ROUTE_TYPE,
+                TEST_TARGET_DISTANCE,
+                TEST_DISTANCE_METERS,
+                TEST_ELEVATION_GAIN,
+                TEST_ELEVATION_LOSS,
+                VALID_WKT_POINT,
+                linestring.toString(),
+                null
+        );
+
+        String responseStr = mockMvc.perform(post(ROUTES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long routeId = jsonMapper.readValue(responseStr, RouteDetailDto.class).id();
+
+        // When & Then
+        mockMvc.perform(get(ROUTES_URL + "/" + routeId + "/elevation")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(lessThanOrEqualTo(250)));
+
+    }
+
+    @Test
     void shouldExportRouteToGpx() throws Exception {
         // Given
         long routeId = createRouteAndGetId();
@@ -195,7 +223,7 @@ class RouteIntegrationTest extends BaseIntegrationTest {
                 // Then
                 .andExpect(status().isOk())
                 .andExpect(header().exists(HttpHeaders.CONTENT_DISPOSITION))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.parseMediaType("application/gpx+xml")))
                 .andReturn().getResponse().getContentAsByteArray();
 
         // Then
@@ -206,7 +234,7 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     void shouldRenameRoute() throws Exception {
         // Given
         long routeId = createRouteAndGetId();
-        RenameRouteRequestDto renameRequest = new RenameRouteRequestDto(NEW_TEST_ROUTE_NAME);
+        RenameRouteRequestDto renameRequest = new RenameRouteRequestDto("New Awesome Route");
 
         // When
         mockMvc.perform(patch(ROUTES_URL + "/" + routeId + "/name")
@@ -218,7 +246,37 @@ class RouteIntegrationTest extends BaseIntegrationTest {
 
         // Then
         Route route = routeRepository.findById(routeId).orElseThrow();
-        assertThat(route.getName()).isEqualTo(NEW_TEST_ROUTE_NAME);
+        assertThat(route.getName()).isEqualTo("New Awesome Route");
+    }
+
+    @Test
+    void shouldReturn400WhenRenamingRouteWithBlankName() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+        RenameRouteRequestDto renameRequest = new RenameRouteRequestDto("   ");
+
+        // When & Then
+        mockMvc.perform(patch(ROUTES_URL + "/" + routeId + "/name")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(renameRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.name").value("Name is required"));
+    }
+
+    @Test
+    void shouldReturn400WhenRenamingRouteWithNameExceedingLimit() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+        RenameRouteRequestDto renameRequest = new RenameRouteRequestDto("a".repeat(151));
+
+        // When & Then
+        mockMvc.perform(patch(ROUTES_URL + "/" + routeId + "/name")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(renameRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.name").value("Name cannot exceed 150 characters"));
     }
 
     @Test
@@ -240,6 +298,30 @@ class RouteIntegrationTest extends BaseIntegrationTest {
         assertThat(route.getFolder()).isNull();
     }
 
+    @Test
+    void shouldReturn401ProblemDetailWhenRequestIsAnonymous() throws Exception {
+        mockMvc.perform(get(ROUTES_URL))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.detail").value("Full authentication is required to access this resource"))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:unauthorized"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
+
+    @Test
+    void shouldReturn401ProblemDetailWhenTokenIsInvalid() throws Exception {
+        mockMvc.perform(get(ROUTES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer invalid.jwt.token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
+                .andExpect(jsonPath("$.detail").value("Full authentication is required to access this resource"))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:unauthorized"))
+                .andExpect(jsonPath("$.timestamp").isNotEmpty());
+    }
 
     private long createRouteAndGetId() throws Exception {
         CreateRouteRequestDto request = createValidRouteRequest();
@@ -267,7 +349,6 @@ class RouteIntegrationTest extends BaseIntegrationTest {
         );
     }
 
-
     private String registerUserAndGetAccessToken(String email, String password, String fullName) throws Exception {
         RegisterRequest request = new RegisterRequest(email, password, fullName);
         String responseContent = mockMvc.perform(post(REGISTER_URL)
@@ -278,6 +359,4 @@ class RouteIntegrationTest extends BaseIntegrationTest {
         return jsonMapper.readValue(responseContent, AuthResponse.class).accessToken();
     }
 }
-
-
 

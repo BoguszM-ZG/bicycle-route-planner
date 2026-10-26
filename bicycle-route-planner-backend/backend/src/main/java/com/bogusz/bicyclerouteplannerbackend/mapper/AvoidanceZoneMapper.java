@@ -7,7 +7,6 @@ import com.bogusz.bicyclerouteplannerbackend.model.AvoidanceZone;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
 import org.springframework.stereotype.Component;
@@ -16,19 +15,10 @@ import org.springframework.stereotype.Component;
 public class AvoidanceZoneMapper {
 
     public AvoidanceZone toEntity(CreateAvoidanceZoneRequestDto request, User user) {
-        WKTReader wktReader = new WKTReader();
         AvoidanceZone avoidanceZone = new AvoidanceZone();
         avoidanceZone.setUser(user);
         avoidanceZone.setName(request.name());
-        try {
-            if (request.zoneGeom() != null) {
-                Geometry geom = wktReader.read(request.zoneGeom());
-                geom.setSRID(4326);
-                avoidanceZone.setZoneGeom((Polygon) geom);
-            }
-        } catch (ParseException e) {
-            throw new InvalidGeometryException("Error parsing WKT geometry " + e.getMessage());
-        }
+        avoidanceZone.setZoneGeom(parsePolygon(request.zoneGeom()));
         avoidanceZone.setIsActive(true);
         return avoidanceZone;
     }
@@ -41,5 +31,15 @@ public class AvoidanceZoneMapper {
                 .zoneGeom(avoidanceZone.getZoneGeom() != null ? wktWriter.write(avoidanceZone.getZoneGeom()) : null)
                 .isActive(avoidanceZone.getIsActive())
                 .build();
+    }
+
+    private Polygon parsePolygon(String wkt) {
+        try {
+            Geometry geom = new WKTReader().read(wkt);
+            geom.setSRID(4326);
+            return (Polygon) geom;
+        } catch (Exception e) {
+            throw new InvalidGeometryException("Failed to parse avoidance zone polygon geometry", e);
+        }
     }
 }

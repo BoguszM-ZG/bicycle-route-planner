@@ -1,5 +1,7 @@
 package com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone;
 
+import com.bogusz.bicyclerouteplannerbackend.validation.GeometryType;
+import com.bogusz.bicyclerouteplannerbackend.validation.ValidWktGeometry;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -9,6 +11,7 @@ public record CreateAvoidanceZoneRequestDto(
         String name,
 
         @NotBlank(message = "Geometry of the avoidance zone is required")
+        @ValidWktGeometry(expectedType = GeometryType.POLYGON, message = "Avoidance zone must be a valid WKT Polygon in WGS84 coordinates")
         String zoneGeom
 ) {
 }

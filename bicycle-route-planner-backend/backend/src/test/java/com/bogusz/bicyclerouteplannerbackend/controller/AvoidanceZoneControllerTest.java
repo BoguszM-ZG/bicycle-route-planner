@@ -1,6 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.controller;
 
-import com.bogusz.bicyclerouteplannerbackend.dto.auth.UserPrincipal;
+import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.UpdateAvoidanceZoneStatusDto;
@@ -11,7 +11,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,6 +26,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -43,11 +44,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class AvoidanceZoneControllerTest {
 
-    private static final long ZONE_ID = 5L;
     private static final long USER_ID = 99L;
+    private static final long ZONE_ID = 5L;
     private static final String ZONE_NAME = "Construction Site";
     private static final String ZONE_GEOM = "POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))";
-    private static final boolean IS_ACTIVE = true;
+    private static final String AVOIDANCE_ZONES_URL = "/api/avoidance-zones";
+    private static final String USER_EMAIL = "test@test.com";
 
     @Autowired
     private MockMvc mockMvc;
@@ -77,18 +79,18 @@ class AvoidanceZoneControllerTest {
                 .id(ZONE_ID)
                 .name(ZONE_NAME)
                 .zoneGeom(ZONE_GEOM)
-                .isActive(IS_ACTIVE)
+                .isActive(true)
                 .build();
         given(avoidanceZoneService.getAvoidanceZonesForUser(USER_ID)).willReturn(List.of(zoneDto));
 
         // When & Then
-        mockMvc.perform(get("/api/avoidance-zones"))
+        mockMvc.perform(get(AVOIDANCE_ZONES_URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()").value(1))
                 .andExpect(jsonPath("$[0].id").value(ZONE_ID))
                 .andExpect(jsonPath("$[0].name").value(ZONE_NAME))
                 .andExpect(jsonPath("$[0].zoneGeom").value(ZONE_GEOM))
-                .andExpect(jsonPath("$[0].isActive").value(IS_ACTIVE));
+                .andExpect(jsonPath("$[0].isActive").value(true));
     }
 
     @Test
@@ -99,13 +101,13 @@ class AvoidanceZoneControllerTest {
                 .id(ZONE_ID)
                 .name(ZONE_NAME)
                 .zoneGeom(ZONE_GEOM)
-                .isActive(IS_ACTIVE)
+                .isActive(true)
                 .build();
 
         given(avoidanceZoneService.saveAvoidanceZoneForUser(any(), eq(USER_ID))).willReturn(response);
 
         // When
-        mockMvc.perform(post("/api/avoidance-zones")
+        mockMvc.perform(post(AVOIDANCE_ZONES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -127,7 +129,7 @@ class AvoidanceZoneControllerTest {
         CreateAvoidanceZoneRequestDto badRequest = new CreateAvoidanceZoneRequestDto("", ZONE_GEOM);
 
         // When & Then
-        mockMvc.perform(post("/api/avoidance-zones")
+        mockMvc.perform(post(AVOIDANCE_ZONES_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
@@ -137,9 +139,24 @@ class AvoidanceZoneControllerTest {
     }
 
     @Test
+    void shouldReturn400BadRequestWhenZoneGeometryIsInvalid() throws Exception {
+        // Given
+        CreateAvoidanceZoneRequestDto badRequest = new CreateAvoidanceZoneRequestDto(
+                ZONE_NAME, "POLYGON((0 0, 0 2, 2 0, 2 2, 0 0))");
+
+        // When & Then
+        mockMvc.perform(post(AVOIDANCE_ZONES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badRequest)))
+                .andExpect(status().isBadRequest());
+
+        then(avoidanceZoneService).should(never()).saveAvoidanceZoneForUser(any(), any());
+    }
+
+    @Test
     void shouldReturn204WhenDeletingAvoidanceZone() throws Exception {
         // When & Then
-        mockMvc.perform(delete("/api/avoidance-zones/" + ZONE_ID))
+        mockMvc.perform(delete(AVOIDANCE_ZONES_URL + "/" + ZONE_ID))
                 .andExpect(status().isNoContent());
 
         // Then
@@ -152,7 +169,7 @@ class AvoidanceZoneControllerTest {
         UpdateAvoidanceZoneStatusDto request = new UpdateAvoidanceZoneStatusDto(false);
 
         // When
-        mockMvc.perform(patch("/api/avoidance-zones/" + ZONE_ID + "/active")
+        mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + ZONE_ID + "/active")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
@@ -167,17 +184,17 @@ class AvoidanceZoneControllerTest {
         UpdateAvoidanceZoneStatusDto badRequest = new UpdateAvoidanceZoneStatusDto(null);
 
         // When & Then
-        mockMvc.perform(patch("/api/avoidance-zones/" + ZONE_ID + "/active")
+        mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + ZONE_ID + "/active")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(badRequest)))
                 .andExpect(status().isBadRequest());
 
         // Then
-        then(avoidanceZoneService).should(never()).toggleAvoidanceActiveStatus(ArgumentMatchers.anyLong(), ArgumentMatchers.anyLong(), ArgumentMatchers.anyBoolean());
+        then(avoidanceZoneService).should(never()).toggleAvoidanceActiveStatus(anyLong(), anyLong(), anyBoolean());
     }
 
     private Authentication getMockAuthentication() {
-        UserPrincipal principal = new UserPrincipal(USER_ID, "test@test.com");
+        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL);
         return new UsernamePasswordAuthenticationToken(
                 principal, null, Collections.emptyList()
         );

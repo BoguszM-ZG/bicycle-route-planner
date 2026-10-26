@@ -2,121 +2,134 @@ package com.bogusz.bicyclerouteplannerbackend.service;
 
 import com.bogusz.bicyclerouteplannerbackend.exception.GpxExportException;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
+import io.jenetics.jpx.GPX;
+import io.jenetics.jpx.Length;
+import io.jenetics.jpx.Track;
+import io.jenetics.jpx.TrackSegment;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
+import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GpxExportServiceTest {
 
-    private static final String TEST_ROUTE_NAME = "Test Route";
-    private static final String ERROR_ROUTE_NAME = "Error Route";
-    private static final String TEMP_FILE_ERROR_ROUTE_NAME = "Temp File Error Route";
-    
-    private static final double LON_1 = 19.0;
-    private static final double LAT_1 = 50.0;
-    private static final double ELEVATION_1 = 200.0;
-    
-    private static final double LON_2 = 19.01;
-    private static final double LAT_2 = 50.01;
-
-    private static final String CREATOR_STRING = "creator=\"Bicycle Route Planner\"";
-    private static final String SIMULATED_DISK_ERROR = "Simulated Disk Full Exception";
-    private static final String SIMULATED_DELETE_ERROR = "Simulated Deletion Error";
-    private static final String GENERATION_ERROR_MSG = "Error during GPX file generation";
+    private static final String ROUTE_NAME = "Test Route";
+    private static final String CREATOR_NAME = "Bicycle Route Planner";
 
     private final GpxExportService gpxExportService = new GpxExportService();
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     @Test
-    void shouldGenerateGpxFileSuccessfully() {
+    void shouldGenerateGpxFileSuccessfully() throws IOException {
         // Given
-        Route mockRoute = new Route();
-        mockRoute.setName(TEST_ROUTE_NAME);
-
         Coordinate[] coords = new Coordinate[]{
-                new Coordinate(LON_1, LAT_1, ELEVATION_1),
-                new Coordinate(LON_2, LAT_2, Double.NaN)
+                new Coordinate(19.0, 50.0, 200.0),
+                new Coordinate(19.01, 50.01, Double.NaN)
         };
-
-        mockRoute.setRouteGeom(geometryFactory.createLineString(coords));
+        Route route = createRoute(ROUTE_NAME, coords);
 
         // When
-        byte[] result = gpxExportService.generateGpxFile(mockRoute);
+        byte[] result = gpxExportService.generateGpxFile(route);
 
         // Then
         assertThat(result).isNotEmpty();
+        String gpxContent = new String(result, StandardCharsets.UTF_8);
+        assertThat(gpxContent)
+                .contains("creator=\"" + CREATOR_NAME + "\"")
+                .contains("<name>" + ROUTE_NAME + "</name>")
+                .contains("<ele>200</ele>");
 
-        String gpxContent = new String(result);
+        GPX parsed = GPX.Reader.DEFAULT.read(new ByteArrayInputStream(result));
+        assertThat(parsed.getCreator()).isEqualTo(CREATOR_NAME);
+        assertThat(parsed.getTracks()).hasSize(1);
 
-        assertThat(gpxContent).contains(CREATOR_STRING);
-        assertThat(gpxContent).contains("<name>" + TEST_ROUTE_NAME + "</name>");
-
-        assertThat(gpxContent).contains("lat=\"50\" lon=\"19\"");
-        assertThat(gpxContent).contains("<ele>200</ele>");
-
-        assertThat(gpxContent).contains("lat=\"50.01\" lon=\"19.01\"");
+        Track track = parsed.getTracks().getFirst();
+        assertThat(track.getName()).contains(ROUTE_NAME);
+        TrackSegment segment = track.getSegments().getFirst();
+        assertThat(segment.getPoints()).hasSize(2);
+        assertThat(segment.getPoints().get(0).getLatitude().doubleValue()).isEqualTo(50.0);
+        assertThat(segment.getPoints().get(0).getLongitude().doubleValue()).isEqualTo(19.0);
+        assertThat(segment.getPoints().get(0).getElevation().map(Length::doubleValue)).contains(200.0);
+        assertThat(segment.getPoints().get(1).getLatitude().doubleValue()).isEqualTo(50.01);
+        assertThat(segment.getPoints().get(1).getLongitude().doubleValue()).isEqualTo(19.01);
+        assertThat(segment.getPoints().get(1).getElevation()).isEmpty();
     }
 
     @Test
-    void shouldThrowExceptionWhenFileOperationsFail() {
-        // Given
-        Route mockRoute = new Route();
-        mockRoute.setName(ERROR_ROUTE_NAME);
-
-        mockRoute.setRouteGeom(geometryFactory.createLineString(
-                new Coordinate[]{
-                        new Coordinate(LON_1, LAT_1),
-                        new Coordinate(LON_2, LAT_2)
-                }
-        ));
-
-        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
-
-            mockedFiles.when(() -> Files.createTempFile(Mockito.anyString(), Mockito.anyString()))
-                    .thenThrow(new IOException(SIMULATED_DISK_ERROR));
-
-            // When & THEN
-            assertThatThrownBy(() -> gpxExportService.generateGpxFile(mockRoute))
-                    .isInstanceOf(GpxExportException.class)
-                    .hasMessageContaining(GENERATION_ERROR_MSG);
-        }
+    void shouldThrowIllegalArgumentExceptionWhenRouteIsNull() {
+        // When & Then
+        assertThatThrownBy(() -> gpxExportService.generateGpxFile(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Route must not be null");
     }
 
     @Test
-    void shouldNotThrowExceptionWhenDeletingTempFileFails() {
+    void shouldThrowGpxExportExceptionWhenRouteGeomIsNull() {
         // Given
-        Route mockRoute = new Route();
-        mockRoute.setName(TEMP_FILE_ERROR_ROUTE_NAME);
+        Route route = new Route();
+        route.setName(ROUTE_NAME);
+        route.setRouteGeom(null);
 
-        mockRoute.setRouteGeom(geometryFactory.createLineString(
-                new Coordinate[]{
-                        new Coordinate(LON_1, LAT_1),
-                        new Coordinate(LON_2, LAT_2)
-                }
-        ));
+        // When & Then
+        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
+                .isInstanceOf(GpxExportException.class)
+                .hasMessage("Route geometry must not be null");
+    }
 
-        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class, Mockito.CALLS_REAL_METHODS)) {
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenOutputStreamIsNull() {
+        // Given
+        Coordinate[] coords = new Coordinate[]{
+                new Coordinate(19.0, 50.0),
+                new Coordinate(19.01, 50.01)
+        };
+        Route route = createRoute(ROUTE_NAME, coords);
 
-            mockedFiles.when(() -> Files.deleteIfExists(Mockito.any(Path.class)))
-                    .thenThrow(new IOException(SIMULATED_DELETE_ERROR));
+        // When & Then
+        assertThatThrownBy(() -> gpxExportService.writeGpx(route, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("OutputStream must not be null");
+    }
 
-            // When
-            byte[] result = gpxExportService.generateGpxFile(mockRoute);
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenCoordinateIsNull() {
+        // Given
+        Coordinate[] coords = new Coordinate[]{
+                null,
+                new Coordinate(19.01, 50.01)
+        };
+        Route route = createRoute(ROUTE_NAME, coords);
 
-            // Then
-            assertThat(result).isNotEmpty();
+        // When & Then
+        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Coordinate must not be null");
+    }
 
-            String gpxContent = new String(result);
-            assertThat(gpxContent).contains("<name>" + TEMP_FILE_ERROR_ROUTE_NAME + "</name>");
-        }
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenCoordinateIsNonFinite() {
+        // Given
+        Coordinate[] coords = new Coordinate[]{
+                new Coordinate(Double.NaN, 50.0),
+                new Coordinate(19.01, 50.01)
+        };
+        Route route = createRoute(ROUTE_NAME, coords);
+
+        // When & Then
+        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Coordinate latitude and longitude must be valid finite numbers");
+    }
+
+
+    private Route createRoute(String name, Coordinate[] coordinates) {
+        Route route = new Route();
+        route.setName(name);
+        route.setRouteGeom(geometryFactory.createLineString(coordinates));
+        return route;
     }
 }

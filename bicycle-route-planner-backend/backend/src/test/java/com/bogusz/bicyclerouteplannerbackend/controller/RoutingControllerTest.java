@@ -69,4 +69,58 @@ class RoutingControllerTest {
         assertThat(captured.coordinates()).hasSize(2);
         assertThat(captured.options()).containsEntry("profile", "cycling-regular");
     }
+
+    @Test
+    void shouldReturn200WhenOneCoordinateProvidedWithRoundTrip() throws Exception {
+        // Given
+        List<List<Double>> coordinates = List.of(List.of(13.4, 52.5));
+        Map<String, Object> options = Map.of("round_trip", Map.of("length", 10000));
+        OrsRouteRequestDto requestDto = new OrsRouteRequestDto(coordinates, true, false, options);
+
+        given(externalRoutingService.getDirections(any())).willReturn(EXPECTED_GEOJSON_RESPONSE);
+
+        // When & Then
+        mockMvc.perform(post(DIRECTIONS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(EXPECTED_GEOJSON_RESPONSE));
+    }
+
+    @Test
+    void shouldReturn400WhenCoordinatesAreEmpty() throws Exception {
+        // Given
+        OrsRouteRequestDto requestDto = new OrsRouteRequestDto(List.of(), true, true, null);
+
+        // When & Then
+        mockMvc.perform(post(DIRECTIONS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenOnlyOneCoordinateProvidedWithoutRoundTrip() throws Exception {
+        // Given
+        OrsRouteRequestDto requestDto = new OrsRouteRequestDto(List.of(List.of(13.4, 52.5)), true, true, null);
+
+        // When & Then
+        mockMvc.perform(post(DIRECTIONS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldSerializeCleanJsonWithoutExtraFields() throws Exception {
+        // Given
+        OrsRouteRequestDto requestDto = new OrsRouteRequestDto(List.of(List.of(13.4, 52.5), List.of(13.5, 52.6)), true, true, null);
+
+        // When
+        String json = objectMapper.writeValueAsString(requestDto);
+
+        // Then
+        assertThat(json).doesNotContain("validCoordinateCount");
+        assertThat(json).contains("\"coordinates\"");
+    }
 }

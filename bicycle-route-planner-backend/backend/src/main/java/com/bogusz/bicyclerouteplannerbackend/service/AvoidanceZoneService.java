@@ -50,7 +50,6 @@ public class AvoidanceZoneService {
     @Transactional
     public void toggleAvoidanceActiveStatus(Long avoidanceZoneId, Long userId, boolean isActive){
         AvoidanceZone avoidanceZone = getValidAvoidanceZoneForUser(avoidanceZoneId, userId);
-        log.info("Toggled avoidance zone ID: {} for user ID: {} to active: {}", avoidanceZoneId, userId, isActive);
         avoidanceZone.setIsActive(isActive);
     }
 

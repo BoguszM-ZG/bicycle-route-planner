@@ -10,8 +10,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -23,14 +23,18 @@ import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-
-    private static final long TEST_USER_ID = 1L;
+    private static final Long TEST_USER_ID = 1L;
     private static final String TEST_EMAIL = "test@example.com";
-    private static final String TEST_PASSWORD = "encodedPassword123";
+    private static final String TEST_RAW_PASSWORD = "rawPassword123!";
+    private static final String TEST_ENCODED_PASSWORD = "encodedPassword123";
     private static final String TEST_FULL_NAME = "Test User";
+    private static final String ROLE_USER = "ROLE_USER";
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -42,17 +46,18 @@ class UserServiceTest {
     void shouldRegisterUserSuccessfully() {
         // Given
         given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(false);
+        given(passwordEncoder.encode(TEST_RAW_PASSWORD)).willReturn(TEST_ENCODED_PASSWORD);
 
         User mockSavedUser = new User();
         mockSavedUser.setId(TEST_USER_ID);
         mockSavedUser.setEmail(TEST_EMAIL);
-        mockSavedUser.setRole("ROLE_USER");
+        mockSavedUser.setRole(ROLE_USER);
         mockSavedUser.setIsActive(true);
 
         given(userRepository.save(any(User.class))).willReturn(mockSavedUser);
 
         // When
-        User result = userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME);
+        User result = userService.registerUser(TEST_EMAIL, TEST_RAW_PASSWORD, TEST_FULL_NAME);
 
         // Then
         assertThat(result).isNotNull();
@@ -63,9 +68,9 @@ class UserServiceTest {
         User capturedUser = userCaptor.getValue();
 
         assertThat(capturedUser.getEmail()).isEqualTo(TEST_EMAIL);
-        assertThat(capturedUser.getPassword()).isEqualTo(TEST_PASSWORD);
+        assertThat(capturedUser.getPassword()).isEqualTo(TEST_ENCODED_PASSWORD);
         assertThat(capturedUser.getFullName()).isEqualTo(TEST_FULL_NAME);
-        assertThat(capturedUser.getRole()).isEqualTo("ROLE_USER");
+        assertThat(capturedUser.getRole()).isEqualTo(ROLE_USER);
         assertThat(capturedUser.getIsActive()).isTrue();
     }
 
@@ -75,7 +80,7 @@ class UserServiceTest {
         given(userRepository.existsByEmail(TEST_EMAIL)).willReturn(true);
 
         // When & THEN
-        assertThatThrownBy(() -> userService.registerUser(TEST_EMAIL, TEST_PASSWORD, TEST_FULL_NAME))
+        assertThatThrownBy(() -> userService.registerUser(TEST_EMAIL, TEST_RAW_PASSWORD, TEST_FULL_NAME))
                 .isInstanceOf(UserAlreadyExistsException.class)
                 .hasMessageContaining("already exists");
 
@@ -109,22 +114,5 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.getByEmail(TEST_EMAIL))
                 .isInstanceOf(UsernameNotFoundException.class)
                 .hasMessageContaining("User not found");
-    }
-
-    @Test
-    void shouldLoadUserByUsernameSuccessfully() {
-        // Given
-        User mockUser = new User();
-        mockUser.setEmail(TEST_EMAIL);
-
-
-        given(userRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(mockUser));
-
-        // When
-        UserDetails result = userService.loadUserByUsername(TEST_EMAIL);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result.getUsername()).isEqualTo(TEST_EMAIL);
     }
 }
