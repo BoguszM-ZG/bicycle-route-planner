@@ -4,7 +4,7 @@ import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.CreateRouteRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.FileExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RenameRouteRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteSummaryDto;
@@ -149,7 +149,7 @@ class RouteControllerTest {
         // GIVEN
         byte[] gpxData = "<gpx>Test GPX</gpx>".getBytes();
         String expectedFileName = "Test Route.gpx";
-        GpxExportDto exportDto = new GpxExportDto(gpxData, expectedFileName);
+        FileExportDto exportDto = new FileExportDto(gpxData, expectedFileName);
         given(routeService.exportRouteToGpx(ROUTE_ID, USER_ID)).willReturn(exportDto);
 
         // WHEN
@@ -160,6 +160,23 @@ class RouteControllerTest {
                 .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/gpx+xml"))
                 .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Test Route.gpx\"; filename*=UTF-8''Test%20Route.gpx"))
                 .andExpect(content().bytes(gpxData));
+    }
+
+    @Test
+    void shouldReturn200AndGeoJsonFileWhenExportingRoute() throws Exception {
+        // GIVEN
+        byte[] geoJsonData = "{\"type\":\"Feature\"}".getBytes();
+        given(routeService.exportRouteToGeoJson(ROUTE_ID, USER_ID))
+                .willReturn(new FileExportDto(geoJsonData, "Test Route.geojson"));
+
+        // WHEN
+        ResultActions resultActions = mockMvc.perform(get(ROUTES_URL + "/" + ROUTE_ID + "/export/geojson"));
+
+        // THEN
+        resultActions.andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, "application/geo+json"))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"Test Route.geojson\"; filename*=UTF-8''Test%20Route.geojson"))
+                .andExpect(content().bytes(geoJsonData));
     }
 
     @Test

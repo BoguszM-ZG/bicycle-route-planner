@@ -6,7 +6,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { RouteSummaryDto } from '../../../models/route.model';
+import { RouteExportFormat, RouteSummaryDto } from '../../../models/route.model';
 import { RouteDetailsComponent } from '../route-details/route-details.component';
 import { FolderDto } from '../../../models/folder.model';
 import { FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -22,6 +22,8 @@ import { RouteStateService } from '../../../services/route-state.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RouteItemComponent {
+  public static readonly MAX_NAME_LENGTH = 150;
+
   private readonly routeStateService = inject(RouteStateService);
 
   public route = input.required<RouteSummaryDto>();
@@ -31,7 +33,15 @@ export class RouteItemComponent {
   public isMoving = signal<boolean>(false);
   public isConfirmingDelete = signal<boolean>(false);
   public isRenaming = signal<boolean>(false);
-  public renameControl = new FormControl('', [Validators.required, Validators.maxLength(50)]);
+  public isExporting = signal<boolean>(false);
+  public renameControl = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [
+      Validators.required,
+      Validators.maxLength(RouteItemComponent.MAX_NAME_LENGTH),
+      Validators.pattern(/\S/),
+    ],
+  });
 
   public selectRoute(): void {
     if (!this.isConfirmingDelete() && this.route().id !== undefined && this.route().id !== null) {
@@ -66,16 +76,15 @@ export class RouteItemComponent {
     this.deleteRoute(event);
   }
 
-  public exportGpx(event?: Event): void {
-    event?.stopPropagation();
-    const id = this.route().id;
-    if (id !== undefined && id !== null) {
-      this.routeStateService.downloadGpx(id, this.route().name);
-    }
+  public toggleExport(event: Event): void {
+    event.stopPropagation();
+    this.isExporting.update((v) => !v);
   }
 
-  public onExportGpx(event: Event): void {
-    this.exportGpx(event);
+  public exportRoute(format: RouteExportFormat, event: Event): void {
+    event.stopPropagation();
+    this.routeStateService.downloadRoute(this.route().id, format, this.route().name);
+    this.isExporting.set(false);
   }
 
   public toggleMove(event: Event): void {
@@ -106,19 +115,21 @@ export class RouteItemComponent {
 
   public saveRename(event?: Event): void {
     event?.stopPropagation();
-    if (this.renameControl.valid && this.renameControl.value) {
-      const newName = this.renameControl.value.trim();
-      const oldName = this.route().name;
-      if (!newName || newName === oldName) {
-        this.isRenaming.set(false);
-        return;
-      }
-      const id = this.route().id;
-      if (id !== undefined && id !== null) {
-        this.routeStateService.renameRoute(id, newName);
-      }
-      this.isRenaming.set(false);
+    if (this.renameControl.invalid) {
+      return;
     }
+
+    const newName = this.renameControl.value.trim();
+    const oldName = this.route().name;
+    if (!newName || newName === oldName) {
+      this.isRenaming.set(false);
+      return;
+    }
+    const id = this.route().id;
+    if (id !== undefined && id !== null) {
+      this.routeStateService.renameRoute(id, newName);
+    }
+    this.isRenaming.set(false);
   }
 
   public confirmRename(event: Event): void {

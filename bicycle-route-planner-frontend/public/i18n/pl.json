@@ -8,7 +8,10 @@
     "MAP_REGION_LABEL": "Interaktywna mapa trasy",
     "WAYPOINT_POPUP_TITLE": "Punkt trasy",
     "DELETE_WAYPOINT": "Usuń punkt",
-    "WAYPOINT_TOOLTIP": "Kliknij, aby zarządzać • Prawy przycisk, aby usunąć"
+    "WAYPOINT_TOOLTIP": "Kliknij, aby zarządzać • Prawy przycisk, aby usunąć",
+    "MARKER_START": "Start",
+    "MARKER_END": "Koniec",
+    "MARKER_LOOP": "Start/Koniec (Pętla)"
   },
   "ROUTE": {
     "ENTER_NAME": "Proszę wpisać nazwę trasy",
@@ -75,11 +78,13 @@
     "CONFIRM": "Zatwierdź",
     "CANCEL": "Anuluj",
     "LOADING_ROUTES": "Pobieranie tras...",
+    "LOADING_DETAILS": "Ładowanie szczegółów trasy...",
     "EMPTY_STATE": "Nie masz jeszcze żadnych zapisanych tras ani folderów. Dodaj trasę, aby ją zobaczyć tutaj.",
     "ROUTE_ITEM_VIEW_ROUTE": "Zobacz trasę na mapie",
     "ROUTE_ITEM_RENAME": "Zmień nazwę",
     "ROUTE_ITEM_MOVE": "Przenieś trasę",
-    "ROUTE_ITEM_DOWNLOAD_GPX": "Pobierz plik GPX",
+    "ROUTE_ITEM_DOWNLOAD": "Pobierz trasę",
+    "ROUTE_ITEM_DOWNLOAD_AS": "Pobierz jako:",
     "ROUTE_ITEM_DELETE": "Usuń trasę",
     "ROUTE_ITEM_CONFIRM_DELETE": "Czy na pewno chcesz usunąć trasę?",
     "ROUTE_ITEM_YES": "Tak",
@@ -101,7 +106,9 @@
     "ROUTE_DETAILS_CHART_TITLE": "Profil Przewyższeń",
     "ZONE_ITEM_TOGGLE": "Przełącz aktywność strefy",
     "ZONE_ITEM_DELETE": "Usuń strefę",
+    "ZONE_ITEM_CONFIRM_DELETE": "Usunąć strefę?",
     "CHART_LOADING": "Ładowanie wykresu przewyższeń...",
+    "CHART_ERROR": "Nie udało się załadować profilu wysokości.",
     "CHART_DISTANCE_KM": "Dystans (km)",
     "CHART_ELEVATION_M": "Wysokość (m n.p.m)"
   },
@@ -121,6 +128,8 @@
     "REGISTER_SUBTITLE": "Dołącz do społeczności rowerzystów już dziś.",
     "FULL_NAME_LABEL": "Imię i nazwisko",
     "FULL_NAME_PLACEHOLDER": "np. Jan Kowalski",
+    "FULL_NAME_REQUIRED": "Imię i nazwisko jest wymagane.",
+    "INVALID_CREDENTIALS": "Nieprawidłowy login lub hasło. Spróbuj ponownie.",
     "PASSWORD_PLACEHOLDER_REG": "Minimum 8 znaków",
     "PASSWORD_MIN_LENGTH": "Hasło musi składać się z co najmniej 8 znaków.",
     "REGISTER_BUTTON": "Zarejestruj się",
@@ -129,7 +138,7 @@
   },
   "ERRORS": {
     "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia.",
-    "DOWNLOAD_GPX_ERROR": "Nie udało się pobrać pliku GPX. Spróbuj ponownie później.",
+    "DOWNLOAD_ROUTE_ERROR": "Nie udało się pobrać pliku trasy. Spróbuj ponownie później.",
     "ROUTE_NOT_FOUND": "Nie znaleziono drogi w pobliżu wybranego punktu.",
     "ROUND_TRIP_NOT_FOUND": "Nie można wyznaczyć pętli w tym obszarze (brak dróg).",
     "ROUTE_TOO_SHORT": "Trasa jest zbyt krótka, aby ją zapisać (wymaga minimum 2 punktów).",
@@ -148,6 +157,18 @@
     "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy wykluczeń.",
     "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy.",
     "WAYPOINT_IN_AVOIDANCE_ZONE": "Punkt trasy znajduje się wewnątrz strefy omijanej. Przesuń punkt poza strefę."
+  },
+  "SUCCESS": {
+    "CREATE_ROUTE": "Trasa została pomyślnie zapisana.",
+    "SAVE_ZONE": "Strefa omijana została pomyślnie zapisana.",
+    "CREATE_FOLDER": "Folder został pomyślnie utworzony.",
+    "RENAME_ROUTE": "Nazwa trasy została pomyślnie zmieniona.",
+    "MOVE_ROUTE": "Trasa została pomyślnie przeniesiona.",
+    "RENAME_FOLDER": "Nazwa folderu została pomyślnie zmieniona.",
+    "DELETE_ROUTE": "Trasa została pomyślnie usunięta.",
+    "DELETE_FOLDER": "Folder został pomyślnie usunięty.",
+    "DELETE_ZONE": "Strefa omijana została pomyślnie usunięta.",
+    "TOGGLE_ZONE": "Status aktywności strefy został pomyślnie zmieniony."
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "woj. lubuskie",

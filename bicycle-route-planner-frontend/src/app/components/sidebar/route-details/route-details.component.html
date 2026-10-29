@@ -1,4 +1,8 @@
-@if (routeDetail(); as detail) {
+@if (isLoadingDetails()) {
+  <div class="loading-state" aria-live="polite">
+    <span>{{ 'SIDEBAR.LOADING_DETAILS' | translate }}</span>
+  </div>
+} @else if (routeDetail(); as detail) {
 <div class="details-container">
   <div class="detail-row">
     <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_CREATED' | translate }}</span>

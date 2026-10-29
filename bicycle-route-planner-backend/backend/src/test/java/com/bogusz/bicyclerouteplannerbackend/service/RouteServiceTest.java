@@ -21,7 +21,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
-import com.bogusz.bicyclerouteplannerbackend.dto.route.GpxExportDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.route.FileExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RenameRouteRequestDto;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -169,11 +169,42 @@ class RouteServiceTest {
         byte[] fakeGpxData = "<gpx>Route</gpx>".getBytes();
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
         // WHEN
-        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+        FileExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
         // THEN
         assertThat(result).isNotNull();
         assertThat(result.fileName()).isEqualTo("Route.gpx");
-        assertThat(result.gpxData()).isEqualTo(fakeGpxData);
+        assertThat(result.data()).isEqualTo(fakeGpxData);
+    }
+
+    @Test
+    void shouldExportRouteToGeoJsonSuccessfully() {
+        // GIVEN
+        Route mockRoute = new Route();
+        mockRoute.setName(ROUTE_NAME);
+        String geoJson = "{\"type\":\"Feature\"}";
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        given(routeRepository.findGeoJsonById(ROUTE_ID)).willReturn(geoJson);
+
+        // WHEN
+        FileExportDto result = routeService.exportRouteToGeoJson(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result.fileName()).isEqualTo("Route.geojson");
+        assertThat(result.data()).isEqualTo(geoJson.getBytes());
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenExportingNonExistentRouteToGeoJson() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.exportRouteToGeoJson(ROUTE_ID, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(routeRepository).should().findByIdAndUserId(ROUTE_ID, USER_ID);
+        then(routeRepository).shouldHaveNoMoreInteractions();
     }
 
     @Test
@@ -447,7 +478,7 @@ assertThat(result.get(1).distance()).isGreaterThan(1000.0);
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
 
         // WHEN
-        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+        FileExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
 
         // THEN
         assertThat(result.fileName()).isEqualTo("route.gpx");
@@ -463,7 +494,7 @@ assertThat(result.get(1).distance()).isGreaterThan(1000.0);
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
 
         // WHEN
-        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+        FileExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
 
         // THEN
         assertThat(result.fileName()).isEqualTo("route.gpx");
@@ -479,7 +510,7 @@ assertThat(result.get(1).distance()).isGreaterThan(1000.0);
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
 
         // WHEN
-        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+        FileExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
 
         // THEN
         assertThat(result.fileName()).isEqualTo("route_test_name.gpx");
@@ -495,7 +526,7 @@ assertThat(result.get(1).distance()).isGreaterThan(1000.0);
         given(gpxExportService.generateGpxFile(mockRoute)).willReturn(fakeGpxData);
 
         // WHEN
-        GpxExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
+        FileExportDto result = routeService.exportRouteToGpx(ROUTE_ID, USER_ID);
 
         // THEN
         assertThat(result.fileName()).isEqualTo("route.gpx");

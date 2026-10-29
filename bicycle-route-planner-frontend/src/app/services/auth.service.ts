@@ -2,7 +2,8 @@ import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, finalize, shareReplay } from 'rxjs';
+import { Observable, tap, catchError, throwError, finalize, shareReplay, switchMap, of } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
 
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
 import { environment } from '../../environments/environment';
@@ -33,6 +34,7 @@ export class AuthService {
   private static readonly CURRENT_USER_KEY = 'currentUser';
   private static readonly CLOCK_SKEW_MS = 30_000;
   private static readonly LOGIN_ROUTE = '/login';
+  private static readonly DEFAULT_AUTH_ERROR_KEY = 'AUTH.INVALID_CREDENTIALS';
 
   private refreshInProgress$: Observable<AuthResponse> | null = null;
 
@@ -74,31 +76,57 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
 
-    this.refreshInProgress$ = this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken }).pipe(
-      tap((response) => {
-        if (!this.refreshInProgress$ || !this.getRefreshToken()) {
-          return;
-        }
-        this.logger.debug('Session successfully refreshed in AuthService');
-        this.handleAuthSuccess(response);
-      }),
-      catchError((error: HttpErrorResponse) => {
-        if (error.status === 401 || error.status === 403) {
-          this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out.');
-          this.logout();
-        } else {
-          this.logger.error(
-            '[Auth] Failed to refresh session due to server or network error:',
-            error,
-          );
-        }
-        return throwError(() => error);
-      }),
-      finalize(() => {
-        this.refreshInProgress$ = null;
-      }),
-      shareReplay({ bufferSize: 1, refCount: false }),
-    );
+    let currentRefresh$: Observable<AuthResponse>;
+    currentRefresh$ = (this.refreshInProgress$ = this.http
+      .post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken })
+      .pipe(
+        switchMap((response) => {
+          if (
+            this.refreshInProgress$ !== currentRefresh$ ||
+            this.getRefreshToken() !== refreshToken
+          ) {
+            this.logger.debug(
+              '[Auth] Session invalidated or changed during refresh. Discarding response.',
+            );
+            return throwError(() => new Error('Session invalidated during token refresh'));
+          }
+          this.logger.debug('[Auth] Session successfully refreshed');
+          this.handleAuthSuccess(response);
+          return of(response);
+        }),
+        catchError((error: unknown) => {
+          const isHttp =
+            error instanceof HttpErrorResponse ||
+            (typeof error === 'object' && error !== null && 'status' in error);
+          const status = (error as { status?: number })?.status;
+
+          if (status === 401 || status === 403) {
+            if (
+              this.refreshInProgress$ === currentRefresh$ &&
+              this.getRefreshToken() === refreshToken
+            ) {
+              this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out.');
+              this.logout();
+            } else {
+              this.logger.debug(
+                '[Auth] Refresh token rejected but session already changed or terminated.',
+              );
+            }
+          } else if (isHttp) {
+            this.logger.error(
+              '[Auth] Failed to refresh session due to server or network error:',
+              error,
+            );
+          }
+          return throwError(() => error);
+        }),
+        finalize(() => {
+          if (this.refreshInProgress$ === currentRefresh$) {
+            this.refreshInProgress$ = null;
+          }
+        }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      ));
 
     return this.refreshInProgress$;
   }
@@ -112,7 +140,7 @@ export class AuthService {
 
   public logout(): void {
     this.clearSession();
-    this.logger.info('User logged out');
+    this.logger.info('[Auth] User logged out');
     void this.router.navigate([AuthService.LOGIN_ROUTE]);
   }
 
@@ -130,39 +158,19 @@ export class AuthService {
     return null;
   }
 
-  public decodeJwtPayload<T = { exp?: number; [key: string]: unknown }>(
-    token: string | null,
-  ): T | null {
-    if (!token) {
-      return null;
-    }
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        return null;
-      }
-
-      let base64 = parts[1].replaceAll('-', '+').replaceAll('_', '/');
-      while (base64.length % 4 !== 0) {
-        base64 += '=';
-      }
-
-      const binaryStr = atob(base64);
-      const bytes = Uint8Array.from(binaryStr, (c) => c.codePointAt(0) ?? 0);
-      const jsonStr = new TextDecoder('utf-8').decode(bytes);
-
-      return JSON.parse(jsonStr) as T;
-    } catch {
-      return null;
-    }
-  }
-
   public isTokenExpired(token: string | null): boolean {
-    const payload = this.decodeJwtPayload<{ exp?: number }>(token);
-    if (!payload || typeof payload.exp !== 'number') {
+    if (!token) {
       return true;
     }
-    return Date.now() >= payload.exp * 1000 - AuthService.CLOCK_SKEW_MS;
+    try {
+      const payload = jwtDecode<{ exp?: number }>(token);
+      if (typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+        return true;
+      }
+      return Date.now() >= payload.exp * 1000 - AuthService.CLOCK_SKEW_MS;
+    } catch {
+      return true;
+    }
   }
 
   public hasValidSession(): boolean {
@@ -232,7 +240,9 @@ export class AuthService {
       this.logger.error('[Auth] Authentication server failure:', error);
     }
     const errorMsg =
-      error.error?.message || 'Invalid authentication credentials. Please try again.';
+      error.status === 401
+        ? AuthService.DEFAULT_AUTH_ERROR_KEY
+        : error.error?.detail || error.error?.message || AuthService.DEFAULT_AUTH_ERROR_KEY;
     this._error.set(errorMsg);
 
     return throwError(() => error);

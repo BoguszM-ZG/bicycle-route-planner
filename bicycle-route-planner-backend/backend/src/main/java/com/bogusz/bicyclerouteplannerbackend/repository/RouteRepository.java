@@ -17,4 +17,11 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
             "r.id, r.name, r.distanceMeters, r.folder.id) " +
             "FROM Route r WHERE r.user.id = :userId ORDER BY r.createdAt DESC")
     List<RouteSummaryDto> findAllByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
+
+    @Query(value = """
+            SELECT ST_AsGeoJSON(r.*) FROM (
+                SELECT name, distance_meters, elevation_gain, elevation_loss, route_geom
+                FROM routes WHERE id = :id
+            ) r""", nativeQuery = true)
+    String findGeoJsonById(@Param("id") Long id);
 }

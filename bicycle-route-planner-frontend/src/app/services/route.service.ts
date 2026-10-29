@@ -1,23 +1,22 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import {
   CreateRouteRequestDto,
   ElevationPointDto,
   RenameRouteRequestDto,
+  RouteExportFormat,
   RouteDetailDto,
   RouteSummaryDto,
   UpdateRouteFolderDto,
 } from '../models/route.model';
 import { environment } from '../../environments/environment';
-import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RouteService {
   private readonly http = inject(HttpClient);
-  private readonly logger = inject(LoggerService);
   private readonly apiUrl = `${environment.apiUrl}/routes`;
 
   public getRoutes(): Observable<RouteSummaryDto[]> {
@@ -36,23 +35,14 @@ export class RouteService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  public exportGpx(routeId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/${routeId}/export/gpx`, {
+  public exportRoute(routeId: number, format: RouteExportFormat): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${routeId}/export/${format}`, {
       responseType: 'blob',
     });
   }
 
   public getElevationProfile(routeId: number): Observable<ElevationPointDto[]> {
-    return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`).pipe(
-      catchError((err: HttpErrorResponse) => {
-        this.logger.error('[RouteService] Error loading elevation profile', {
-          routeId,
-          error: err?.message ?? err,
-        });
-
-        return throwError(() => err);
-      }),
-    );
+    return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`);
   }
 
   public updateRouteFolder(routeId: number, request: UpdateRouteFolderDto): Observable<void> {
@@ -63,4 +53,3 @@ export class RouteService {
     return this.http.patch<void>(`${this.apiUrl}/${routeId}/name`, request);
   }
 }
-

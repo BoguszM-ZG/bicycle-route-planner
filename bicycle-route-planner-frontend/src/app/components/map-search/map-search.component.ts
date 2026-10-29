@@ -14,15 +14,14 @@ import {
   debounceTime,
   distinctUntilChanged,
   switchMap,
-  filter,
   tap,
-  catchError,
 } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { TranslatePipe } from '@ngx-translate/core';
 
-import { SearchResult } from '../../models/map-search.model';
-import { MapRenderService } from '../../services/map-render.service';
+import { SearchResult, GeocodingSearchParams } from '../../models/map-search.model';
+import { MapEngineService } from '../../services/map-engine.service';
+import { MapRouteLayerService } from '../../services/map-route-layer.service';
 import { MapSearchService } from '../../services/map-search.service';
 import { LoggerService } from '../../services/logger.service';
 import { MAP_CONSTANTS } from '../../constants/map.constants';
@@ -37,10 +36,9 @@ import { MAP_CONSTANTS } from '../../constants/map.constants';
 })
 export class MapSearchComponent implements OnInit {
   private readonly mapSearchService = inject(MapSearchService);
-  private readonly mapRenderService = inject(MapRenderService);
-  private readonly logger = inject(LoggerService);
+  private readonly mapEngine = inject(MapEngineService);
+  private readonly mapRouteLayer = inject(MapRouteLayerService);
   private readonly destroyRef = inject(DestroyRef);
-
 
   public readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   public readonly searchControl = new FormControl<string>('', { nonNullable: true });
@@ -48,35 +46,52 @@ export class MapSearchComponent implements OnInit {
   public readonly results = signal<SearchResult[]>([]);
   public readonly isSearching = signal<boolean>(false);
   public readonly hasNoResults = signal<boolean>(false);
-
+  private shouldResetDistinct = false;
 
   ngOnInit(): void {
     this.setupSearchPipeline();
   }
 
-
   private setupSearchPipeline(): void {
     this.searchControl.valueChanges
       .pipe(
         debounceTime(MAP_CONSTANTS.SEARCH_CONFIG.DEBOUNCE_MS),
-        distinctUntilChanged(),
+        distinctUntilChanged((prev, curr) => {
+          if (this.shouldResetDistinct) {
+            this.shouldResetDistinct = false;
+            return false;
+          }
+          return prev === curr;
+        }),
         tap((query) => this.handlePreSearchState(query)),
-        filter((query) => query.length >= MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS),
-        switchMap((query) => this.executeSearch(query)),
+        switchMap((query) => {
+          if (query.length < MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS) {
+            return of([]);
+          }
+          return this.executeSearch(query);
+        }),
         tap((results) => this.handlePostSearchState(results)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((results) => this.results.set(results));
+      .subscribe((results) => {
+        if (this.searchControl.value.length >= MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS) {
+          this.results.set(results);
+        } else {
+          this.results.set([]);
+        }
+      });
   }
 
   private executeSearch(query: string): Observable<SearchResult[]> {
-    const center = this.mapRenderService.getCenter();
+    const center = this.mapEngine.getCenter();
 
-    return this.mapSearchService.searchLocation(query, center?.lat, center?.lng).pipe(
-      catchError((err) => {
-        return of([]);
-      }),
-    );
+    const searchParams: GeocodingSearchParams = {
+      query,
+      lat: center?.lat,
+      lon: center?.lng,
+    };
+
+    return this.mapSearchService.searchLocation(searchParams);
   }
 
   private handlePreSearchState(query: string): void {
@@ -100,25 +115,28 @@ export class MapSearchComponent implements OnInit {
   }
 
   public clearSearch(): void {
+    this.shouldResetDistinct = true;
     this.searchControl.setValue('');
     this.results.set([]);
     this.isSearching.set(false);
     this.hasNoResults.set(false);
-    this.mapRenderService.clearSearchMarker();
+    this.mapRouteLayer.setSearchPin(null);
     this.searchInput()?.nativeElement.focus();
   }
 
   public selectResult(result: SearchResult): void {
+    this.shouldResetDistinct = true;
     this.searchControl.setValue(result.shortLabel, { emitEvent: false });
     this.results.set([]);
+    this.isSearching.set(false);
     this.hasNoResults.set(false);
 
-    this.mapRenderService.focusOnSearchLocation(
-      result.y,
-      result.x,
-      MAP_CONSTANTS.SEARCH_CONFIG.MAP_ZOOM,
-      MAP_CONSTANTS.SEARCH_CONFIG.ANIMATION_DURATION_SEC,
-      () => this.searchControl.setValue('', { emitEvent: false }),
-    );
+    this.mapEngine.flyTo([result.y, result.x], MAP_CONSTANTS.SEARCH_CONFIG.MAP_ZOOM, {
+      animate: true,
+      duration: MAP_CONSTANTS.SEARCH_CONFIG.ANIMATION_DURATION_SEC,
+    });
+
+    this.mapRouteLayer.setSearchPin({ lat: result.y, lng: result.x });
   }
 }
+

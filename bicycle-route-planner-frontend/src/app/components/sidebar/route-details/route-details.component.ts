@@ -16,6 +16,6 @@ export class RouteDetailsComponent {
 
   private readonly routeStateService = inject(RouteStateService);
 
-  public routeDetail = this.routeStateService.selectedRoute;
-
+  public readonly routeDetail = this.routeStateService.selectedRoute;
+  public readonly isLoadingDetails = this.routeStateService.isLoadingDetails;
 }

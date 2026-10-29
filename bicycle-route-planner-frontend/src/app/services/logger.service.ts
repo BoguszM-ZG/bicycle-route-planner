@@ -77,9 +77,9 @@ export class LoggerService {
 
       const logRequest: ClientLogRequestDto = {
         level: levelName as keyof typeof LogLevel,
-        message: msg,
+        message: (msg ?? '').trim().slice(0, 490) || '[Empty message]',
         timestamp: timestamp,
-        details: parsedDetails,
+        details: parsedDetails ? parsedDetails.slice(0, 1990) : undefined,
       };
 
       const telemetryUrl = `${environment.apiUrl}/telemetry/logs`;

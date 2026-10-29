@@ -7,6 +7,7 @@
       <input
         [id]="'rename-' + folderId()"
         type="text"
+        maxlength="100"
         [formControl]="renameControl"
         class="route-name-input rename-input"
         (keyup.enter)="confirmRename($event)"
@@ -43,10 +44,6 @@
 
   @if (isExpanded()) {
     <div class="folder-children" [id]="'folder-content-' + folderId()">
-
-      @for (subFolder of subFolders(); track subFolder.id) {
-        <app-folder-item [folderId]="subFolder.id"></app-folder-item>
-      }
 
       @for (route of folderRoutes(); track route.id) {
         <app-route-item

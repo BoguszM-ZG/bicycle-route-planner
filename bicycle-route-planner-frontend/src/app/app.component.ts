@@ -25,17 +25,11 @@ export class AppComponent {
   }
 
   private setupTranslations(): void {
-    this.translate.setFallbackLang('en');
+    this.translate.setFallbackLang('pl');
 
-    this.translate.use('en');
-
-    /*
-      TODO: Docelowe rozwiązanie na produkcję / obronę (odkomentować na koniec):
-
-      const browserLang = this.translate.getBrowserLang();
-      const defaultLang = browserLang && browserLang.match(/en|pl/) ? browserLang : 'en';
-      this.translate.use(defaultLang);
-    */
+    const browserLang = this.translate.getBrowserLang();
+    const isSupported = browserLang === 'en' || browserLang === 'pl';
+    this.translate.use(isSupported ? browserLang : 'pl');
   }
 
   private setupNavigationLogging(): void {
@@ -46,7 +40,7 @@ export class AppComponent {
       )
       .subscribe((event: NavigationEnd) => {
         const cleanUrl = this.sanitizeUrl(event.urlAfterRedirects);
-        this.logger.debug(`[Navigation] User navigated to: ${cleanUrl}`);
+        this.logger.debug('[Navigation] User navigated to route', { url: cleanUrl });
       });
   }
 

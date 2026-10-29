@@ -10,3 +10,9 @@
   color: #888;
   font-size: 0.9rem;
 }
+.chart-error {
+  text-align: center;
+  padding: 20px;
+  color: #dc2626;
+  font-size: 0.9rem;
+}

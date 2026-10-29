@@ -1,4 +1,4 @@
-import { ErrorHandler, Injectable, Injector, NgZone, inject } from '@angular/core';
+import { ErrorHandler, Injectable, Injector, inject } from '@angular/core';
 import { LoggerService } from '../../services/logger.service';
 import { NotificationService } from '../../services/notification.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -6,7 +6,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
   private readonly injector = inject(Injector);
-  private readonly zone = inject(NgZone);
 
   public handleError(error: unknown): void {
     const unwrappedError = this.findOriginalError(error);
@@ -17,19 +16,32 @@ export class GlobalErrorHandler implements ErrorHandler {
     const message =
       unwrappedError instanceof Error
         ? unwrappedError.message
-        : typeof unwrappedError === 'object' && unwrappedError !== null && 'message' in unwrappedError
+        : typeof unwrappedError === 'object' &&
+            unwrappedError !== null &&
+            'message' in unwrappedError
           ? String((unwrappedError as { message: unknown }).message)
           : String(unwrappedError);
 
-    logger.error('Unhandled application error:', message, unwrappedError);
+    let originalError: string;
+    try {
+      if (unwrappedError instanceof Error) {
+        originalError = unwrappedError.stack ?? unwrappedError.message;
+      } else if (typeof unwrappedError === 'object' && unwrappedError !== null) {
+        originalError = JSON.stringify(unwrappedError);
+      } else {
+        originalError = String(unwrappedError);
+      }
+    } catch {
+      originalError = String(unwrappedError);
+    }
+
+    logger.error(`[GlobalError] ${message}`, { originalError });
 
     if (unwrappedError instanceof HttpErrorResponse) {
       return;
     }
 
-    this.zone.run(() => {
-      notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
-    });
+    notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
   }
 
   private findOriginalError(error: unknown): unknown {

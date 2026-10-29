@@ -1,5 +1,7 @@
 @if (isLoading()) {
   <div class="loading">{{ 'SIDEBAR.CHART_LOADING' | translate }}</div>
+} @else if (hasElevationError()) {
+  <div class="chart-error">{{ 'SIDEBAR.CHART_ERROR' | translate }}</div>
 } @else if (chartData()) {
   <div class="chart-container">
     <canvas baseChart

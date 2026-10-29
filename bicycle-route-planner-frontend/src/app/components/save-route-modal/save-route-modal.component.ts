@@ -81,11 +81,6 @@ export class SaveRouteModalComponent {
       return;
     }
 
-    if (!this.routeDataToSave.distanceMeters || this.routeDataToSave.distanceMeters <= 0) {
-      this.notificationService.warning('MAP.DRAW_ROUTE_FIRST');
-      return;
-    }
-
     const dto: CreateRouteRequestDto = {
       name: this.routeNameControl.value.trim(),
       routeType: this.routeDataToSave.routeType || 'POINT_TO_POINT',
@@ -98,9 +93,6 @@ export class SaveRouteModalComponent {
       folderId: this.selectedFolderControl.value,
     };
 
-    this.routeStateService.createRoute(dto, () => {
-      this.notificationService.success('MODALS.ROUTE_SAVED');
-      this.close();
-    });
+    this.routeStateService.createRoute(dto, () => this.close());
   }
 }

@@ -2,8 +2,6 @@ import {
   Component,
   inject,
   ChangeDetectionStrategy,
-  ElementRef,
-  viewChild,
   DestroyRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -27,12 +25,10 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  public fullNameInput = viewChild<ElementRef<HTMLInputElement>>('fullNameInput');
-
   public registerForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-    fullName: ['', [Validators.maxLength(255)]],
+    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
+    fullName: ['', [Validators.required, Validators.maxLength(255), Validators.pattern(/\S/)]],
   });
 
   public isLoading = this.authService.isLoading;

@@ -1,4 +1,4 @@
-﻿<div class="login-container">
+<div class="login-container">
   <div class="login-card">
     <div class="login-header">
       <h2>{{ 'AUTH.LOGIN_TITLE' | translate }}</h2>
@@ -16,11 +16,11 @@
         <label for="email">{{ 'AUTH.EMAIL_LABEL' | translate }} <span class="required" aria-hidden="true">*</span></label>
 
         <input
-          #emailInput
           id="email"
           type="email"
           formControlName="email"
           autocomplete="username"
+          autofocus
           [placeholder]="'AUTH.EMAIL_PLACEHOLDER' | translate"
           [class.invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
           [attr.aria-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"

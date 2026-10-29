@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { CreateFolderRequestDto, FolderDto, RenameFolderRequestDto } from '../models/folder.model';
+import { FolderDto, FolderRequestDto } from '../models/folder.model';
 
 
 @Injectable({
@@ -17,11 +17,11 @@ export class FolderService {
     return this.http.get<FolderDto[]>(this.apiUrl);
   }
 
-  public createFolder(data: CreateFolderRequestDto): Observable<FolderDto> {
-    return this.http.post<FolderDto>(this.apiUrl, data);
+  public createFolder(request: FolderRequestDto): Observable<FolderDto> {
+    return this.http.post<FolderDto>(this.apiUrl, request);
   }
 
-  public renameFolder(folderId: number, request: RenameFolderRequestDto): Observable<void> {
+  public renameFolder(folderId: number, request: FolderRequestDto): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${folderId}`, request);
   }
 

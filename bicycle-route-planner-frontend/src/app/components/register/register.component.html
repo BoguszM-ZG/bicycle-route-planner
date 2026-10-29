@@ -1,4 +1,4 @@
-﻿<div class="register-container">
+<div class="register-container">
   <div class="register-card">
     <div class="register-header">
       <h2>{{ 'AUTH.REGISTER_TITLE' | translate }}</h2>
@@ -13,17 +13,23 @@
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form" novalidate>
       <div class="form-group">
-        <label for="fullName">{{ 'AUTH.FULL_NAME_LABEL' | translate }}</label>
+        <label for="fullName">{{ 'AUTH.FULL_NAME_LABEL' | translate }} <span class="required" aria-hidden="true">*</span></label>
         <input
-          #fullNameInput
           id="fullName"
           type="text"
           formControlName="fullName"
           autocomplete="name"
+          autofocus
           [placeholder]="'AUTH.FULL_NAME_PLACEHOLDER' | translate"
           [class.invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
           [attr.aria-invalid]="registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched"
+          [attr.aria-describedby]="(registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) ? 'fullName-error' : null"
         />
+        @if (registerForm.get('fullName')?.invalid && registerForm.get('fullName')?.touched) {
+          <div id="fullName-error" class="error-text">
+            {{ 'AUTH.FULL_NAME_REQUIRED' | translate }}
+          </div>
+        }
       </div>
 
       <div class="form-group">

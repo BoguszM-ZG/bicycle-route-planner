@@ -27,20 +27,19 @@ export class RoutePanelComponent {
   private readonly folderStateService = inject(FolderStateService);
 
   public readonly isLoadingRoutes = this.routeStateService.isLoadingList;
+  public readonly isLoadingDetails = this.routeStateService.isLoadingDetails;
   public readonly folders = this.folderStateService.folders;
   public readonly selectedRouteDetails = this.routeStateService.selectedRoute;
 
-  public readonly selectedRouteId = computed(() => this.selectedRouteDetails()?.id ?? null);
+  public readonly selectedRouteId = this.routeStateService.selectedRouteId;
   public readonly rootRoutes = computed(() =>
     this.routeStateService.routes().filter((r) => r.folderId == null),
   );
-  public readonly rootFolders = computed(() =>
-    this.folderStateService.folders().filter((f) => f.parentFolderId == null),
-  );
+  public readonly rootFolders = this.folderStateService.folders;
 
   public readonly isCreatingFolder = signal<boolean>(false);
   public readonly newFolderName = new FormControl('', {
-    validators: [Validators.required, Validators.maxLength(50)],
+    validators: [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)],
     nonNullable: true,
   });
 

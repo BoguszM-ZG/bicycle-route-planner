@@ -1,14 +1,8 @@
 export interface FolderDto {
   id: number;
   name: string;
-  parentFolderId?: number | null;
 }
 
-export interface CreateFolderRequestDto {
-  name: string;
-  parentFolderId?: number | null;
-}
-
-export interface RenameFolderRequestDto {
+export interface FolderRequestDto {
   name: string;
 }

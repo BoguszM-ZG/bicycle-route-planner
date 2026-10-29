@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -66,11 +67,16 @@ public class RouteService {
         log.info("Deleted route with ID: {} for user ID: {}", routeId, userId);
     }
 
-    public GpxExportDto exportRouteToGpx(Long routeId, Long userId) {
+    public FileExportDto exportRouteToGpx(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
         byte[] gpxData = gpxExportService.generateGpxFile(route);
-        String fileName = resolveFileName(route.getName());
-        return new GpxExportDto(gpxData, fileName);
+        return new FileExportDto(gpxData, resolveFileName(route.getName(), "gpx"));
+    }
+
+    public FileExportDto exportRouteToGeoJson(Long routeId, Long userId) {
+        Route route = getValidRouteForUser(routeId, userId);
+        String geoJson = routeRepository.findGeoJsonById(routeId);
+        return new FileExportDto(geoJson.getBytes(StandardCharsets.UTF_8), resolveFileName(route.getName(), "geojson"));
     }
 
     @Transactional(readOnly = true)
@@ -136,17 +142,18 @@ public class RouteService {
                 .orElseThrow(() -> new RouteNotFoundException("Route not found or access denied"));
     }
 
-    private String resolveFileName(String routeName) {
+    private String resolveFileName(String routeName, String extension) {
+        String defaultFileName = "route." + extension;
         if (routeName == null || routeName.isBlank()) {
-            return "route.gpx";
+            return defaultFileName;
         }
         String sanitized = Pattern.compile("[\\\\/:*?\"<>|\\x00-\\x1F]").matcher(routeName).replaceAll("_")
                 .replace("..", "_")
                 .trim();
         if (sanitized.isEmpty() || sanitized.replace("_", "").isBlank()) {
-            return "route.gpx";
+            return defaultFileName;
         }
-        return sanitized + ".gpx";
+        return sanitized + "." + extension;
     }
 
 }

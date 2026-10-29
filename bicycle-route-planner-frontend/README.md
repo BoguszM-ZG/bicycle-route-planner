@@ -86,7 +86,7 @@ Interaktywna obsługa danych przestrzennych została podzielona na wyspecjalizow
 | `MapDrawService` | Mapa (Leaflet-Draw) | Narzędzie do interaktywnego rysowania wielokątów stref omijanych (`L.Draw.Polygon`) |
 | `MapRenderService` | Mapa (Leaflet) | Inicjalizacja instancji mapy, warstwy kafelkowe, centrowanie, marker GPS i renderowanie tras zapisanych |
 | `MapSearchService` | Mapa / API | Autouzupełnianie i geokodowanie zapytań adresowych |
-| `RouteCalculationService` | Logika GIS |Formatowanie geometrii WKT (LineString Z), uzupełnianie brakujących wysokości i kalkulacja sumy przewyższeń |
+| `RouteGeometryService` | Logika GIS |Formatowanie geometrii WKT (LineString Z), uzupełnianie brakujących wysokości i kalkulacja sumy przewyższeń |
 | `AuthService` | Bezpieczeństwo | Logowanie, rejestracja, zarządzanie tokenami JWT w `localStorage` |
 | `LoggerService` | Telemetria | Scentralizowany logger z asynchronicznym wysyłaniem błędów na backend |
 | `NotificationService` | UI | Emisja powiadomień typu Toast (sukces, błąd, ostrzeżenie) |

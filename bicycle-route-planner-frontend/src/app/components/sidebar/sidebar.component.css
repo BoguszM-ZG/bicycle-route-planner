@@ -130,6 +130,37 @@
   border-radius: 4px;
 }
 
+@media (max-width: 1100px) {
+  .sidebar-container {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    height: var(--mobile-sheet-height);
+    gap: 8px;
+  }
 
+  .profile-section {
+    padding: 10px 16px;
+    align-items: center;
+  }
 
+  .profile-info h2,
+  .panel-section h3,
+  .profile-avatar {
+    display: none;
+  }
 
+  .profile-info .user-email {
+    margin-bottom: 4px;
+  }
+
+  .panel-section {
+    padding: 12px;
+  }
+
+  .segmented-control {
+    margin-bottom: 8px;
+  }
+}

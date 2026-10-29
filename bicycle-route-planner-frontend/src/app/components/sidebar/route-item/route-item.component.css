@@ -90,7 +90,8 @@
   color: #b91c1c;
 }
 
-.delete-confirmation {
+.delete-confirmation,
+.export-confirmation {
   display: flex;
   justify-content: space-between;
   align-items: center;

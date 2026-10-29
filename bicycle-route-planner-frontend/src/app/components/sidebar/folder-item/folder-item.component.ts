@@ -25,7 +25,7 @@ export class FolderItemComponent {
   public isConfirmingDelete = signal<boolean>(false);
   public renameControl = new FormControl<string>('', {
     nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(50)],
+    validators: [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)],
   });
 
   public toggleExpanded(): void {
@@ -45,8 +45,6 @@ export class FolderItemComponent {
 
   public confirmDelete(event: Event): void {
     event.stopPropagation();
-
-    this.routeStateService.handleFolderDeleted(this.folderId());
 
     this.folderStateService.deleteFolder(this.folderId());
     this.isConfirmingDelete.set(false);
@@ -79,14 +77,9 @@ export class FolderItemComponent {
     return this.folderStateService.folders().find((f) => f.id === this.folderId());
   });
 
-  public subFolders = computed(() => {
-    return this.folderStateService.folders().filter((f) => f.parentFolderId === this.folderId());
-  });
 
   public folderRoutes = computed(() => {
     return this.routeStateService.routes().filter((r) => r.folderId === this.folderId());
   });
-  public selectedRouteId = computed(() => {
-    return this.routeStateService.selectedRoute()?.id;
-  });
+  public readonly selectedRouteId = this.routeStateService.selectedRouteId;
 }

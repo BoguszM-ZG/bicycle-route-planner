@@ -1,8 +1,9 @@
-import type { Feature, FeatureCollection, LineString, MultiLineString, MultiPolygon } from 'geojson';
+import type { LineString, MultiLineString } from 'geojson';
 import type { LatLng } from 'leaflet';
 
 export type RouteType = 'POINT_TO_POINT' | 'LOOP';
 export type RoutingMode = 'direct' | 'roundTrip' | 'avoidanceZone';
+export type RouteExportFormat = 'gpx' | 'geojson';
 export type RouteGeometry = LineString | MultiLineString;
 
 export interface RouteDetailDto {
@@ -20,10 +21,10 @@ export interface RouteDetailDto {
 }
 
 export interface RouteSummaryDto {
-   id: number;
-   name: string;
-   distanceMeters: number;
-   folderId?: number | null;
+  id: number;
+  name: string;
+  distanceMeters: number;
+  folderId?: number | null;
 }
 
 export interface CreateRouteRequestDto {
@@ -49,35 +50,15 @@ export interface RouteDraft {
   startPoint?: string;
 }
 
-export interface RouteStats  {
+export interface RouteWkt {
   geometryWkt: string;
   startPoint: string;
-  elevationGain: number;
-  elevationLoss: number;
 }
+
+export type RouteStats = RouteWkt;
 
 export interface RenameRouteRequestDto {
   name: string;
-}
-
-export interface OrsFeatureSummary {
-  distance: number;
-  duration: number;
-}
-
-export interface OrsFeatureProperties {
-  summary?: OrsFeatureSummary;
-  [key: string]: unknown;
-}
-
-export type OrsGeoJsonFeature = Feature<LineString, OrsFeatureProperties>;
-
-export interface OrsGeoJsonResponse extends Partial<FeatureCollection<LineString, OrsFeatureProperties>> {
-  features?: OrsGeoJsonFeature[];
-  error?: {
-    code?: number;
-    message: string;
-  };
 }
 
 export interface ElevationPointDto {
@@ -88,8 +69,6 @@ export interface ElevationPointDto {
 export interface UpdateRouteFolderDto {
   folderId: number | null;
 }
-
-export type AvoidPolygonsGeoJson = MultiPolygon;
 
 export interface ActiveRouteGeometry {
   coordinates: LatLng[];

@@ -171,3 +171,12 @@
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+@media (max-width: 1100px) {
+  .search-container {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
+}

@@ -231,6 +231,40 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldExportRouteToGeoJsonGeneratedByPostgis() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+
+        // When
+        mockMvc.perform(get(ROUTES_URL + "/" + routeId + "/export/geojson")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken))
+                // Then
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.parseMediaType("application/geo+json")))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"My Test Route.geojson\"; filename*=UTF-8''My%20Test%20Route.geojson"))
+                .andExpect(jsonPath("$.type").value("Feature"))
+                .andExpect(jsonPath("$.geometry.type").value("LineString"))
+                .andExpect(jsonPath("$.geometry.coordinates.length()").value(2))
+                .andExpect(jsonPath("$.geometry.coordinates[0][2]").value(100.0))
+                .andExpect(jsonPath("$.properties.name").value(TEST_ROUTE_NAME))
+                .andExpect(jsonPath("$.properties.distance_meters").value(TEST_DISTANCE_METERS));
+    }
+
+    @Test
+    void shouldReturn404WhenExportingGeoJsonOfAnotherUserRoute() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+        String otherUserToken = registerUserAndGetAccessToken("other@test.com", "Password123!", "Other User");
+
+        // When
+        mockMvc.perform(get(ROUTES_URL + "/" + routeId + "/export/geojson")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherUserToken))
+                // Then
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Route Not Found"));
+    }
+
+    @Test
     void shouldRenameRoute() throws Exception {
         // Given
         long routeId = createRouteAndGetId();

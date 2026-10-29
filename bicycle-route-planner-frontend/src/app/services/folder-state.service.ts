@@ -1,8 +1,8 @@
 import { Injectable, inject, signal, effect, untracked } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Subscription, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { FolderService } from './folder.service';
-import { CreateFolderRequestDto, FolderDto, RenameFolderRequestDto } from '../models/folder.model';
+import { FolderDto, FolderRequestDto } from '../models/folder.model';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -15,6 +15,8 @@ export class FolderStateService {
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly _folderDeleted$ = new Subject<number>();
+  public readonly folderDeleted$ = this._folderDeleted$.asObservable();
 
   private fetchFoldersSubscription?: Subscription;
 
@@ -60,7 +62,7 @@ export class FolderStateService {
       });
   }
 
-  public createFolder(request: CreateFolderRequestDto): void {
+  public createFolder(request: FolderRequestDto): void {
     this._isLoading.set(true);
 
     this.folderService
@@ -74,6 +76,7 @@ export class FolderStateService {
             folderId: createdFolder.id,
             folderName: createdFolder.name,
           });
+          this.notificationService.success('SUCCESS.CREATE_FOLDER');
         },
         error: (err) => {
           if (err.status === 400 || err.status === 409) {
@@ -90,9 +93,11 @@ export class FolderStateService {
     this.folderService.deleteFolder(folderId).subscribe({
       next: () => {
         this._folders.update((folders) => folders.filter((f) => f.id !== folderId));
+        this._folderDeleted$.next(folderId);
         this.logger.info('[FolderStateService] Folder successfully deleted.', {
           deletedFolderId: folderId,
         });
+        this.notificationService.success('SUCCESS.DELETE_FOLDER');
       },
       error: (err) => {
         if (err.status === 404) {
@@ -115,7 +120,7 @@ export class FolderStateService {
       return;
     }
 
-    const request: RenameFolderRequestDto = { name: trimmed };
+    const request: FolderRequestDto = { name: trimmed };
     this.folderService.renameFolder(folderId, request).subscribe({
       next: () => {
         this._folders.update((folders) =>
@@ -125,6 +130,7 @@ export class FolderStateService {
           folderId,
           newName: trimmed,
         });
+        this.notificationService.success('SUCCESS.RENAME_FOLDER');
       },
       error: (err) => {
         if (err.status === 400 || err.status === 404 || err.status === 409) {

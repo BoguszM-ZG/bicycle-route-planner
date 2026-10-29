@@ -95,6 +95,25 @@ class RoutingIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldReturn401WhenCalculatingRouteWithoutAuthentication() throws Exception {
+        // Given
+        OrsRouteRequestDto request = new OrsRouteRequestDto(
+                List.of(List.of(19.945, 50.0647), List.of(19.946, 50.0648)),
+                false,
+                false,
+                null
+        );
+
+        // When & Then
+        mockMvc.perform(post(ROUTING_DIRECTIONS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized());
+
+        wireMockServer.verify(0, postRequestedFor(urlPathEqualTo(ORS_API_PATH)));
+    }
+
+    @Test
     void shouldHandleExternalApiException() throws Exception {
         // Given
         OrsRouteRequestDto request = new OrsRouteRequestDto(

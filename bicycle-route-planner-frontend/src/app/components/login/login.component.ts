@@ -2,9 +2,6 @@ import {
   Component,
   inject,
   ChangeDetectionStrategy,
-  ElementRef,
-  viewChild,
-  effect,
   DestroyRef,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,21 +25,13 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  public emailInput = viewChild<ElementRef<HTMLInputElement>>('emailInput');
-
   public loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: ['', [Validators.required, Validators.maxLength(72)]],
   });
 
   public isLoading = this.authService.isLoading;
   public errorMessage = this.authService.error;
-
-  constructor() {
-    effect(() => {
-      setTimeout(() => this.emailInput()?.nativeElement.focus(), 0);
-    });
-  }
 
   public onSubmit() {
     if (this.isLoading()) {

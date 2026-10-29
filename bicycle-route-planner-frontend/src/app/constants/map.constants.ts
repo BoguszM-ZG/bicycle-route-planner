@@ -10,21 +10,23 @@ export const MAP_CONSTANTS = {
   TILE_LAYER: {
     URL: 'https://{s}.tile.osm.org/{z}/{x}/{y}.png',
     MAX_ZOOM: 19,
-    ATTRIBUTION: '@ OpenStreetMap'
+    ATTRIBUTION:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
 
   // Styles for rendered routes and lines
   STYLES: {
     SAVED_ROUTE: { color: '#e74c3c', weight: 6, opacity: 0.9 },
     DRAFT_ROUTE: { color: '#e74c3c', weight: 5, opacity: 0.8 },
-    LOOP_ROUTE:  { color: '#8e44ad', weight: 6 }
+    LOOP_ROUTE: { color: '#8e44ad', weight: 6 },
+    AVOIDANCE_ZONE: { color: 'red', weight: 2, fillColor: '#ff0000', fillOpacity: 0.2 },
   },
 
   // Default marker icon (overrides Leaflet default local asset paths in bundler environments)
   DEFAULT_ICON: L.icon({
-    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    iconUrl: 'marker-icon.png',
+    iconRetinaUrl: 'marker-icon-2x.png',
+    shadowUrl: 'marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
@@ -45,26 +47,33 @@ export const MAP_CONSTANTS = {
       className: 'route-marker-loop',
       html: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`,
       iconSize: [28, 28],
-      iconAnchor: [14, 14]
+      iconAnchor: [14, 14],
     }),
     START_ICON: L.divIcon({
       className: 'route-marker-circle route-marker-start',
       html: 'A',
       iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      iconAnchor: [12, 12],
     }),
     END_ICON: L.divIcon({
       className: 'route-marker-circle route-marker-end',
       html: 'B',
       iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    })
+      iconAnchor: [12, 12],
+    }),
   },
 
   SEARCH_CONFIG: {
     DEBOUNCE_MS: 350,
     MIN_CHARS: 3,
     MAP_ZOOM: 15,
-    ANIMATION_DURATION_SEC: 1.5
-  }
+    ANIMATION_DURATION_SEC: 1.5,
+  },
 };
+
+export const MAP_PANES = {
+  ZONES: { name: 'zonesPane', zIndex: '400' },
+  ROUTES: { name: 'routesPane', zIndex: '500' },
+  MARKERS: { name: 'markersPane', zIndex: '600' },
+  SEARCH: { name: 'searchPane', zIndex: '700' },
+} as const;

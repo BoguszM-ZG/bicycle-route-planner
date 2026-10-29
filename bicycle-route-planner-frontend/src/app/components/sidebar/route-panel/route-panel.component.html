@@ -10,6 +10,7 @@
         id="newFolderInput"
         class="folder-input"
         type="text"
+        maxlength="100"
         [formControl]="newFolderName"
         [placeholder]="'SIDEBAR.FOLDER_NAME_PLACEHOLDER' | translate"
         (keyup.enter)="submitNewFolder()"

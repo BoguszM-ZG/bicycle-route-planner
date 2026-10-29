@@ -54,24 +54,13 @@
       <div class="zone-actions">
         <button
           type="button"
-          class="btn-save-zone"
-          [disabled]="!currentZoneDraft()"
-          (click)="saveZone()">
-          {{ 'MAP_MODE_PANEL.SAVE' | translate }}
-        </button>
-        <button
-          type="button"
           class="btn-cancel-zone"
           (click)="cancelZone()">
           {{ 'MAP_MODE_PANEL.CANCEL' | translate }}
         </button>
       </div>
       <small class="zone-hint" aria-live="polite">
-        @if (!currentZoneDraft()) {
-          {{ 'MAP_MODE_PANEL.ZONE_HINT_DRAW' | translate }}
-        } @else {
-          {{ 'MAP_MODE_PANEL.ZONE_HINT_DONE' | translate }}
-        }
+        {{ 'MAP_MODE_PANEL.ZONE_HINT_DRAW' | translate }}
       </small>
     }
   </div>

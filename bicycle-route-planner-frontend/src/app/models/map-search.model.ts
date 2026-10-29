@@ -21,3 +21,11 @@ export interface SearchResult {
   shortLabel: string;
   subtitle: string;
 }
+
+export interface GeocodingSearchParams {
+  query: string;
+  lat?: number;
+  lon?: number;
+}
+
+

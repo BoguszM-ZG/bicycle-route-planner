@@ -38,7 +38,8 @@
 
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 
-  width: 400px;
+  box-sizing: border-box;
+  width: min(460px, 100% - 32px);
   padding: 30px;
   color: #1f2937;
   font-family: 'Inter', 'Roboto', sans-serif;

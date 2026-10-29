@@ -20,9 +20,12 @@ export class AvoidanceZoneStateService {
 
   private readonly _zones = signal<AvoidanceZoneDto[]>([]);
   private readonly _isLoading = signal<boolean>(false);
+  private readonly _isSaving = signal<boolean>(false);
 
   public readonly zones = this._zones.asReadonly();
   public readonly isLoading = this._isLoading.asReadonly();
+  public readonly isSaving = this._isSaving.asReadonly();
+  public readonly currentZoneDraft = signal<string | null>(null);
 
   constructor() {
     effect(() => {
@@ -30,7 +33,9 @@ export class AvoidanceZoneStateService {
       if (user) {
         untracked(() => this.fetchZones());
       } else {
-        this.logger.debug('[AvoidanceZoneStateService] User logged out, clearing AvoidanceZoneStateService');
+        this.logger.debug(
+          '[AvoidanceZoneStateService] User logged out, clearing AvoidanceZoneStateService',
+        );
         untracked(() => this.clearState());
       }
     });
@@ -40,6 +45,8 @@ export class AvoidanceZoneStateService {
     this.fetchZonesSubscription?.unsubscribe();
     this._zones.set([]);
     this._isLoading.set(false);
+    this._isSaving.set(false);
+    this.currentZoneDraft.set(null);
   }
 
   public fetchZones(): void {
@@ -58,19 +65,40 @@ export class AvoidanceZoneStateService {
       });
   }
 
-  public saveZone(name: string, wktGeom: string): void {
-    const newZone: CreateAvoidanceZoneRequestDto = { name, zoneGeom: wktGeom };
+  public saveZone(name: string, wktGeom: string, onSuccess?: () => void): void {
+    if (this._isSaving()) {
+      return;
+    }
+
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    if (!trimmedName || !wktGeom) {
+      this.logger.debug('[AvoidanceZoneStateService] Invalid zone data provided for saveZone', {
+        name,
+        hasWkt: Boolean(wktGeom),
+      });
+      return;
+    }
+
+    this._isSaving.set(true);
+    const newZone: CreateAvoidanceZoneRequestDto = { name: trimmedName, zoneGeom: wktGeom };
 
     this.avoidanceZoneService
       .saveAvoidanceZone(newZone)
+      .pipe(finalize(() => this._isSaving.set(false)))
       .subscribe({
         next: (savedZone) => {
-          this.logger.info('[AvoidanceZoneStateService] Zone successfully saved', { name });
+          this._isSaving.set(false);
+          this.logger.info('[AvoidanceZoneStateService] Zone successfully saved', { name: trimmedName });
           this._zones.update((currentZones) => [...currentZones, savedZone]);
+          this.notificationService.success('SUCCESS.SAVE_ZONE');
+          onSuccess?.();
         },
         error: (err) => {
           if (err.status === 400 || err.status === 409) {
-            this.logger.debug('[AvoidanceZoneStateService] Zone creation validation error:', err.error);
+            this.logger.debug(
+              '[AvoidanceZoneStateService] Zone creation validation error:',
+              err.error,
+            );
           } else {
             this.logger.error('[AvoidanceZoneStateService] Error saving zone:', err);
           }
@@ -80,24 +108,28 @@ export class AvoidanceZoneStateService {
   }
 
   public deleteZone(id: number): void {
-    this.avoidanceZoneService
-      .deleteAvoidanceZone(id)
-      .subscribe({
-        next: () => {
-          this.logger.info('[AvoidanceZoneStateService] Zone successfully deleted', {
-            deletedZoneId: id,
-          });
-          this._zones.update((currentZones) => currentZones.filter((z) => z.id !== id));
-        },
-        error: (err) => {
-          if (err.status === 404) {
-            this.logger.debug('[AvoidanceZoneStateService] Zone to delete not found:', { id });
-          } else {
-            this.logger.error('[AvoidanceZoneStateService] Error deleting zone:', err);
-          }
-          this.notificationService.error('ERRORS.DELETE_ZONE_FAILED');
-        },
-      });
+    if (!id || id <= 0) {
+      this.logger.debug('[AvoidanceZoneStateService] Invalid zone id provided for deleteZone', { id });
+      return;
+    }
+
+    this.avoidanceZoneService.deleteAvoidanceZone(id).subscribe({
+      next: () => {
+        this.logger.info('[AvoidanceZoneStateService] Zone successfully deleted', {
+          deletedZoneId: id,
+        });
+        this._zones.update((currentZones) => currentZones.filter((z) => z.id !== id));
+        this.notificationService.success('SUCCESS.DELETE_ZONE');
+      },
+      error: (err) => {
+        if (err.status === 404) {
+          this.logger.debug('[AvoidanceZoneStateService] Zone to delete not found:', { id });
+        } else {
+          this.logger.error('[AvoidanceZoneStateService] Error deleting zone:', err);
+        }
+        this.notificationService.error('ERRORS.DELETE_ZONE_FAILED');
+      },
+    });
   }
 
   public toggleActive(zone: AvoidanceZoneDto): void {
@@ -105,13 +137,13 @@ export class AvoidanceZoneStateService {
 
     const newStatus = !zone.isActive;
 
-
     this._zones.update((currentZones) =>
       currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: newStatus } : z)),
     );
 
     this.avoidanceZoneService.toggleAvoidanceZoneActiveStatus(zone.id, newStatus).subscribe({
       next: () => {
+        this.notificationService.success('SUCCESS.TOGGLE_ZONE');
         this.logger.info('[AvoidanceZoneStateService] Toggled zone activity successfully.', {
           zoneId: zone.id,
           newActiveStatus: newStatus,
@@ -119,7 +151,9 @@ export class AvoidanceZoneStateService {
       },
       error: (err) => {
         if (err.status === 404) {
-          this.logger.debug('[AvoidanceZoneStateService] Zone to toggle not found:', { zoneId: zone.id });
+          this.logger.debug('[AvoidanceZoneStateService] Zone to toggle not found:', {
+            zoneId: zone.id,
+          });
         } else {
           this.logger.error('[AvoidanceZoneStateService] Error toggling zone status', err);
         }

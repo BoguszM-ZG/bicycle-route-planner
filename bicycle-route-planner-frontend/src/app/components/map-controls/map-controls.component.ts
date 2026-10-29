@@ -1,6 +1,6 @@
 import { Component, output, ChangeDetectionStrategy, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MapRenderService } from '../../services/map-render.service';
+import { MapEngineService } from '../../services/map-engine.service';
 
 @Component({
   selector: 'app-map-controls',
@@ -11,7 +11,7 @@ import { MapRenderService } from '../../services/map-render.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapControlsComponent {
-  public readonly mapRenderService = inject(MapRenderService);
+  public readonly mapEngine = inject(MapEngineService);
 
   save = output<void>();
   clear = output<void>();
@@ -25,9 +25,11 @@ export class MapControlsComponent {
   }
 
   public onLocateClick(): void {
-    if (this.mapRenderService.isLocating()) {
+    if (this.mapEngine.isLocating()) {
       return;
     }
+    this.mapEngine.locateUser();
     this.locate.emit();
   }
 }
+
