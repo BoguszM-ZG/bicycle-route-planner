@@ -9,8 +9,6 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @NoArgsConstructor
 @Getter
@@ -47,15 +45,6 @@ public class User {
     @CreationTimestamp
     @Column(name = "created_at")
     private Instant createdAt;
-
-    @OneToMany(mappedBy = "user")
-    private Set<AvoidanceZone> avoidanceZones = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "user")
-    private Set<Folder> folders = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "user")
-    private Set<Route> routes = new LinkedHashSet<>();
 
     public boolean isEnabled() {
         return Boolean.TRUE.equals(isActive);

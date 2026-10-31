@@ -26,6 +26,9 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class RouteService {
+    private static final int MAX_ELEVATION_PROFILE_POINTS = 250;
+    private static final double EARTH_RADIUS_METERS = 6_371_000.0;
+
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
     private final GpxExportService gpxExportService;
@@ -67,12 +70,14 @@ public class RouteService {
         log.info("Deleted route with ID: {} for user ID: {}", routeId, userId);
     }
 
+    @Transactional(readOnly = true)
     public FileExportDto exportRouteToGpx(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
         byte[] gpxData = gpxExportService.generateGpxFile(route);
         return new FileExportDto(gpxData, resolveFileName(route.getName(), "gpx"));
     }
 
+    @Transactional(readOnly = true)
     public FileExportDto exportRouteToGeoJson(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
         String geoJson = routeRepository.findGeoJsonById(routeId);
@@ -82,9 +87,6 @@ public class RouteService {
     @Transactional(readOnly = true)
     public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
-        if (route.getRouteGeom() == null) {
-            return List.of();
-        }
         Coordinate[] coordinates = route.getRouteGeom().getCoordinates();
         List<ElevationPointDto> elevationProfile = new ArrayList<>(coordinates.length);
         double totalDistance = 0.0;
@@ -105,7 +107,7 @@ public class RouteService {
             }
         }
 
-        return elevationProfileDownsampler.downsample(elevationProfile, 250);
+        return elevationProfileDownsampler.downsample(elevationProfile, MAX_ELEVATION_PROFILE_POINTS);
     }
 
     @Transactional
@@ -134,7 +136,7 @@ public class RouteService {
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double clampedA = Math.clamp(a, 0.0, 1.0);
         double c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
-        return 6371000.0 * c;
+        return EARTH_RADIUS_METERS * c;
     }
 
     private Route getValidRouteForUser(Long routeId, Long userId){

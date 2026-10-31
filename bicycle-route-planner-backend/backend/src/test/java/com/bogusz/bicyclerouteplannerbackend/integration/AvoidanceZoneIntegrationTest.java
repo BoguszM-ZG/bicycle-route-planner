@@ -13,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -32,6 +33,10 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
     private static final String AVOIDANCE_ZONES_URL = "/api/avoidance-zones";
     private static final String TEST_ZONE_NAME = "Construction Site";
     private static final String VALID_WKT_POLYGON = "POLYGON ((19.945 50.064, 19.946 50.064, 19.946 50.065, 19.945 50.065, 19.945 50.064))";
+    private static final String LARGE_WKT_POLYGON_A = "POLYGON ((19.0 50.0, 19.25 50.0, 19.25 50.06, 19.0 50.06, 19.0 50.0))";
+    private static final String LARGE_WKT_POLYGON_B = "POLYGON ((19.0 50.1, 19.25 50.1, 19.25 50.16, 19.0 50.16, 19.0 50.1))";
+    private static final String TOO_WIDE_WKT_POLYGON = "POLYGON ((19.0 50.0, 19.35 50.0, 19.35 50.01, 19.0 50.01, 19.0 50.0))";
+    private static final String LIMIT_EXCEEDED_TYPE = "urn:problem-type:avoidance-zone-limit-exceeded";
 
     @Autowired
     private MockMvc mockMvc;
@@ -82,6 +87,45 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldRejectZoneWiderThan20Km() throws Exception {
+        // When & Then
+        createZone(TOO_WIDE_WKT_POLYGON)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(LIMIT_EXCEEDED_TYPE));
+
+        assertZoneCount(0);
+    }
+
+    @Test
+    void shouldRejectZoneWhenTotalActiveAreaExceeds200SquareKm() throws Exception {
+        // Given
+        createZone(LARGE_WKT_POLYGON_A).andExpect(status().isCreated());
+
+        // When & Then
+        createZone(LARGE_WKT_POLYGON_B)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(LIMIT_EXCEEDED_TYPE));
+
+        assertZoneCount(1);
+    }
+
+    @Test
+    void shouldAllowActivatingZoneOnlyWhenTotalActiveAreaStaysWithinLimit() throws Exception {
+        // Given
+        Long zoneAId = readZoneId(createZone(LARGE_WKT_POLYGON_A).andExpect(status().isCreated()));
+        setZoneActive(zoneAId, false).andExpect(status().isNoContent());
+        Long zoneBId = readZoneId(createZone(LARGE_WKT_POLYGON_B).andExpect(status().isCreated()));
+
+        // When & Then
+        setZoneActive(zoneAId, true)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value(LIMIT_EXCEEDED_TYPE));
+
+        setZoneActive(zoneBId, false).andExpect(status().isNoContent());
+        setZoneActive(zoneAId, true).andExpect(status().isNoContent());
+    }
+
+    @Test
     void shouldToggleAvoidanceZoneStatus() throws Exception {
         // Given
         Long zoneId = createDefaultAvoidanceZone(userAccessToken);
@@ -128,6 +172,33 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(delete(AVOIDANCE_ZONES_URL + "/" + zoneId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + thiefAccessToken))
                 .andExpect(status().isNotFound());
+    }
+
+    private ResultActions createZone(String wkt) throws Exception {
+        CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto(TEST_ZONE_NAME, wkt);
+        return mockMvc.perform(post(AVOIDANCE_ZONES_URL)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(request)));
+    }
+
+    private ResultActions setZoneActive(Long zoneId, boolean isActive) throws Exception {
+        return mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + zoneId + "/active")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonMapper.writeValueAsString(new UpdateAvoidanceZoneStatusDto(isActive))));
+    }
+
+    private Long readZoneId(ResultActions resultActions) throws Exception {
+        String responseContent = resultActions.andReturn().getResponse().getContentAsString();
+        return jsonMapper.readValue(responseContent, AvoidanceZoneDto.class).id();
+    }
+
+    private void assertZoneCount(int expectedCount) throws Exception {
+        mockMvc.perform(get(AVOIDANCE_ZONES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(expectedCount));
     }
 
     private String registerUserAndGetAccessToken(String email, String password, String fullName) throws Exception {

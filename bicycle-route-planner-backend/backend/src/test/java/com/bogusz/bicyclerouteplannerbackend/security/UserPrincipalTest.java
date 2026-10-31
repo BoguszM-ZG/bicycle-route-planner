@@ -106,57 +106,9 @@ class UserPrincipalTest {
     }
 
     @Test
-    void shouldCreateWithFactoryOfWithIdAndEmail() {
-        // WHEN
-        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL);
-
-        // THEN
-        assertThat(principal.getId()).isEqualTo(USER_ID);
-        assertThat(principal.getEmail()).isEqualTo(USER_EMAIL);
-        assertThat(principal.getRole()).isEqualTo(ROLE_USER);
-        assertThat(principal.getPassword()).isNull();
-        assertThat(principal.getFullName()).isNull();
-        assertThat(principal.getCreatedAt()).isNull();
-        assertThat(principal.isEnabled()).isTrue();
-        assertThat(principal.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .containsExactly(ROLE_USER);
-    }
-
-    @Test
-    void shouldCreateWithFactoryOfWithIdEmailAndRole() {
-        // WHEN
-        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL, ROLE_ADMIN);
-
-        // THEN
-        assertThat(principal.getId()).isEqualTo(USER_ID);
-        assertThat(principal.getEmail()).isEqualTo(USER_EMAIL);
-        assertThat(principal.getRole()).isEqualTo(ROLE_ADMIN);
-        assertThat(principal.getPassword()).isNull();
-        assertThat(principal.getFullName()).isNull();
-        assertThat(principal.getCreatedAt()).isNull();
-        assertThat(principal.isEnabled()).isTrue();
-        assertThat(principal.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .containsExactly(ROLE_ADMIN);
-    }
-
-    @Test
     void shouldDefaultToRoleUserWhenRoleIsNullInCanonicalConstructor() {
         // WHEN
         UserPrincipal principal = new UserPrincipal(DEFAULT_USER_ID, DEFAULT_EMAIL, PASSWORD_HASH, null, true, FULL_NAME, CREATED_AT);
-
-        // THEN
-        assertThat(principal.getRole()).isEqualTo(ROLE_USER);
-        assertThat(principal.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .containsExactly(ROLE_USER);
-    }
-
-    @Test
-    void shouldDefaultToRoleUserWhenRoleIsNullInOfFactory() {
-        // WHEN
-        UserPrincipal principal = UserPrincipal.of(DEFAULT_USER_ID, DEFAULT_EMAIL, null);
 
         // THEN
         assertThat(principal.getRole()).isEqualTo(ROLE_USER);
@@ -190,37 +142,11 @@ class UserPrincipalTest {
     }
 
     @Test
-    void shouldDefaultToRoleUserWhenRoleIsBlankInOfFactory() {
-        // WHEN
-        UserPrincipal principal = UserPrincipal.of(DEFAULT_USER_ID, DEFAULT_EMAIL, BLANK_ROLE);
-
-        // THEN
-        assertThat(principal.getRole()).isEqualTo(ROLE_USER);
-        assertThat(principal.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .containsExactly(ROLE_USER);
-    }
-
-    @Test
     void shouldDefaultToRoleUserWhenRoleIsBlankInFromJwt() {
         // WHEN
         UserPrincipal principal = UserPrincipal.fromJwt(DEFAULT_USER_ID, DEFAULT_EMAIL, BLANK_ROLE);
 
         // THEN
-        assertThat(principal.getRole()).isEqualTo(ROLE_USER);
-        assertThat(principal.getAuthorities())
-                .extracting(GrantedAuthority::getAuthority)
-                .containsExactly(ROLE_USER);
-    }
-
-    @Test
-    void shouldCreateFromJwtWithDefaultRoleWhenRoleNotProvided() {
-        // WHEN
-        UserPrincipal principal = UserPrincipal.fromJwt(JWT_USER_ID, JWT_EMAIL);
-
-        // THEN
-        assertThat(principal.getId()).isEqualTo(JWT_USER_ID);
-        assertThat(principal.getEmail()).isEqualTo(JWT_EMAIL);
         assertThat(principal.getRole()).isEqualTo(ROLE_USER);
         assertThat(principal.getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
@@ -272,8 +198,8 @@ class UserPrincipalTest {
     @Test
     void shouldBeEqualAndHaveSameHashCodeWhenSameIdAndEmail() {
         // GIVEN
-        UserPrincipal principal1 = UserPrincipal.of(USER_ID, USER_EMAIL, ROLE_ADMIN);
-        UserPrincipal principal2 = UserPrincipal.of(USER_ID, USER_EMAIL, ROLE_USER);
+        UserPrincipal principal1 = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, ROLE_ADMIN);
+        UserPrincipal principal2 = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, ROLE_USER);
 
         // WHEN & THEN
         assertThat(principal1).isEqualTo(principal2);
@@ -283,8 +209,8 @@ class UserPrincipalTest {
     @Test
     void shouldNotBeEqualWhenDifferentId() {
         // GIVEN
-        UserPrincipal principal1 = UserPrincipal.of(USER_ID, USER_EMAIL);
-        UserPrincipal principal2 = UserPrincipal.of(ANOTHER_USER_ID, USER_EMAIL);
+        UserPrincipal principal1 = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, ROLE_USER);
+        UserPrincipal principal2 = UserPrincipal.fromJwt(ANOTHER_USER_ID, USER_EMAIL, ROLE_USER);
 
         // WHEN & THEN
         assertThat(principal1).isNotEqualTo(principal2);
@@ -293,8 +219,8 @@ class UserPrincipalTest {
     @Test
     void shouldNotBeEqualWhenDifferentEmail() {
         // GIVEN
-        UserPrincipal principal1 = UserPrincipal.of(USER_ID, USER_EMAIL);
-        UserPrincipal principal2 = UserPrincipal.of(USER_ID, ANOTHER_EMAIL);
+        UserPrincipal principal1 = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, ROLE_USER);
+        UserPrincipal principal2 = UserPrincipal.fromJwt(USER_ID, ANOTHER_EMAIL, ROLE_USER);
 
         // WHEN & THEN
         assertThat(principal1).isNotEqualTo(principal2);
@@ -319,7 +245,7 @@ class UserPrincipalTest {
     @Test
     void shouldReturnSameValueForGetNameAndGetUsername() {
         // GIVEN
-        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL);
+        UserPrincipal principal = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, ROLE_USER);
 
         // WHEN & THEN
         assertThat(principal.getName()).isEqualTo(principal.getUsername()).isEqualTo(USER_EMAIL);

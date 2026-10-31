@@ -109,6 +109,7 @@
     "ZONE_ITEM_CONFIRM_DELETE": "Delete zone?",
     "CHART_LOADING": "Loading elevation chart...",
     "CHART_ERROR": "Failed to load elevation profile.",
+    "CHART_NO_DATA": "No elevation data for this route.",
     "CHART_DISTANCE_KM": "Distance (km)",
     "CHART_ELEVATION_M": "Elevation (m a.s.l.)"
   },
@@ -156,6 +157,7 @@
     "SAVE_ZONE_FAILED": "Failed to save avoidance zone.",
     "DELETE_ZONE_FAILED": "Failed to delete avoidance zone.",
     "TOGGLE_ZONE_FAILED": "Failed to toggle zone status.",
+    "ZONE_LIMIT_EXCEEDED": "The zone exceeds routing engine limits: max 20 km width and height, and max 200 km² total area of active zones. Make the zone smaller or deactivate another one.",
     "WAYPOINT_IN_AVOIDANCE_ZONE": "A route waypoint is located inside an avoidance zone. Move the waypoint outside the zone."
   },
   "SUCCESS": {

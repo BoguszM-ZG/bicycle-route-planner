@@ -7,7 +7,6 @@ import { AvoidanceZonePanelComponent } from './avoidance-zone-panel/avoidance-zo
 
 @Component({
   selector: 'app-sidebar',
-  standalone: true,
   imports: [RoutePanelComponent, AvoidanceZonePanelComponent, TranslatePipe],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',

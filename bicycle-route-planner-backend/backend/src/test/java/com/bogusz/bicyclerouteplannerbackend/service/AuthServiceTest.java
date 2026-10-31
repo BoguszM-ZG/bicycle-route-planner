@@ -176,27 +176,6 @@ class AuthServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenRefreshTokenRequestIsNull() {
-        // GIVEN
-
-        // WHEN & THEN
-        assertThatThrownBy(() -> authService.refreshToken(null))
-                .isInstanceOf(RefreshTokenException.class)
-                .hasMessage("Invalid refresh token");
-    }
-
-    @Test
-    void shouldThrowExceptionWhenRefreshTokenIsNull() {
-        // GIVEN
-        RefreshTokenRequest request = new RefreshTokenRequest(null);
-
-        // WHEN & THEN
-        assertThatThrownBy(() -> authService.refreshToken(request))
-                .isInstanceOf(RefreshTokenException.class)
-                .hasMessage("Invalid refresh token");
-    }
-
-    @Test
     void shouldThrowExceptionWhenUserNotFoundDuringTokenRefresh() {
         // GIVEN
         RefreshTokenRequest request = new RefreshTokenRequest(FAKE_REFRESH_TOKEN);
@@ -208,17 +187,6 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.refreshToken(request))
                 .isInstanceOf(RefreshTokenException.class)
                 .hasMessage("User not found or refresh token invalid");
-    }
-
-    @Test
-    void shouldThrowExceptionWhenRefreshTokenIsBlank() {
-        // GIVEN
-        RefreshTokenRequest request = new RefreshTokenRequest("   ");
-
-        // WHEN & THEN
-        assertThatThrownBy(() -> authService.refreshToken(request))
-                .isInstanceOf(RefreshTokenException.class)
-                .hasMessage("Invalid refresh token");
     }
 
     @Test

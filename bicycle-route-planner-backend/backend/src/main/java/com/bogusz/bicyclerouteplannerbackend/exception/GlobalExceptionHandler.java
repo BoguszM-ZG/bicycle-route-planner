@@ -16,11 +16,9 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.net.SocketTimeoutException;
@@ -79,6 +77,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ex.getMessage(), "avoidance-zone-not-found");
     }
 
+    @ExceptionHandler(AvoidanceZoneLimitExceededException.class)
+    public ProblemDetail handleAvoidanceZoneLimitExceededException(AvoidanceZoneLimitExceededException ex) {
+        log.warn("Avoidance zone limit exceeded: {}", ex.getMessage());
+        return createProblemDetail(HttpStatus.BAD_REQUEST, "Avoidance Zone Limit Exceeded",
+                ex.getMessage(), "avoidance-zone-limit-exceeded");
+    }
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ProblemDetail handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
         log.warn("User registration conflict: email already exists");
@@ -124,38 +129,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
         log.warn("Validation failed for field(s): {}", errors.keySet());
-
-        ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
-                "Invalid request parameters", "validation-failure");
-        problemDetail.setProperty(ERRORS_PROPERTY, errors);
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
-    }
-
-    @Override
-    protected ResponseEntity<@NonNull Object> handleHandlerMethodValidationException(
-            @NonNull HandlerMethodValidationException ex,
-            @NonNull HttpHeaders headers,
-            @NonNull HttpStatusCode statusCode,
-            @NonNull WebRequest request
-    ) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getParameterValidationResults().forEach(result -> {
-            String paramName = result.getMethodParameter().getParameterName();
-            if (paramName == null) {
-                RequestParam requestParam = result.getMethodParameter().getParameterAnnotation(RequestParam.class);
-                if (requestParam != null && !requestParam.value().isBlank()) {
-                    paramName = requestParam.value();
-                } else if (requestParam != null && !requestParam.name().isBlank()) {
-                    paramName = requestParam.name();
-                }
-            }
-            String key = (paramName != null && !paramName.isBlank()) ? paramName : "parameter";
-            result.getResolvableErrors().forEach(error ->
-                    errors.put(key, error.getDefaultMessage())
-            );
-        });
-        log.warn("Validation failed for parameter(s): {}", errors.keySet());
 
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
                 "Invalid request parameters", "validation-failure");

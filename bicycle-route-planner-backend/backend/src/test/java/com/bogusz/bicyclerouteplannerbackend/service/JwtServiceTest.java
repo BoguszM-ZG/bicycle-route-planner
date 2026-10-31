@@ -36,7 +36,7 @@ class JwtServiceTest {
 
     @BeforeEach
     void setUp() {
-        testPrincipal = UserPrincipal.of(TEST_USER_ID, TEST_EMAIL, TEST_ROLE);
+        testPrincipal = UserPrincipal.fromJwt(TEST_USER_ID, TEST_EMAIL, TEST_ROLE);
 
         given(jwtConfig.getSecret()).willReturn(VALID_SECRET);
         jwtService = new JwtService(jwtConfig);

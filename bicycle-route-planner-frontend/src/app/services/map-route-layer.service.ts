@@ -266,13 +266,13 @@ export class MapRouteLayerService {
     return this.translate.instant('MAP.WAYPOINT_TOOLTIP');
   }
 
-  public updateWaypointPopups(): void {
+  private updateWaypointPopups(): void {
     this.waypointMarkers.forEach((marker) => {
       marker.setPopupContent(this.createWaypointPopup(marker));
     });
   }
 
-  public updateWaypointTooltips(): void {
+  private updateWaypointTooltips(): void {
     const tooltipContent = this.createWaypointTooltip();
     this.waypointMarkers.forEach((marker) => {
       marker.setTooltipContent(tooltipContent);
@@ -461,7 +461,7 @@ export class MapRouteLayerService {
     });
   }
 
-  public clearSearchPinLayer(): void {
+  private clearSearchPinLayer(): void {
     if (this.searchMarker) {
       this.searchFeatureGroup.removeLayer(this.searchMarker);
       this.searchMarker.off();
@@ -469,7 +469,7 @@ export class MapRouteLayerService {
     }
   }
 
-  public clearDraftLayers(): void {
+  private clearDraftLayers(): void {
     this.removeDraftRouteLayers();
     this.clearWaypointMarkers();
   }
@@ -486,7 +486,7 @@ export class MapRouteLayerService {
     marker.off();
   }
 
-  public clearSavedRouteLayers(): void {
+  private clearSavedRouteLayers(): void {
     this.savedRouteFeatureGroup.clearLayers();
   }
 
@@ -496,7 +496,7 @@ export class MapRouteLayerService {
     this.routePlanningStateService.clearRoute();
   }
 
-  public clearAll(): void {
+  private clearAll(): void {
     this.clearRoute();
     this.setSearchPin(null);
   }

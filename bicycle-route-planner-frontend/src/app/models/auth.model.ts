@@ -1,12 +1,12 @@
 export interface RegisterRequest {
   email: string;
-  password?: string;
-  fullName?: string;
+  password: string;
+  fullName: string;
 }
 
 export interface LoginRequest {
   email: string;
-  password?: string;
+  password: string;
 }
 
 export interface UserDto {

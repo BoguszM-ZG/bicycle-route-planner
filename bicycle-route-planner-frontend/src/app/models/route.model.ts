@@ -7,7 +7,7 @@ export type RouteExportFormat = 'gpx' | 'geojson';
 export type RouteGeometry = LineString | MultiLineString;
 
 export interface RouteDetailDto {
-  id?: number;
+  id: number;
   name: string;
   routeType: RouteType;
   targetDistance: number;
@@ -40,22 +40,19 @@ export interface CreateRouteRequestDto {
 }
 
 export interface RouteDraft {
-  geometryWkt?: string;
-  distanceMeters?: number;
-  targetDistance?: number;
-  elevationGain?: number;
-  elevationLoss?: number;
-  name?: string;
-  routeType?: RouteType;
-  startPoint?: string;
+  geometryWkt: string;
+  distanceMeters: number;
+  targetDistance: number;
+  elevationGain: number;
+  elevationLoss: number;
+  routeType: RouteType;
+  startPoint: string;
 }
 
 export interface RouteWkt {
   geometryWkt: string;
   startPoint: string;
 }
-
-export type RouteStats = RouteWkt;
 
 export interface RenameRouteRequestDto {
   name: string;

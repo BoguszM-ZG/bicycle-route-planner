@@ -301,21 +301,6 @@ assertThat(result.get(1).distance()).isGreaterThan(1000.0);
     }
 
     @Test
-    void shouldReturnEmptyListWhenRouteGeometryIsNull() {
-        // GIVEN
-        Route mockRoute = new Route();
-        mockRoute.setRouteGeom(null);
-        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
-
-        // WHEN
-        List<ElevationPointDto> result =
-                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
-
-        // THEN
-        assertThat(result).isEmpty();
-    }
-
-    @Test
     void shouldFilterOutNaNZCoordinates() {
         // GIVEN
         Route mockRoute = new Route();

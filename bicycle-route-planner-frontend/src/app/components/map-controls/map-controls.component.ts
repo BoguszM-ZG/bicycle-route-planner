@@ -4,7 +4,6 @@ import { MapEngineService } from '../../services/map-engine.service';
 
 @Component({
   selector: 'app-map-controls',
-  standalone: true,
   imports: [TranslatePipe],
   templateUrl: './map-controls.component.html',
   styleUrl: './map-controls.component.css',
@@ -25,10 +24,6 @@ export class MapControlsComponent {
   }
 
   public onLocateClick(): void {
-    if (this.mapEngine.isLocating()) {
-      return;
-    }
-    this.mapEngine.locateUser();
     this.locate.emit();
   }
 }

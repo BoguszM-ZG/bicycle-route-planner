@@ -1,5 +1,4 @@
-import { Injectable, inject, signal, computed, PLATFORM_ID } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, finalize, shareReplay, switchMap, of } from 'rxjs';
@@ -15,7 +14,6 @@ import { LoggerService } from './logger.service';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
-  private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private readonly apiUrl = `${environment.apiUrl}/auth`;
 
@@ -145,17 +143,11 @@ export class AuthService {
   }
 
   public getAccessToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem(AuthService.ACCESS_TOKEN_KEY);
-    }
-    return null;
+    return localStorage.getItem(AuthService.ACCESS_TOKEN_KEY);
   }
 
   public getRefreshToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem(AuthService.REFRESH_TOKEN_KEY);
-    }
-    return null;
+    return localStorage.getItem(AuthService.REFRESH_TOKEN_KEY);
   }
 
   public isTokenExpired(token: string | null): boolean {
@@ -188,47 +180,39 @@ export class AuthService {
   }
 
   private clearAuthStorage(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
-      localStorage.removeItem(AuthService.REFRESH_TOKEN_KEY);
-      localStorage.removeItem(AuthService.CURRENT_USER_KEY);
-    }
+    localStorage.removeItem(AuthService.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(AuthService.REFRESH_TOKEN_KEY);
+    localStorage.removeItem(AuthService.CURRENT_USER_KEY);
   }
 
   private hydrateAuthState(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const userStr = localStorage.getItem(AuthService.CURRENT_USER_KEY);
-      const accessToken = this.getAccessToken();
-      const refreshToken = this.getRefreshToken();
+    const userStr = localStorage.getItem(AuthService.CURRENT_USER_KEY);
+    const accessToken = this.getAccessToken();
+    const refreshToken = this.getRefreshToken();
 
-      if (!userStr || (!accessToken && !refreshToken)) {
-        this.clearSession();
-        return;
-      }
+    if (!userStr || (!accessToken && !refreshToken)) {
+      this.clearSession();
+      return;
+    }
 
-      if (this.isTokenExpired(accessToken) && this.isTokenExpired(refreshToken)) {
-        this.clearSession();
-        return;
-      }
+    if (this.isTokenExpired(accessToken) && this.isTokenExpired(refreshToken)) {
+      this.clearSession();
+      return;
+    }
 
-      try {
-        this._currentUser.set(JSON.parse(userStr));
-      } catch {
-        this.clearSession();
-      }
+    try {
+      this._currentUser.set(JSON.parse(userStr));
+    } catch {
+      this.clearSession();
     }
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
     this._currentUser.set(response.user);
 
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem(AuthService.ACCESS_TOKEN_KEY, response.accessToken);
-      if (response.refreshToken) {
-        localStorage.setItem(AuthService.REFRESH_TOKEN_KEY, response.refreshToken);
-      }
-      localStorage.setItem(AuthService.CURRENT_USER_KEY, JSON.stringify(response.user));
-    }
+    localStorage.setItem(AuthService.ACCESS_TOKEN_KEY, response.accessToken);
+    localStorage.setItem(AuthService.REFRESH_TOKEN_KEY, response.refreshToken);
+    localStorage.setItem(AuthService.CURRENT_USER_KEY, JSON.stringify(response.user));
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {

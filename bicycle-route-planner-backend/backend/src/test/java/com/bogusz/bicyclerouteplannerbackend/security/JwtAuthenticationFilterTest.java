@@ -1,6 +1,5 @@
-package com.bogusz.bicyclerouteplannerbackend.config;
+package com.bogusz.bicyclerouteplannerbackend.security;
 
-import com.bogusz.bicyclerouteplannerbackend.security.UserPrincipal;
 import com.bogusz.bicyclerouteplannerbackend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -88,7 +87,7 @@ class JwtAuthenticationFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, BEARER_TOKEN);
         MockHttpServletResponse response = new MockHttpServletResponse();
-        UserPrincipal principal = UserPrincipal.of(42L, "test@example.com", "ROLE_USER");
+        UserPrincipal principal = UserPrincipal.fromJwt(42L, "test@example.com", "ROLE_USER");
 
         given(jwtService.parseAccessToken(VALID_TOKEN)).willReturn(Optional.of(principal));
 

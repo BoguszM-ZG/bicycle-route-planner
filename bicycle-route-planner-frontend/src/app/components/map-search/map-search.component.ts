@@ -28,7 +28,6 @@ import { MAP_CONSTANTS } from '../../constants/map.constants';
 
 @Component({
   selector: 'app-map-search',
-  standalone: true,
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './map-search.component.html',
   styleUrl: './map-search.component.css',

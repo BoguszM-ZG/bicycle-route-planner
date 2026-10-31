@@ -84,6 +84,8 @@ W przypadku pracy deweloperskiej w IDE, samą bazę danych uruchamia się bezpie
 docker compose up postgis_db -d
 ```
 
+Dane bazy są przechowywane w trwałym wolumenie Dockera (`postgis_data`), więc zostają po `docker compose stop` / `down` i restarcie komputera. Usuwa je dopiero `docker compose down -v`.
+
 ### 2. Backend (Spring Boot 4.1.0)
 Wymagane: **JDK 21**.
 ```cmd
@@ -92,7 +94,7 @@ mvnw clean spring-boot:run
 ```
 
 ### 3. Frontend (Angular 22)
-Wymagane: **Node.js 22+**.
+Wymagane: **Node.js 24**.
 ```cmd
 cd bicycle-route-planner-frontend
 npm ci

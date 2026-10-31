@@ -10,7 +10,7 @@ import {
   RouteExportFormat,
 } from '../models/route.model';
 import { RouteService } from './route.service';
-import { sanitizeFileName, triggerBlobDownload } from '../utils/file-download.util';
+import { fileNameFromContentDisposition, triggerBlobDownload } from '../utils/file-download.util';
 import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
@@ -30,7 +30,6 @@ export class RouteStateService {
   private fetchRoutesSubscription?: Subscription;
   private selectRouteSubscription?: Subscription;
   private fetchElevationSubscription?: Subscription;
-  private currentElevationRouteId: number | null = null;
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
   private readonly _selectedRouteId = signal<number | null>(null);
@@ -74,7 +73,6 @@ export class RouteStateService {
     this.fetchRoutesSubscription?.unsubscribe();
     this.selectRouteSubscription?.unsubscribe();
     this.fetchElevationSubscription?.unsubscribe();
-    this.currentElevationRouteId = null;
     this._routes.set([]);
     this._selectedRouteId.set(null);
     this._selectedRoute.set(null);
@@ -103,13 +101,6 @@ export class RouteStateService {
   }
 
   public selectRoute(routeId: number): void {
-    if (!this.isValidId(routeId)) {
-      this.logger.debug('[RouteStateService] Invalid routeId provided for selectRoute', {
-        routeId,
-      });
-      return;
-    }
-
     if (this.selectedRouteId() === routeId) {
       this.clearSelectedRoute();
       return;
@@ -128,7 +119,6 @@ export class RouteStateService {
       .subscribe({
         next: (routeDetails) => {
           this._selectedRoute.set(routeDetails);
-          this._selectedRouteId.set(routeDetails?.id ?? routeId);
         },
         error: (err) => {
           this.clearSelectedRoute();
@@ -138,47 +128,9 @@ export class RouteStateService {
       });
   }
 
-  public fetchElevationProfile(routeId: number, force = false): void {
-    if (!this.isValidId(routeId)) {
-      this.logger.debug('[RouteStateService] Invalid routeId provided for elevation profile', {
-        routeId,
-      });
-      return;
-    }
-
-    if (!force && this.currentElevationRouteId === routeId) {
-      return;
-    }
-
-    this.currentElevationRouteId = routeId;
-    this.fetchElevationSubscription?.unsubscribe();
-    this._isLoadingElevation.set(true);
-    this._elevationProfile.set(null);
-    this._hasElevationError.set(false);
-
-    this.fetchElevationSubscription = this.routeService
-      .getElevationProfile(routeId)
-      .pipe(finalize(() => this._isLoadingElevation.set(false)))
-      .subscribe({
-        next: (points) => {
-          this._hasElevationError.set(false);
-          this._elevationProfile.set(points);
-        },
-        error: (err) => {
-          this.logger.error('[RouteStateService] Error fetching elevation profile', {
-            routeId,
-            error: err,
-          });
-          this._hasElevationError.set(true);
-          this._elevationProfile.set(null);
-        },
-      });
-  }
-
   public clearSelectedRoute(): void {
     this.selectRouteSubscription?.unsubscribe();
     this.fetchElevationSubscription?.unsubscribe();
-    this.currentElevationRouteId = null;
     this._selectedRouteId.set(null);
     this._selectedRoute.set(null);
     this._elevationProfile.set(null);
@@ -188,25 +140,12 @@ export class RouteStateService {
   }
 
   public deleteRoute(routeId: number): void {
-    if (!this.isValidId(routeId)) {
-      this.logger.debug('[RouteStateService] Invalid routeId provided for deleteRoute', {
-        routeId,
-      });
-      return;
-    }
-
     this.routeService.deleteRoute(routeId).subscribe({
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
         this.logger.info('[RouteStateService] Route successfully deleted', { routeId });
         if (this.selectedRouteId() === routeId || this._selectedRoute()?.id === routeId) {
           this.clearSelectedRoute();
-        } else if (this.currentElevationRouteId === routeId) {
-          this.fetchElevationSubscription?.unsubscribe();
-          this.currentElevationRouteId = null;
-          this._elevationProfile.set(null);
-          this._isLoadingElevation.set(false);
-          this._hasElevationError.set(false);
         }
         this.notificationService.success('SUCCESS.DELETE_ROUTE');
       },
@@ -226,17 +165,6 @@ export class RouteStateService {
       return;
     }
 
-    const trimmedName = typeof dto?.name === 'string' ? dto.name.trim() : '';
-    if (
-      !dto ||
-      !trimmedName ||
-      trimmedName.length > 150 ||
-      (dto.folderId != null && !this.isValidId(dto.folderId))
-    ) {
-      this.logger.debug('[RouteStateService] Invalid route data provided for createRoute', { dto });
-      return;
-    }
-
     this._isSaving.set(true);
 
     this.routeService
@@ -244,17 +172,6 @@ export class RouteStateService {
       .pipe(finalize(() => this._isSaving.set(false)))
       .subscribe({
         next: (newRouteDetails) => {
-          if (!newRouteDetails || !this.isValidId(newRouteDetails.id)) {
-            this.logger.error(
-              '[RouteStateService] Server returned invalid route details on creation',
-              {
-                newRouteDetails,
-              },
-            );
-            this.notificationService.error('ERRORS.SAVE_ROUTE_FAILED');
-            return;
-          }
-
           const summary: RouteSummaryDto = {
             id: newRouteDetails.id,
             name: newRouteDetails.name,
@@ -292,20 +209,14 @@ export class RouteStateService {
       });
   }
 
-  public downloadRoute(routeId: number, format: RouteExportFormat, routeName?: string): void {
-    if (!this.isValidId(routeId)) {
-      this.logger.debug('[RouteStateService] Invalid routeId provided for downloadRoute', {
-        routeId,
-      });
-      return;
-    }
-
-    const route = this.findRoute(routeId);
-    const defaultName = routeName ?? route?.name ?? `route_${routeId}`;
-
+  public downloadRoute(routeId: number, format: RouteExportFormat): void {
     this.routeService.exportRoute(routeId, format).subscribe({
-      next: (blob) => {
-        triggerBlobDownload(blob, sanitizeFileName(defaultName, format));
+      next: (response) => {
+        const fileName = fileNameFromContentDisposition(
+          response.headers.get('Content-Disposition'),
+          `route.${format}`,
+        );
+        triggerBlobDownload(response.body, fileName);
         this.logger.debug('[RouteStateService] Route download initiated successfully', { format });
       },
       error: (err) => {
@@ -320,17 +231,6 @@ export class RouteStateService {
   }
 
   public moveRouteToFolder(routeId: number, folderId: number | null): void {
-    if (!this.isValidId(routeId) || (folderId !== null && !this.isValidId(folderId))) {
-      this.logger.debug(
-        '[RouteStateService] Invalid routeId or folderId provided for moveRouteToFolder',
-        {
-          routeId,
-          folderId,
-        },
-      );
-      return;
-    }
-
     const currentRoute = this.findRoute(routeId);
     const currentFolderId = currentRoute ? (currentRoute.folderId ?? null) : undefined;
     if (currentFolderId !== undefined && currentFolderId === (folderId ?? null)) {
@@ -367,10 +267,6 @@ export class RouteStateService {
   }
 
   public handleFolderDeleted(folderId: number): void {
-    if (!this.isValidId(folderId)) {
-      return;
-    }
-
     if (this._routes().some((r) => r.folderId === folderId)) {
       this._routes.update((routes) =>
         routes.map((r) => (r.folderId === folderId ? { ...r, folderId: null } : r)),
@@ -382,21 +278,7 @@ export class RouteStateService {
   }
 
   public renameRoute(routeId: number, newName: string): void {
-    if (!this.isValidId(routeId)) {
-      this.logger.debug('[RouteStateService] Invalid routeId provided for renameRoute', {
-        routeId,
-      });
-      return;
-    }
-
-    const trimmed = typeof newName === 'string' ? newName.trim() : '';
-    if (!trimmed || trimmed.length > 150) {
-      this.logger.debug('[RouteStateService] Invalid route name provided for renameRoute', {
-        routeId,
-        newName,
-      });
-      return;
-    }
+    const trimmed = newName.trim();
 
     const currentName = this.findRoute(routeId)?.name;
     if (currentName === trimmed) {
@@ -432,8 +314,29 @@ export class RouteStateService {
     });
   }
 
-  private isValidId(id: unknown): id is number {
-    return typeof id === 'number' && Number.isInteger(id) && id > 0;
+  private fetchElevationProfile(routeId: number): void {
+    this.fetchElevationSubscription?.unsubscribe();
+    this._isLoadingElevation.set(true);
+    this._elevationProfile.set(null);
+    this._hasElevationError.set(false);
+
+    this.fetchElevationSubscription = this.routeService
+      .getElevationProfile(routeId)
+      .pipe(finalize(() => this._isLoadingElevation.set(false)))
+      .subscribe({
+        next: (points) => {
+          this._hasElevationError.set(false);
+          this._elevationProfile.set(points);
+        },
+        error: (err) => {
+          this.logger.error('[RouteStateService] Error fetching elevation profile', {
+            routeId,
+            error: err,
+          });
+          this._hasElevationError.set(true);
+          this._elevationProfile.set(null);
+        },
+      });
   }
 
   private findRoute(routeId: number): RouteSummaryDto | RouteDetailDto | undefined {

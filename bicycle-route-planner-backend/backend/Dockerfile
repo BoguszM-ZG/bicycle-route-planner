@@ -24,9 +24,6 @@ RUN ./mvnw clean package -DskipTests -B
 # -------------------------------------------------------------
 FROM eclipse-temurin:21-jre-alpine AS runner
 
-# Install curl for container health checks
-RUN apk --no-cache add curl
-
 # Create non-privileged system user and group
 RUN addgroup -S spring && adduser -S spring -G spring
 

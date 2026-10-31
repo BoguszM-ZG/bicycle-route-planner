@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   CreateRouteRequestDto,
@@ -35,9 +35,10 @@ export class RouteService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  public exportRoute(routeId: number, format: RouteExportFormat): Observable<Blob> {
+  public exportRoute(routeId: number, format: RouteExportFormat): Observable<HttpResponse<Blob>> {
     return this.http.get(`${this.apiUrl}/${routeId}/export/${format}`, {
       responseType: 'blob',
+      observe: 'response',
     });
   }
 

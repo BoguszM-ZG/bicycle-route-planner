@@ -19,8 +19,7 @@ class ElevationProfileDownsamplerTest {
     }
 
     @Test
-    void shouldReturnEmptyListWhenInputIsNullOrEmpty() {
-        assertThat(downsampler.downsample(null, 250)).isEmpty();
+    void shouldReturnEmptyListWhenInputIsEmpty() {
         assertThat(downsampler.downsample(Collections.emptyList(), 250)).isEmpty();
     }
 
@@ -35,68 +34,6 @@ class ElevationProfileDownsamplerTest {
         List<ElevationPointDto> result = downsampler.downsample(points, 5);
 
         assertThat(result).hasSize(3).containsExactlyElementsOf(points);
-    }
-
-    @Test
-    void shouldReturnOriginalPointsWhenCountLessThanThree() {
-        List<ElevationPointDto> points = List.of(
-                new ElevationPointDto(0.0, 100.0),
-                new ElevationPointDto(50.0, 150.0)
-        );
-
-        List<ElevationPointDto> result = downsampler.downsample(points, 2);
-
-        assertThat(result).hasSize(2).containsExactlyElementsOf(points);
-    }
-
-    @Test
-    void shouldReturnStartAndEndPointsWhenMaxPointsIsTwo() {
-        List<ElevationPointDto> points = createLinearPoints(20, 10.0, 5.0);
-
-        List<ElevationPointDto> result = downsampler.downsample(points, 2);
-
-        assertThat(result).hasSize(2);
-        assertThat(result.getFirst()).isEqualTo(points.getFirst());
-        assertThat(result.getLast()).isEqualTo(points.getLast());
-    }
-
-    @Test
-    void shouldClampMaxPointsWhenLessThanTwo() {
-        List<ElevationPointDto> points = createLinearPoints(10, 10.0, 5.0);
-
-        List<ElevationPointDto> resultOne = downsampler.downsample(points, 1);
-        List<ElevationPointDto> resultZero = downsampler.downsample(points, 0);
-        List<ElevationPointDto> resultNegative = downsampler.downsample(points, -5);
-
-        assertThat(resultOne).hasSize(2);
-        assertThat(resultOne.getFirst()).isEqualTo(points.getFirst());
-        assertThat(resultOne.getLast()).isEqualTo(points.getLast());
-
-        assertThat(resultZero).hasSize(2);
-        assertThat(resultZero.getFirst()).isEqualTo(points.getFirst());
-        assertThat(resultZero.getLast()).isEqualTo(points.getLast());
-
-        assertThat(resultNegative).hasSize(2);
-        assertThat(resultNegative.getFirst()).isEqualTo(points.getFirst());
-        assertThat(resultNegative.getLast()).isEqualTo(points.getLast());
-    }
-
-    @Test
-    void shouldPreserveProminentPeakWhenMaxPointsIsThree() {
-        List<ElevationPointDto> points = List.of(
-                new ElevationPointDto(0.0, 100.0),
-                new ElevationPointDto(10.0, 120.0),
-                new ElevationPointDto(20.0, 500.0),
-                new ElevationPointDto(30.0, 110.0),
-                new ElevationPointDto(40.0, 100.0)
-        );
-
-        List<ElevationPointDto> result = downsampler.downsample(points, 3);
-
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0)).isEqualTo(points.get(0));
-        assertThat(result.get(1)).isEqualTo(points.get(2));
-        assertThat(result.get(2)).isEqualTo(points.get(4));
     }
 
     @Test
@@ -221,13 +158,5 @@ class ElevationProfileDownsamplerTest {
         assertThat(result).hasSizeLessThanOrEqualTo(250);
         assertThat(result.getFirst()).isEqualTo(largePoints.getFirst());
         assertThat(result.getLast()).isEqualTo(largePoints.getLast());
-    }
-
-    private List<ElevationPointDto> createLinearPoints(int count, double distanceStep, double elevationStep) {
-        List<ElevationPointDto> points = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            points.add(new ElevationPointDto(i * distanceStep, 100.0 + (i * elevationStep)));
-        }
-        return points;
     }
 }

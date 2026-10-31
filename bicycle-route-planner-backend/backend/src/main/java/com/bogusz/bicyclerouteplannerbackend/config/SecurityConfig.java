@@ -1,5 +1,6 @@
 package com.bogusz.bicyclerouteplannerbackend.config;
 
+import com.bogusz.bicyclerouteplannerbackend.security.JwtAuthenticationFilter;
 import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

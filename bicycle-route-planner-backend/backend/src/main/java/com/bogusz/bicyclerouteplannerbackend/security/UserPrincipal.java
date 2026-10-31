@@ -59,18 +59,6 @@ public class UserPrincipal implements UserDetails, Principal {
     }
 
     public static UserPrincipal fromJwt(Long id, String email, String role) {
-        return of(id, email, role);
-    }
-
-    public static UserPrincipal fromJwt(Long id, String email) {
-        return of(id, email);
-    }
-
-    public static UserPrincipal of(Long id, String email) {
-        return of(id, email, DEFAULT_ROLE);
-    }
-
-    public static UserPrincipal of(Long id, String email, String role) {
         return new UserPrincipal(id, email, null, role, true, null, null);
     }
 

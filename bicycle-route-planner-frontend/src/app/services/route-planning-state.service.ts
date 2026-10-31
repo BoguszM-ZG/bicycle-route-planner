@@ -249,7 +249,6 @@ export class RoutePlanningStateService {
     const properties = feature.properties;
 
     this._currentRouteDraft.set({
-      name: '',
       routeType,
       geometryWkt,
       startPoint: startPointWkt,

@@ -29,11 +29,11 @@ public record CreateRouteRequestDto(
         Double elevationLoss,
 
         @NotBlank(message = "Start point is required")
-        @ValidWktGeometry(expectedType = GeometryType.POINT, message = "Start point must be a valid WKT Point in WGS84 coordinates")
+        @ValidWktGeometry(expectedType = GeometryType.POINT)
         String startPoint,
 
         @NotBlank(message = "Route geometry is required")
-        @ValidWktGeometry(expectedType = GeometryType.LINE_STRING, message = "Route geometry must be a valid WKT LineString in WGS84 coordinates")
+        @ValidWktGeometry(expectedType = GeometryType.LINE_STRING)
         String routeGeom,
 
         Long folderId

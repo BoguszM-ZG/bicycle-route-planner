@@ -97,7 +97,7 @@ export class MapDrawService {
     this.tempDrawFeatureGroup.clearLayers();
   }
 
-  public startDrawingPolygon(targetMap?: L.Map): void {
+  private startDrawingPolygon(targetMap?: L.Map): void {
     const map = targetMap ?? this.map ?? this.mapEngine.mapInstance();
     if (!map) {
       return;
@@ -115,7 +115,7 @@ export class MapDrawService {
     }
   }
 
-  public cancelDrawing(): void {
+  private cancelDrawing(): void {
     if (this.currentDrawer) {
       this.currentDrawer.disable();
       this.currentDrawer = undefined;

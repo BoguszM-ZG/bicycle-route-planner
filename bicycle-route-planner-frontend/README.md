@@ -142,7 +142,7 @@ npm run build
 ## 🐳 Konteneryzacja (Docker & Nginx)
 
 Moduł frontendu posiada produkcyjny, dwuetapowy plik `Dockerfile` zoptymalizowany pod kątem bezpieczeństwa i wydajności:
-- **Stage 1 (Builder):** Kompilacja aplikacji produkcyjnej (`ng build`) w kontenerze `node:22-alpine`.
+- **Stage 1 (Builder):** Kompilacja aplikacji produkcyjnej (`ng build`) w kontenerze `node:24-alpine`.
 - **Stage 2 (Runner):** Serwowanie statycznych plików SPA przez zoptymalizowany serwer **Nginx 1.27 Alpine**.
 - **Bezpieczeństwo Non-root:** Nginx został skonfigurowany do działania jako użytkownik nieuprzywilejowany (`USER nginx`) na porcie `8080`.
 

@@ -1,4 +1,4 @@
-package com.bogusz.bicyclerouteplannerbackend.config;
+package com.bogusz.bicyclerouteplannerbackend.security;
 
 import com.bogusz.bicyclerouteplannerbackend.service.JwtService;
 import jakarta.servlet.FilterChain;

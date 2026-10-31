@@ -7,6 +7,7 @@ import com.bogusz.bicyclerouteplannerbackend.model.AvoidanceZone;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.io.WKTWriter;
 import org.springframework.stereotype.Component;
@@ -38,7 +39,7 @@ public class AvoidanceZoneMapper {
             Geometry geom = new WKTReader().read(wkt);
             geom.setSRID(4326);
             return (Polygon) geom;
-        } catch (Exception e) {
+        } catch (ParseException | IllegalArgumentException | ClassCastException e) {
             throw new InvalidGeometryException("Failed to parse avoidance zone polygon geometry", e);
         }
     }

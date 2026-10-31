@@ -102,7 +102,12 @@ export class AvoidanceZoneStateService {
           } else {
             this.logger.error('[AvoidanceZoneStateService] Error saving zone:', err);
           }
-          this.notificationService.error('ERRORS.SAVE_ZONE_FAILED');
+          const errorType = typeof err.error?.type === 'string' ? err.error.type : '';
+          this.notificationService.error(
+            errorType.includes('avoidance-zone-limit-exceeded')
+              ? 'ERRORS.ZONE_LIMIT_EXCEEDED'
+              : 'ERRORS.SAVE_ZONE_FAILED',
+          );
         },
       });
   }
@@ -150,9 +155,10 @@ export class AvoidanceZoneStateService {
         });
       },
       error: (err) => {
-        if (err.status === 404) {
-          this.logger.debug('[AvoidanceZoneStateService] Zone to toggle not found:', {
+        if (err.status === 400 || err.status === 404) {
+          this.logger.debug('[AvoidanceZoneStateService] Zone toggle rejected:', {
             zoneId: zone.id,
+            error: err.error,
           });
         } else {
           this.logger.error('[AvoidanceZoneStateService] Error toggling zone status', err);
@@ -161,7 +167,12 @@ export class AvoidanceZoneStateService {
           currentZones.map((z) => (z.id === zone.id ? { ...z, isActive: zone.isActive } : z)),
         );
 
-        this.notificationService.error('ERRORS.TOGGLE_ZONE_FAILED');
+        const errorType = typeof err.error?.type === 'string' ? err.error.type : '';
+        this.notificationService.error(
+          errorType.includes('avoidance-zone-limit-exceeded')
+            ? 'ERRORS.ZONE_LIMIT_EXCEEDED'
+            : 'ERRORS.TOGGLE_ZONE_FAILED',
+        );
       },
     });
   }

@@ -5,7 +5,6 @@ import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-toast',
-  standalone: true,
   imports: [NgClass, TranslatePipe],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.css',

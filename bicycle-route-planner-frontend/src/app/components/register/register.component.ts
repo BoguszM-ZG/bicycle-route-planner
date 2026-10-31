@@ -13,7 +13,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-register',
-  standalone: true,
   imports: [ReactiveFormsModule, TranslatePipe, RouterLink],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css',

@@ -11,7 +11,7 @@ public record CreateAvoidanceZoneRequestDto(
         String name,
 
         @NotBlank(message = "Geometry of the avoidance zone is required")
-        @ValidWktGeometry(expectedType = GeometryType.POLYGON, message = "Avoidance zone must be a valid WKT Polygon in WGS84 coordinates")
+        @ValidWktGeometry(expectedType = GeometryType.POLYGON)
         String zoneGeom
 ) {
 }

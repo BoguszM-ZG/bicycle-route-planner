@@ -15,7 +15,6 @@ import { RouteStateService } from '../../../services/route-state.service';
 
 @Component({
   selector: 'app-route-item',
-  standalone: true,
   imports: [DecimalPipe, RouteDetailsComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './route-item.component.html',
   styleUrl: './route-item.component.css',
@@ -44,13 +43,9 @@ export class RouteItemComponent {
   });
 
   public selectRoute(): void {
-    if (!this.isConfirmingDelete() && this.route().id !== undefined && this.route().id !== null) {
+    if (!this.isConfirmingDelete()) {
       this.routeStateService.selectRoute(this.route().id);
     }
-  }
-
-  public onSelect(): void {
-    this.selectRoute();
   }
 
   public promptDelete(event: Event): void {
@@ -65,15 +60,8 @@ export class RouteItemComponent {
 
   public deleteRoute(event?: Event): void {
     event?.stopPropagation();
-    const id = this.route().id;
-    if (id !== undefined && id !== null) {
-      this.routeStateService.deleteRoute(id);
-    }
+    this.routeStateService.deleteRoute(this.route().id);
     this.isConfirmingDelete.set(false);
-  }
-
-  public confirmDelete(event: Event): void {
-    this.deleteRoute(event);
   }
 
   public toggleExport(event: Event): void {
@@ -83,7 +71,7 @@ export class RouteItemComponent {
 
   public exportRoute(format: RouteExportFormat, event: Event): void {
     event.stopPropagation();
-    this.routeStateService.downloadRoute(this.route().id, format, this.route().name);
+    this.routeStateService.downloadRoute(this.route().id, format);
     this.isExporting.set(false);
   }
 
@@ -94,15 +82,8 @@ export class RouteItemComponent {
 
   public moveToFolder(targetFolderId: number | null, event?: Event): void {
     event?.stopPropagation();
-    const id = this.route().id;
-    if (id !== undefined && id !== null) {
-      this.routeStateService.moveRouteToFolder(id, targetFolderId);
-    }
+    this.routeStateService.moveRouteToFolder(this.route().id, targetFolderId);
     this.isMoving.set(false);
-  }
-
-  public confirmMove(event: Event, targetFolderId: number | null): void {
-    this.moveToFolder(targetFolderId, event);
   }
 
   public toggleRename(event: Event): void {
@@ -125,14 +106,7 @@ export class RouteItemComponent {
       this.isRenaming.set(false);
       return;
     }
-    const id = this.route().id;
-    if (id !== undefined && id !== null) {
-      this.routeStateService.renameRoute(id, newName);
-    }
+    this.routeStateService.renameRoute(this.route().id, newName);
     this.isRenaming.set(false);
-  }
-
-  public confirmRename(event: Event): void {
-    this.saveRename(event);
   }
 }

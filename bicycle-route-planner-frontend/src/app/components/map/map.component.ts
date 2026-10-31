@@ -21,12 +21,12 @@ import { LoggerService } from '../../services/logger.service';
 import { MapEngineService } from '../../services/map-engine.service';
 import { RoutePlanningStateService } from '../../services/route-planning-state.service';
 import { MapRouteLayerService } from '../../services/map-route-layer.service';
+import { MapDrawService } from '../../services/map-draw.service';
 import { RouteStateService } from '../../services/route-state.service';
 import { AvoidanceZoneStateService } from '../../services/avoidance-zone-state.service';
 
 @Component({
   selector: 'app-map',
-  standalone: true,
   imports: [
     SidebarComponent,
     SaveRouteModalComponent,
@@ -45,6 +45,8 @@ export class MapComponent implements AfterViewInit {
   private readonly mapEngine = inject(MapEngineService);
   private readonly routePlanningState = inject(RoutePlanningStateService);
   private readonly mapRouteLayer = inject(MapRouteLayerService);
+  //dont delete
+  private readonly mapDraw = inject(MapDrawService);
   private readonly routeState = inject(RouteStateService);
   private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
   private readonly notificationService = inject(NotificationService);

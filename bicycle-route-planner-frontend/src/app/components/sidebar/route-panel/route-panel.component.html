@@ -32,18 +32,18 @@
   </div>
 }
 
-@if (!isLoadingRoutes() && rootRoutes().length === 0 && rootFolders().length === 0) {
+@if (!isLoadingRoutes() && unassignedRoutes().length === 0 && folders().length === 0) {
   <div class="empty-state" aria-live="polite">
     {{ 'SIDEBAR.EMPTY_STATE' | translate }}
   </div>
 }
 
-@if (!isLoadingRoutes() && (rootRoutes().length > 0 || rootFolders().length > 0)) {
-  @for (folder of rootFolders(); track folder.id) {
+@if (!isLoadingRoutes() && (unassignedRoutes().length > 0 || folders().length > 0)) {
+  @for (folder of folders(); track folder.id) {
     <app-folder-item [folderId]="folder.id"></app-folder-item>
   }
 
-  @for (route of rootRoutes(); track route.id) {
+  @for (route of unassignedRoutes(); track route.id) {
     <app-route-item
       [route]="route"
       [isSelected]="route.id === selectedRouteId()"

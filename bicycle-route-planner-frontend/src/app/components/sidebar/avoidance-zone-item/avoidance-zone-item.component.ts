@@ -5,7 +5,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-avoidance-zone-item',
-  standalone: true,
   imports: [TranslatePipe],
   templateUrl: './avoidance-zone-item.component.html',
   styleUrl: './avoidance-zone-item.component.css',

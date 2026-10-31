@@ -17,7 +17,6 @@ import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-save-route-modal',
-  standalone: true,
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './save-route-modal.component.html',
   styleUrl: './save-route-modal.component.css',
@@ -83,13 +82,13 @@ export class SaveRouteModalComponent {
 
     const dto: CreateRouteRequestDto = {
       name: this.routeNameControl.value.trim(),
-      routeType: this.routeDataToSave.routeType || 'POINT_TO_POINT',
-      targetDistance: this.routeDataToSave.targetDistance || 0,
-      distanceMeters: this.routeDataToSave.distanceMeters || 0,
-      elevationGain: this.routeDataToSave.elevationGain || 0,
-      elevationLoss: this.routeDataToSave.elevationLoss || 0,
-      startPoint: this.routeDataToSave.startPoint || '',
-      routeGeom: this.routeDataToSave.geometryWkt || '',
+      routeType: this.routeDataToSave.routeType,
+      targetDistance: this.routeDataToSave.targetDistance,
+      distanceMeters: this.routeDataToSave.distanceMeters,
+      elevationGain: this.routeDataToSave.elevationGain,
+      elevationLoss: this.routeDataToSave.elevationLoss,
+      startPoint: this.routeDataToSave.startPoint,
+      routeGeom: this.routeDataToSave.geometryWkt,
       folderId: this.selectedFolderControl.value,
     };
 

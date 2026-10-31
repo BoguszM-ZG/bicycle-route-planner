@@ -43,10 +43,6 @@ public class AuthService {
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        if (request == null || request.refreshToken() == null || request.refreshToken().isBlank()) {
-            throw new RefreshTokenException("Invalid refresh token");
-        }
-
         String userEmail = jwtService.extractEmailFromRefreshToken(request.refreshToken());
         User user;
         try {

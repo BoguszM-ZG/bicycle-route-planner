@@ -5,7 +5,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-map-mode-panel',
-  standalone: true,
   imports: [TranslatePipe],
   templateUrl: './map-mode-panel.component.html',
   styleUrl: './map-mode-panel.component.css',

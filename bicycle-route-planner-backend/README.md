@@ -123,7 +123,7 @@ docker compose up -d
 
 ### Sposób 2: Baza danych w Dockerze + natywny Spring Boot
 ```bash
-# 1. Start bazy PostGIS (z katalogu głównego projektu lub bicycle-route-planner-backend):
+# 1. Start bazy PostGIS (z katalogu głównego projektu):
 docker compose up postgis_db -d
 
 # 2. Uruchomienie aplikacji Spring Boot (z poziomu katalogu bicycle-route-planner-backend/backend):

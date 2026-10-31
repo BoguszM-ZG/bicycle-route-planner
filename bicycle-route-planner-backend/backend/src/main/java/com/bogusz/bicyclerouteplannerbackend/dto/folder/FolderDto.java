@@ -8,9 +8,6 @@ public record FolderDto(
         String name
 ) {
     public static FolderDto from(Folder folder) {
-        if (folder == null) {
-            return null;
-        }
         return new FolderDto(folder.getId(), folder.getName());
     }
 }

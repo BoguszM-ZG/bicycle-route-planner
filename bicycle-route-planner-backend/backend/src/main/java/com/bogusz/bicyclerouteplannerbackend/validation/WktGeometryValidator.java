@@ -16,7 +16,6 @@ public class WktGeometryValidator implements ConstraintValidator<ValidWktGeometr
     private static final double MAX_LONGITUDE = 180.0;
     private static final double MIN_LATITUDE = -90.0;
     private static final double MAX_LATITUDE = 90.0;
-    private static final int MIN_LINESTRING_POINTS = 2;
 
     private GeometryType expectedType;
 
@@ -61,9 +60,8 @@ public class WktGeometryValidator implements ConstraintValidator<ValidWktGeometr
     private boolean matchesExpectedType(Geometry geometry) {
         return switch (expectedType) {
             case POINT -> geometry instanceof Point;
-            case LINE_STRING -> geometry instanceof LineString lineString && lineString.getNumPoints() >= MIN_LINESTRING_POINTS;
+            case LINE_STRING -> geometry instanceof LineString;
             case POLYGON -> geometry instanceof Polygon;
-            case ANY -> true;
         };
     }
 

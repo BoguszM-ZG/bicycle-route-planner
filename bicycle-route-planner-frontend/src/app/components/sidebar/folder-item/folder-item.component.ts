@@ -7,7 +7,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 
 @Component({
-  standalone: true,
   selector: 'app-folder-item',
   imports: [RouteItemComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './folder-item.component.html',

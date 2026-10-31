@@ -16,7 +16,6 @@ import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-save-zone-modal',
-  standalone: true,
   imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './save-zone-modal.component.html',
   styleUrl: './save-zone-modal.component.css',

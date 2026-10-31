@@ -109,6 +109,7 @@
     "ZONE_ITEM_CONFIRM_DELETE": "Usunąć strefę?",
     "CHART_LOADING": "Ładowanie wykresu przewyższeń...",
     "CHART_ERROR": "Nie udało się załadować profilu wysokości.",
+    "CHART_NO_DATA": "Brak danych o wysokości dla tej trasy.",
     "CHART_DISTANCE_KM": "Dystans (km)",
     "CHART_ELEVATION_M": "Wysokość (m n.p.m)"
   },
@@ -156,6 +157,7 @@
     "SAVE_ZONE_FAILED": "Nie udało się zapisać strefy wykluczeń.",
     "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy wykluczeń.",
     "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy.",
+    "ZONE_LIMIT_EXCEEDED": "Strefa przekracza limity silnika tras: maks. 20 km szerokości i wysokości, a łączna powierzchnia aktywnych stref maks. 200 km². Zmniejsz strefę lub wyłącz inną.",
     "WAYPOINT_IN_AVOIDANCE_ZONE": "Punkt trasy znajduje się wewnątrz strefy omijanej. Przesuń punkt poza strefę."
   },
   "SUCCESS": {

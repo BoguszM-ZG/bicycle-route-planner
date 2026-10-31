@@ -1,6 +1,5 @@
 package com.bogusz.bicyclerouteplannerbackend.service;
 
-import com.bogusz.bicyclerouteplannerbackend.exception.GpxExportException;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import io.jenetics.jpx.GPX;
 import io.jenetics.jpx.Length;
@@ -13,7 +12,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GpxExportServiceTest {
 
@@ -58,73 +56,6 @@ class GpxExportServiceTest {
         assertThat(segment.getPoints().get(1).getLongitude().doubleValue()).isEqualTo(19.01);
         assertThat(segment.getPoints().get(1).getElevation()).isEmpty();
     }
-
-    @Test
-    void shouldThrowIllegalArgumentExceptionWhenRouteIsNull() {
-        // When & Then
-        assertThatThrownBy(() -> gpxExportService.generateGpxFile(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Route must not be null");
-    }
-
-    @Test
-    void shouldThrowGpxExportExceptionWhenRouteGeomIsNull() {
-        // Given
-        Route route = new Route();
-        route.setName(ROUTE_NAME);
-        route.setRouteGeom(null);
-
-        // When & Then
-        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
-                .isInstanceOf(GpxExportException.class)
-                .hasMessage("Route geometry must not be null");
-    }
-
-    @Test
-    void shouldThrowIllegalArgumentExceptionWhenOutputStreamIsNull() {
-        // Given
-        Coordinate[] coords = new Coordinate[]{
-                new Coordinate(19.0, 50.0),
-                new Coordinate(19.01, 50.01)
-        };
-        Route route = createRoute(ROUTE_NAME, coords);
-
-        // When & Then
-        assertThatThrownBy(() -> gpxExportService.writeGpx(route, null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("OutputStream must not be null");
-    }
-
-    @Test
-    void shouldThrowIllegalArgumentExceptionWhenCoordinateIsNull() {
-        // Given
-        Coordinate[] coords = new Coordinate[]{
-                null,
-                new Coordinate(19.01, 50.01)
-        };
-        Route route = createRoute(ROUTE_NAME, coords);
-
-        // When & Then
-        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Coordinate must not be null");
-    }
-
-    @Test
-    void shouldThrowIllegalArgumentExceptionWhenCoordinateIsNonFinite() {
-        // Given
-        Coordinate[] coords = new Coordinate[]{
-                new Coordinate(Double.NaN, 50.0),
-                new Coordinate(19.01, 50.01)
-        };
-        Route route = createRoute(ROUTE_NAME, coords);
-
-        // When & Then
-        assertThatThrownBy(() -> gpxExportService.generateGpxFile(route))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Coordinate latitude and longitude must be valid finite numbers");
-    }
-
 
     private Route createRoute(String name, Coordinate[] coordinates) {
         Route route = new Route();

@@ -16,7 +16,6 @@ import { FolderItemComponent } from '../folder-item/folder-item.component';
 
 @Component({
   selector: 'app-route-panel',
-  standalone: true,
   imports: [RouteItemComponent, FolderItemComponent, ReactiveFormsModule, TranslatePipe],
   templateUrl: './route-panel.component.html',
   styleUrl: './route-panel.component.css',
@@ -27,15 +26,12 @@ export class RoutePanelComponent {
   private readonly folderStateService = inject(FolderStateService);
 
   public readonly isLoadingRoutes = this.routeStateService.isLoadingList;
-  public readonly isLoadingDetails = this.routeStateService.isLoadingDetails;
   public readonly folders = this.folderStateService.folders;
-  public readonly selectedRouteDetails = this.routeStateService.selectedRoute;
 
   public readonly selectedRouteId = this.routeStateService.selectedRouteId;
-  public readonly rootRoutes = computed(() =>
+  public readonly unassignedRoutes = computed(() =>
     this.routeStateService.routes().filter((r) => r.folderId == null),
   );
-  public readonly rootFolders = this.folderStateService.folders;
 
   public readonly isCreatingFolder = signal<boolean>(false);
   public readonly newFolderName = new FormControl('', {

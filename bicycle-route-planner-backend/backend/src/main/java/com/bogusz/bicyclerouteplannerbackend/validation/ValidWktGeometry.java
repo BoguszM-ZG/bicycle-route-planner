@@ -17,7 +17,7 @@ public @interface ValidWktGeometry {
 
     String message() default "Invalid WKT geometry";
 
-    GeometryType expectedType() default GeometryType.ANY;
+    GeometryType expectedType();
 
     Class<?>[] groups() default {};
 

@@ -20,10 +20,6 @@ export class LoggerService {
     this.logWith(LogLevel.INFO, msg, optionalParams);
   }
 
-  public warn(msg: string, ...optionalParams: unknown[]): void {
-    this.logWith(LogLevel.WARN, msg, optionalParams);
-  }
-
   public error(msg: string, ...optionalParams: unknown[]): void {
     this.logWith(LogLevel.ERROR, msg, optionalParams);
   }

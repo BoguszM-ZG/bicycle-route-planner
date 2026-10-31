@@ -354,7 +354,7 @@ class RouteControllerTest {
     }
 
     private Authentication getMockAuthentication() {
-        UserPrincipal principal = UserPrincipal.of(USER_ID, USER_EMAIL);
+        UserPrincipal principal = UserPrincipal.fromJwt(USER_ID, USER_EMAIL, "ROLE_USER");
         return new UsernamePasswordAuthenticationToken(
                 principal, null, Collections.emptyList()
         );
