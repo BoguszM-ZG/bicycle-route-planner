@@ -22,17 +22,16 @@ export class AvoidanceZoneStateService {
   private readonly _zones = signal<AvoidanceZoneDto[]>([]);
   private readonly _isLoading = signal<boolean>(false);
   private readonly _isSaving = signal<boolean>(false);
+  private readonly _currentZoneDraft = signal<string | null>(null);
 
   public readonly zones = this._zones.asReadonly();
   public readonly isLoading = this._isLoading.asReadonly();
   public readonly isSaving = this._isSaving.asReadonly();
-  private readonly _currentZoneDraft = signal<string | null>(null);
   public readonly currentZoneDraft = this._currentZoneDraft.asReadonly();
 
   constructor() {
     effect(() => {
-      const user = this.authService.currentUser();
-      if (user) {
+      if (this.authService.isAuthenticated()) {
         untracked(() => this.fetchZones());
       } else {
         this.logger.debug(
@@ -55,7 +54,7 @@ export class AvoidanceZoneStateService {
     this._currentZoneDraft.set(wkt);
   }
 
-  public fetchZones(): void {
+  private fetchZones(): void {
     this.fetchZonesSubscription?.unsubscribe();
     this._isLoading.set(true);
 
@@ -95,10 +94,10 @@ export class AvoidanceZoneStateService {
         },
         error: (err) => {
           if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.Conflict) {
-            this.logger.debug(
-              '[AvoidanceZoneStateService] Zone creation validation error',
-              err.error,
-            );
+            this.logger.debug('[AvoidanceZoneStateService] Zone creation validation error', {
+              status: err.status,
+              type: err.error?.type,
+            });
           } else {
             this.logger.error('[AvoidanceZoneStateService] Error saving zone', {
               status: err.status,
@@ -157,7 +156,8 @@ export class AvoidanceZoneStateService {
         if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.NotFound) {
           this.logger.debug('[AvoidanceZoneStateService] Zone toggle rejected', {
             zoneId: zone.id,
-            error: err.error,
+            status: err.status,
+            type: err.error?.type,
           });
         } else {
           this.logger.error('[AvoidanceZoneStateService] Error toggling zone status', {
