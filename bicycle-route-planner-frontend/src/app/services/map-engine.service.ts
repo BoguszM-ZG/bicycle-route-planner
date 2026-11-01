@@ -93,7 +93,7 @@ export class MapEngineService {
     if (this.isLocating()) {
       return;
     }
-    this.logger.debug('[Geolocation] Requesting user GPS location');
+    this.logger.debug('[MapEngine] Requesting user GPS location');
     const map = this.mapInstance();
     if (!map) {
       return;
@@ -132,7 +132,7 @@ export class MapEngineService {
         return;
       }
       this._isLocating.set(false);
-      this.logger.debug('[Geolocation] GPS location access denied or failed', {
+      this.logger.debug('[MapEngine] GPS location access denied or failed', {
         message: e.message,
       });
       this.notificationService.warning('MAP.LOCATION_ERROR');

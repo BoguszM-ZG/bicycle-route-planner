@@ -118,7 +118,7 @@ export class MapDrawService {
     this.tempDrawFeatureGroup.addLayer(layer);
 
     const geoJson = layer.toGeoJSON();
-    this.logger.debug('[AvoidanceZone] New polygon drawn on map');
+    this.logger.debug('[MapDraw] New polygon drawn on map');
     const wktString = wellknown.stringify(geoJson.geometry as unknown as GeoJSONGeometry);
 
     this.avoidanceZoneStateService.setZoneDraft(wktString);
