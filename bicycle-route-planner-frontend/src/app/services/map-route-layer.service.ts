@@ -1,8 +1,7 @@
-import { Injectable, inject, effect, untracked, signal, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Injectable, inject, effect, untracked, signal } from '@angular/core';
 import * as L from 'leaflet';
 import { parse } from 'wellknown';
-import type { Position } from 'geojson';
+import type { LineString, Position } from 'geojson';
 import { TranslateService } from '@ngx-translate/core';
 import { MapEngineService } from './map-engine.service';
 import { RoutePlanningStateService } from './route-planning-state.service';
@@ -10,12 +9,7 @@ import { RouteStateService } from './route-state.service';
 import { AuthService } from './auth.service';
 import { LoggerService } from './logger.service';
 import { MAP_CONSTANTS, MAP_PANES } from '../constants/map.constants';
-import {
-  ActiveRouteGeometry,
-  RouteDetailDto,
-  RouteGeometry,
-  RouteType,
-} from '../models/route.model';
+import { ActiveRouteGeometry, RouteDetailDto, RouteType } from '../models/route.model';
 
 @Injectable({
   providedIn: 'root',
@@ -32,13 +26,13 @@ export class MapRouteLayerService {
     direction: 'top',
     offset: [0, MapRouteLayerService.TOOLTIP_OFFSET_Y],
   };
+
   private readonly mapEngine = inject(MapEngineService);
   private readonly routePlanningStateService = inject(RoutePlanningStateService);
   private readonly routeStateService = inject(RouteStateService);
   private readonly authService = inject(AuthService);
   private readonly logger = inject(LoggerService);
   private readonly translate = inject(TranslateService);
-  private readonly destroyRef = inject(DestroyRef);
 
   private currentMap?: L.Map;
   private readonly routesFeatureGroup = new L.FeatureGroup();
@@ -87,15 +81,9 @@ export class MapRouteLayerService {
     });
 
     effect(() => {
-      const user = this.authService.currentUser();
-      if (!user) {
-        this.clearAll();
+      if (!this.authService.isAuthenticated()) {
+        this.searchPin.set(null);
       }
-    });
-
-    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.updateWaypointPopups();
-      this.updateWaypointTooltips();
     });
   }
 
@@ -141,18 +129,10 @@ export class MapRouteLayerService {
   private detachFromMap(): void {
     if (this.currentMap) {
       this.currentMap.off('click', this.onMapClick);
-      if (this.currentMap.hasLayer(this.routesFeatureGroup)) {
-        this.currentMap.removeLayer(this.routesFeatureGroup);
-      }
-      if (this.currentMap.hasLayer(this.markersFeatureGroup)) {
-        this.currentMap.removeLayer(this.markersFeatureGroup);
-      }
-      if (this.currentMap.hasLayer(this.savedRouteFeatureGroup)) {
-        this.currentMap.removeLayer(this.savedRouteFeatureGroup);
-      }
-      if (this.currentMap.hasLayer(this.searchFeatureGroup)) {
-        this.currentMap.removeLayer(this.searchFeatureGroup);
-      }
+      this.currentMap.removeLayer(this.routesFeatureGroup);
+      this.currentMap.removeLayer(this.markersFeatureGroup);
+      this.currentMap.removeLayer(this.savedRouteFeatureGroup);
+      this.currentMap.removeLayer(this.searchFeatureGroup);
       this.currentMap = undefined;
     }
     this.clearDraftLayers();
@@ -192,7 +172,10 @@ export class MapRouteLayerService {
 
   private setupMarkerEvents(marker: L.Marker): void {
     marker.bindPopup(this.createWaypointPopup(marker), MapRouteLayerService.WAYPOINT_POPUP_OPTIONS);
-    marker.bindTooltip(this.createWaypointTooltip(), MapRouteLayerService.WAYPOINT_TOOLTIP_OPTIONS);
+    marker.bindTooltip(
+      this.translate.instant('MAP.WAYPOINT_TOOLTIP'),
+      MapRouteLayerService.WAYPOINT_TOOLTIP_OPTIONS,
+    );
 
     marker.on('popupopen', () => {
       marker.closeTooltip();
@@ -252,23 +235,6 @@ export class MapRouteLayerService {
 
     container.appendChild(deleteButton);
     return container;
-  }
-
-  private createWaypointTooltip(): string {
-    return this.translate.instant('MAP.WAYPOINT_TOOLTIP');
-  }
-
-  private updateWaypointPopups(): void {
-    this.waypointMarkers.forEach((marker) => {
-      marker.setPopupContent(this.createWaypointPopup(marker));
-    });
-  }
-
-  private updateWaypointTooltips(): void {
-    const tooltipContent = this.createWaypointTooltip();
-    this.waypointMarkers.forEach((marker) => {
-      marker.setTooltipContent(tooltipContent);
-    });
   }
 
   private deleteWaypoint(marker: L.Marker): void {
@@ -372,12 +338,12 @@ export class MapRouteLayerService {
       return;
     }
 
-    const geoJsonGeometry = parse(routeState.routeGeom) as RouteGeometry | null;
+    const geoJsonGeometry = parse(routeState.routeGeom) as LineString | null;
     if (!geoJsonGeometry) {
       return;
     }
 
-    const savedRouteLayer = L.geoJson<unknown, RouteGeometry>(geoJsonGeometry, {
+    const savedRouteLayer = L.geoJson<unknown, LineString>(geoJsonGeometry, {
       style: MAP_CONSTANTS.STYLES.SAVED_ROUTE,
       pane: MAP_PANES.ROUTES.name,
     }).addTo(this.savedRouteFeatureGroup);
@@ -389,24 +355,9 @@ export class MapRouteLayerService {
     );
   }
 
-  private addSavedRouteMarkers(geoJsonGeometry: RouteGeometry, routeType: RouteType): void {
-    let startCoords: Position | undefined;
-    let endCoords: Position | undefined;
-
-    if (geoJsonGeometry.type === 'LineString') {
-      const coords = geoJsonGeometry.coordinates;
-      if (coords.length > 0) {
-        startCoords = coords[0];
-        endCoords = coords[coords.length - 1];
-      }
-    } else if (geoJsonGeometry.type === 'MultiLineString') {
-      const validLines = geoJsonGeometry.coordinates.filter((line) => line.length > 0);
-      if (validLines.length > 0) {
-        startCoords = validLines[0][0];
-        const lastLine = validLines[validLines.length - 1];
-        endCoords = lastLine[lastLine.length - 1];
-      }
-    }
+  private addSavedRouteMarkers(geoJsonGeometry: LineString, routeType: RouteType): void {
+    const startCoords = geoJsonGeometry.coordinates[0];
+    const endCoords = geoJsonGeometry.coordinates.at(-1);
 
     if (!startCoords || !endCoords) {
       return;
@@ -486,10 +437,5 @@ export class MapRouteLayerService {
     this.clearDraftLayers();
     this.clearSavedRouteLayers();
     this.routePlanningStateService.clearRoute();
-  }
-
-  private clearAll(): void {
-    this.clearRoute();
-    this.setSearchPin(null);
   }
 }

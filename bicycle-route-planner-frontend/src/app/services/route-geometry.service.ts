@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as L from 'leaflet';
-import type { GeometryObject, Polygon, Position } from 'geojson';
+import type { Polygon, Position } from 'geojson';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { parse, stringify } from 'wellknown';
 import { RouteWkt } from '../models/route.model';
@@ -14,69 +14,20 @@ export class RouteGeometryService {
     waypoints: readonly L.LatLng[],
     avoidPolygons?: AvoidPolygonsGeoJson,
   ): boolean {
-    if (!waypoints || waypoints.length === 0) {
-      return false;
-    }
-    if (!avoidPolygons?.coordinates || avoidPolygons.coordinates.length === 0) {
+    if (!avoidPolygons) {
       return false;
     }
 
-    return waypoints.some(
-      (waypoint) =>
-        waypoint &&
-        avoidPolygons.coordinates.some(
-          (polygon) => polygon && this.isPointInPolygon(waypoint, polygon),
-        ),
+    return waypoints.some((waypoint) =>
+      avoidPolygons.coordinates.some((rings) =>
+        booleanPointInPolygon([waypoint.lng, waypoint.lat], {
+          type: 'Polygon',
+          coordinates: rings,
+        }),
+      ),
     );
   }
 
-  public isPointInPolygon(point: L.LatLng, rings: Polygon['coordinates']): boolean {
-    if (!point || !Number.isFinite(point.lat) || !Number.isFinite(point.lng) || !rings?.length) {
-      return false;
-    }
-
-    const exterior = this.closeRing(rings[0]);
-    if (!exterior) {
-      return false;
-    }
-
-    const closedRings: Position[][] = [
-      exterior,
-      ...rings
-        .slice(1)
-        .map((ring) => this.closeRing(ring))
-        .filter((ring): ring is Position[] => ring !== null),
-    ];
-
-    try {
-      return booleanPointInPolygon([point.lng, point.lat], {
-        type: 'Polygon',
-        coordinates: closedRings,
-      });
-    } catch {
-      return false;
-    }
-  }
-
-  private closeRing(ring: Position[]): Position[] | null {
-    if (
-      !ring ||
-      ring.length < 3 ||
-      ring.some((pos) => !pos || !Number.isFinite(pos[0]) || !Number.isFinite(pos[1]))
-    ) {
-      return null;
-    }
-
-    const first = ring[0];
-    const last = ring[ring.length - 1];
-    const isClosed = first[0] === last[0] && first[1] === last[1];
-
-    if (isClosed) {
-      return ring.length >= 4 ? ring : null;
-    }
-
-    return [...ring, first];
-  }
   public generateRouteWkt(coordinates: readonly L.LatLng[]): RouteWkt {
     const lineCoords: [number, number, number][] = coordinates.map((pt) => [
       pt.lng,
@@ -99,23 +50,7 @@ export class RouteGeometryService {
   }
 
   public extractPolygonCoordinates(zoneGeom: string): Position[][][] {
-    try {
-      const parsed = parse(zoneGeom) as GeometryObject | null;
-      if (!parsed) {
-        return [];
-      }
-
-      if (parsed.type === 'Polygon') {
-        return parsed.coordinates.length > 0 ? [parsed.coordinates] : [];
-      }
-
-      if (parsed.type === 'MultiPolygon') {
-        return parsed.coordinates.filter((poly) => poly.length > 0);
-      }
-
-      return [];
-    } catch {
-      return [];
-    }
+    const parsed = parse(zoneGeom) as Polygon | null;
+    return parsed ? [parsed.coordinates] : [];
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable, inject, signal, effect, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpStatusCode } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -15,7 +16,6 @@ import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
 import { FolderStateService } from './folder-state.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -55,8 +55,7 @@ export class RouteStateService {
 
   constructor() {
     effect(() => {
-      const user = this.authService.currentUser();
-      if (user) {
+      if (this.authService.isAuthenticated()) {
         untracked(() => this.fetchRoutes());
       } else {
         this.logger.debug('[RouteStateService] User logged out, clearing RouteStateService');
@@ -84,7 +83,7 @@ export class RouteStateService {
     this._hasElevationError.set(false);
   }
 
-  public fetchRoutes(): void {
+  private fetchRoutes(): void {
     this.fetchRoutesSubscription?.unsubscribe();
     this._isLoadingList.set(true);
 
@@ -150,7 +149,7 @@ export class RouteStateService {
       next: () => {
         this._routes.update((routes) => routes.filter((r) => r.id !== routeId));
         this.logger.info('[RouteStateService] Route successfully deleted', { routeId });
-        if (this.selectedRouteId() === routeId || this._selectedRoute()?.id === routeId) {
+        if (this.selectedRouteId() === routeId) {
           this.clearSelectedRoute();
         }
         this.notificationService.success('SUCCESS.DELETE_ROUTE');
@@ -199,7 +198,8 @@ export class RouteStateService {
         error: (err) => {
           if (err.status === HttpStatusCode.BadRequest) {
             this.logger.debug('[RouteStateService] Route validation failed on server', {
-              error: err.error,
+              status: err.status,
+              type: err.error?.type,
             });
             const validationErrors = err.error?.validationErrors;
             const errorType = typeof err.error?.type === 'string' ? err.error.type : '';
@@ -235,8 +235,8 @@ export class RouteStateService {
       error: (err) => {
         this.logger.error('[RouteStateService] Error exporting route', {
           routeId,
-          format,
           status: err.status,
+          type: err.error?.type,
         });
         this.notificationService.error('ERRORS.DOWNLOAD_ROUTE_ERROR');
       },
@@ -244,9 +244,7 @@ export class RouteStateService {
   }
 
   public moveRouteToFolder(routeId: number, folderId: number | null): void {
-    const currentRoute = this.findRoute(routeId);
-    const currentFolderId = currentRoute ? (currentRoute.folderId ?? null) : undefined;
-    if (currentFolderId !== undefined && currentFolderId === (folderId ?? null)) {
+    if (this.findRoute(routeId)?.folderId === folderId) {
       return;
     }
 
@@ -268,8 +266,8 @@ export class RouteStateService {
         if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.NotFound) {
           this.logger.debug('[RouteStateService] Route move validation error', {
             routeId,
-            folderId,
-            error: err.error,
+            status: err.status,
+            type: err.error?.type,
           });
         } else {
           this.logger.error('[RouteStateService] Error moving route', {
@@ -282,7 +280,7 @@ export class RouteStateService {
     });
   }
 
-  public handleFolderDeleted(folderId: number): void {
+  private handleFolderDeleted(folderId: number): void {
     if (this._routes().some((r) => r.folderId === folderId)) {
       this._routes.update((routes) =>
         routes.map((r) => (r.folderId === folderId ? { ...r, folderId: null } : r)),
@@ -319,8 +317,8 @@ export class RouteStateService {
         if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.NotFound) {
           this.logger.debug('[RouteStateService] Route rename validation error', {
             routeId,
-            newName: trimmed,
-            error: err.error,
+            status: err.status,
+            type: err.error?.type,
           });
         } else {
           this.logger.error('[RouteStateService] Error renaming route', {
@@ -359,12 +357,7 @@ export class RouteStateService {
       });
   }
 
-  private findRoute(routeId: number): RouteSummaryDto | RouteDetailDto | undefined {
-    const fromList = this._routes().find((r) => r.id === routeId);
-    if (fromList) {
-      return fromList;
-    }
-    const selected = this._selectedRoute();
-    return selected?.id === routeId ? selected : undefined;
+  private findRoute(routeId: number): RouteSummaryDto | undefined {
+    return this._routes().find((r) => r.id === routeId);
   }
 }

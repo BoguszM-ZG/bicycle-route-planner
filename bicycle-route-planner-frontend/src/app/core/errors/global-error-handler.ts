@@ -1,71 +1,26 @@
-import { ErrorHandler, Injectable, Injector, inject } from '@angular/core';
+import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LoggerService } from '../../services/logger.service';
 import { NotificationService } from '../../services/notification.service';
-import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
-  private readonly injector = inject(Injector);
+  private readonly logger = inject(LoggerService);
+  private readonly notificationService = inject(NotificationService);
 
   public handleError(error: unknown): void {
-    const unwrappedError = this.findOriginalError(error);
-
-    const logger = this.injector.get(LoggerService);
-    const notificationService = this.injector.get(NotificationService);
-
-    if (unwrappedError instanceof HttpErrorResponse) {
-      logger.error('[GlobalError] Unhandled HTTP error', {
-        status: unwrappedError.status,
-        type: unwrappedError.error?.type,
+    if (error instanceof HttpErrorResponse) {
+      this.logger.error('[GlobalError] Unhandled HTTP error', {
+        status: error.status,
+        type: error.error?.type,
       });
       return;
     }
 
-    const message =
-      unwrappedError instanceof Error
-        ? unwrappedError.message
-        : typeof unwrappedError === 'object' &&
-            unwrappedError !== null &&
-            'message' in unwrappedError
-          ? String((unwrappedError as { message: unknown }).message)
-          : String(unwrappedError);
+    const message = error instanceof Error ? error.message : String(error);
+    const originalError = error instanceof Error ? (error.stack ?? error.message) : String(error);
 
-    let originalError: string;
-    try {
-      if (unwrappedError instanceof Error) {
-        originalError = unwrappedError.stack ?? unwrappedError.message;
-      } else if (typeof unwrappedError === 'object' && unwrappedError !== null) {
-        originalError = JSON.stringify(unwrappedError);
-      } else {
-        originalError = String(unwrappedError);
-      }
-    } catch {
-      originalError = String(unwrappedError);
-    }
-
-    logger.error(`[GlobalError] ${message}`, { originalError });
-
-    notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
-  }
-
-  private findOriginalError(error: unknown): unknown {
-    let currentError: unknown = error;
-    while (
-      typeof currentError === 'object' &&
-      currentError !== null &&
-      'originalError' in currentError &&
-      (currentError as { originalError: unknown }).originalError
-    ) {
-      currentError = (currentError as { originalError: unknown }).originalError;
-    }
-    if (
-      typeof currentError === 'object' &&
-      currentError !== null &&
-      'rejection' in currentError &&
-      (currentError as { rejection: unknown }).rejection
-    ) {
-      return (currentError as { rejection: unknown }).rejection;
-    }
-    return currentError;
+    this.logger.error(`[GlobalError] ${message}`, { originalError });
+    this.notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
   }
 }

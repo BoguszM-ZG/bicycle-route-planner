@@ -12,6 +12,16 @@ import { LoggerService } from './logger.service';
   providedIn: 'root',
 })
 export class AuthService {
+  private static readonly ACCESS_TOKEN_KEY = 'accessToken';
+  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
+  private static readonly CURRENT_USER_KEY = 'currentUser';
+  private static readonly CLOCK_SKEW_MS = 30_000;
+  private static readonly LOGIN_ROUTE = '/login';
+  private static readonly AUTH_ERROR_KEYS: Record<number, string> = {
+    [HttpStatusCode.Unauthorized]: 'AUTH.INVALID_CREDENTIALS',
+    [HttpStatusCode.Conflict]: 'AUTH.EMAIL_TAKEN',
+  };
+
   private readonly http = inject(HttpClient);
   private readonly logger = inject(LoggerService);
   private readonly router = inject(Router);
@@ -26,16 +36,6 @@ export class AuthService {
   public readonly error = this._error.asReadonly();
 
   public readonly isAuthenticated = computed(() => this._currentUser() !== null);
-
-  private static readonly ACCESS_TOKEN_KEY = 'accessToken';
-  private static readonly REFRESH_TOKEN_KEY = 'refreshToken';
-  private static readonly CURRENT_USER_KEY = 'currentUser';
-  private static readonly CLOCK_SKEW_MS = 30_000;
-  private static readonly LOGIN_ROUTE = '/login';
-  private static readonly AUTH_ERROR_KEYS: Record<number, string> = {
-    [HttpStatusCode.Unauthorized]: 'AUTH.INVALID_CREDENTIALS',
-    [HttpStatusCode.Conflict]: 'AUTH.EMAIL_TAKEN',
-  };
 
   private refreshInProgress$: Observable<AuthResponse> | null = null;
 
@@ -77,8 +77,7 @@ export class AuthService {
       return throwError(() => new Error('No refresh token available'));
     }
 
-    let currentRefresh$: Observable<AuthResponse>;
-    currentRefresh$ = (this.refreshInProgress$ = this.http
+    const currentRefresh$: Observable<AuthResponse> = this.http
       .post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken })
       .pipe(
         switchMap((response) => {
@@ -96,12 +95,14 @@ export class AuthService {
           return of(response);
         }),
         catchError((error: unknown) => {
-          const isHttp =
-            error instanceof HttpErrorResponse ||
-            (typeof error === 'object' && error !== null && 'status' in error);
-          const status = (error as { status?: number })?.status;
+          if (!(error instanceof HttpErrorResponse)) {
+            return throwError(() => error);
+          }
 
-          if (status === 401 || status === 403) {
+          if (
+            error.status === HttpStatusCode.Unauthorized ||
+            error.status === HttpStatusCode.Forbidden
+          ) {
             if (
               this.refreshInProgress$ === currentRefresh$ &&
               this.getRefreshToken() === refreshToken
@@ -113,11 +114,10 @@ export class AuthService {
                 '[Auth] Refresh token rejected but session already changed or terminated',
               );
             }
-          } else if (isHttp) {
-            this.logger.error(
-              '[Auth] Failed to refresh session due to server or network error',
-              { status },
-            );
+          } else {
+            this.logger.error('[Auth] Failed to refresh session due to server or network error', {
+              status: error.status,
+            });
           }
           return throwError(() => error);
         }),
@@ -127,9 +127,10 @@ export class AuthService {
           }
         }),
         shareReplay({ bufferSize: 1, refCount: false }),
-      ));
+      );
 
-    return this.refreshInProgress$;
+    this.refreshInProgress$ = currentRefresh$;
+    return currentRefresh$;
   }
 
   public clearError(): void {
@@ -177,13 +178,9 @@ export class AuthService {
       return false;
     }
 
-    const accessToken = this.getAccessToken();
-    const refreshToken = this.getRefreshToken();
-
-    const isAccessValid = !!accessToken && !this.isTokenExpired(accessToken);
-    const isRefreshValid = !!refreshToken && !this.isTokenExpired(refreshToken);
-
-    return isAccessValid || isRefreshValid;
+    return (
+      !this.isTokenExpired(this.getAccessToken()) || !this.isTokenExpired(this.getRefreshToken())
+    );
   }
 
   private clearAuthStorage(): void {
@@ -194,15 +191,10 @@ export class AuthService {
 
   private hydrateAuthState(): void {
     const userStr = localStorage.getItem(AuthService.CURRENT_USER_KEY);
-    const accessToken = this.getAccessToken();
-    const refreshToken = this.getRefreshToken();
+    const isSessionExpired =
+      this.isTokenExpired(this.getAccessToken()) && this.isTokenExpired(this.getRefreshToken());
 
-    if (!userStr || (!accessToken && !refreshToken)) {
-      this.clearSession();
-      return;
-    }
-
-    if (this.isTokenExpired(accessToken) && this.isTokenExpired(refreshToken)) {
+    if (!userStr || isSessionExpired) {
       this.clearSession();
       return;
     }

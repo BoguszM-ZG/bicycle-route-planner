@@ -10,9 +10,7 @@ export interface GeoFeatureProperties {
 
 export type GeoFeature = Feature<Point, GeoFeatureProperties>;
 
-export interface GeoResponse extends Partial<FeatureCollection<Point, GeoFeatureProperties>> {
-  features?: GeoFeature[];
-}
+export type GeoResponse = Partial<FeatureCollection<Point, GeoFeatureProperties>>;
 
 export interface SearchResult {
   x: number;

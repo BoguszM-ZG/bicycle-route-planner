@@ -72,7 +72,7 @@ export class MapDrawService {
     this.map = mapInstance;
     this.map.addLayer(this.drawnItems);
     this.map.addLayer(this.tempDrawFeatureGroup);
-    this.setupDrawEvents(mapInstance);
+    this.map.on(L.Draw.Event.CREATED, this.onDrawCreated);
 
     this.renderZones(this.avoidanceZoneStateService.zones());
 
@@ -85,34 +85,22 @@ export class MapDrawService {
     this.cancelDrawing();
     if (this.map) {
       this.map.off(L.Draw.Event.CREATED, this.onDrawCreated);
-      if (this.map.hasLayer(this.drawnItems)) {
-        this.map.removeLayer(this.drawnItems);
-      }
-      if (this.map.hasLayer(this.tempDrawFeatureGroup)) {
-        this.map.removeLayer(this.tempDrawFeatureGroup);
-      }
+      this.map.removeLayer(this.drawnItems);
+      this.map.removeLayer(this.tempDrawFeatureGroup);
       this.map = undefined;
     }
     this.drawnItems.clearLayers();
     this.tempDrawFeatureGroup.clearLayers();
   }
 
-  private startDrawingPolygon(targetMap?: L.Map): void {
-    const map = targetMap ?? this.map ?? this.mapEngine.mapInstance();
-    if (!map) {
-      return;
-    }
+  private startDrawingPolygon(map: L.Map): void {
     this.cancelDrawing();
 
-    try {
-      this.currentDrawer = new L.Draw.Polygon(
-        map as unknown as L.DrawMap,
-        MapDrawService.DRAW_POLYGON_OPTIONS,
-      );
-      this.currentDrawer.enable();
-    } catch (err) {
-      this.logger.debug('[MapDraw] Could not enable polygon drawer', { error: err });
-    }
+    this.currentDrawer = new L.Draw.Polygon(
+      map as unknown as L.DrawMap,
+      MapDrawService.DRAW_POLYGON_OPTIONS,
+    );
+    this.currentDrawer.enable();
   }
 
   private cancelDrawing(): void {
@@ -135,10 +123,6 @@ export class MapDrawService {
 
     this.avoidanceZoneStateService.setZoneDraft(wktString);
   };
-
-  private setupDrawEvents(map: L.Map): void {
-    map.on(L.Draw.Event.CREATED, this.onDrawCreated);
-  }
 
   private renderZones(zones: AvoidanceZoneDto[]): void {
     if (!this.map) {

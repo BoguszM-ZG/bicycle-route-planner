@@ -1,10 +1,8 @@
-import type { LineString, MultiLineString } from 'geojson';
 import type { LatLng } from 'leaflet';
 
 export type RouteType = 'POINT_TO_POINT' | 'LOOP';
 export type RoutingMode = 'direct' | 'roundTrip' | 'avoidanceZone';
 export type RouteExportFormat = 'gpx' | 'geojson';
-export type RouteGeometry = LineString | MultiLineString;
 
 export interface RouteDetailDto {
   id: number;
@@ -17,14 +15,14 @@ export interface RouteDetailDto {
   startPoint: string;
   routeGeom: string;
   createdAt: string;
-  folderId?: number | null;
+  folderId: number | null;
 }
 
 export interface RouteSummaryDto {
   id: number;
   name: string;
   distanceMeters: number;
-  folderId?: number | null;
+  folderId: number | null;
 }
 
 export interface CreateRouteRequestDto {
@@ -36,7 +34,7 @@ export interface CreateRouteRequestDto {
   elevationLoss: number;
   startPoint: string;
   routeGeom: string;
-  folderId?: number | null;
+  folderId: number | null;
 }
 
 export interface RouteDraft {

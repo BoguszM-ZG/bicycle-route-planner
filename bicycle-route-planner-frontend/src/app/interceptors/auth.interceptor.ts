@@ -1,21 +1,18 @@
-import { HttpInterceptorFn, HttpErrorResponse, HttpRequest } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpRequest, HttpStatusCode } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { EMPTY, catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { environment } from '../../environments/environment';
-
-const AUTH_ENDPOINT = '/auth/';
-const TELEMETRY_ENDPOINT = '/telemetry/';
-const AUTH_HEADER = 'Authorization';
-const BEARER_PREFIX = 'Bearer ';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
 
   const isApiUrl = req.url.startsWith(environment.apiUrl);
-  const isExcludedEndpoint = req.url.includes(AUTH_ENDPOINT) || req.url.includes(TELEMETRY_ENDPOINT);
+  const isPublicEndpoint =
+    req.url.startsWith(`${environment.apiUrl}/auth/`) ||
+    req.url.startsWith(`${environment.apiUrl}/telemetry/`);
 
-  if (!isApiUrl || isExcludedEndpoint) {
+  if (!isApiUrl || isPublicEndpoint) {
     return next(req);
   }
 
@@ -25,7 +22,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (token && !authService.isTokenExpired(token)) {
     return next(addTokenHeader(req, token)).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
+        if (error.status === HttpStatusCode.Unauthorized) {
           return authService.refreshToken().pipe(
             switchMap((res) => next(addTokenHeader(req, res.accessToken))),
           );
@@ -41,11 +38,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     );
   }
 
-  return next(req);
+  if (authService.isAuthenticated()) {
+    authService.logout();
+  }
+  return EMPTY;
 };
 
 function addTokenHeader(request: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
   return request.clone({
-    setHeaders: { [AUTH_HEADER]: `${BEARER_PREFIX}${token}` },
+    setHeaders: { Authorization: `Bearer ${token}` },
   });
 }
