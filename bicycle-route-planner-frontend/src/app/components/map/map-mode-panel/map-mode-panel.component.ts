@@ -11,7 +11,6 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapModePanelComponent {
-  private static readonly METERS_PER_KILOMETER = 1000;
 
   private readonly routePlanningState = inject(RoutePlanningStateService);
 
@@ -26,15 +25,8 @@ export class MapModePanelComponent {
     this.setMode('direct');
   }
 
-  public onDistanceChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const val = Number(input.value);
-
-    if (!Number.isNaN(val)) {
-      this.routePlanningState.setRoundTripDistance(
-        val * MapModePanelComponent.METERS_PER_KILOMETER,
-      );
-    }
+  public setDistanceKm(km: number): void {
+    this.routePlanningState.setRoundTripDistance(km * 1000);
   }
 }
 

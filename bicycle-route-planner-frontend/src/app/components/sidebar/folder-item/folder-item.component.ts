@@ -2,9 +2,9 @@ import { Component, ChangeDetectionStrategy, signal, input, inject, computed } f
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FolderStateService } from '../../../services/folder-state.service';
 import { RouteStateService } from '../../../services/route-state.service';
+import { FolderDto } from '../../../models/folder.model';
 import { RouteItemComponent } from '../route-item/route-item.component';
 import { TranslatePipe } from '@ngx-translate/core';
-
 
 @Component({
   selector: 'app-folder-item',
@@ -14,71 +14,58 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FolderItemComponent {
-  public folderId = input.required<number>();
   private readonly folderStateService = inject(FolderStateService);
   private readonly routeStateService = inject(RouteStateService);
-  public isExpanded = signal<boolean>(false);
-  public allFolders = this.folderStateService.folders;
 
-  public isRenaming = signal<boolean>(false);
-  public isConfirmingDelete = signal<boolean>(false);
-  public renameControl = new FormControl<string>('', {
+  public readonly folder = input.required<FolderDto>();
+
+  public readonly allFolders = this.folderStateService.folders;
+  public readonly selectedRouteId = this.routeStateService.selectedRouteId;
+  public readonly folderRoutes = computed(() =>
+    this.routeStateService.routes().filter((r) => r.folderId === this.folder().id),
+  );
+
+  public readonly isExpanded = signal<boolean>(false);
+  public readonly isRenaming = signal<boolean>(false);
+  public readonly isConfirmingDelete = signal<boolean>(false);
+  public readonly renameControl = new FormControl<string>('', {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(100), Validators.pattern(/\S/)],
   });
 
   public toggleExpanded(): void {
-    if (this.isRenaming() || this.isConfirmingDelete()) return;
-    this.isExpanded.set(!this.isExpanded());
+    this.isExpanded.update((v) => !v);
   }
 
-  public promptDelete(event: Event): void {
-    event.stopPropagation();
+  public promptDelete(): void {
     this.isConfirmingDelete.set(true);
   }
 
-  public cancelDelete(event: Event): void {
-    event.stopPropagation();
+  public cancelDelete(): void {
     this.isConfirmingDelete.set(false);
   }
 
-  public confirmDelete(event: Event): void {
-    event.stopPropagation();
-
-    this.folderStateService.deleteFolder(this.folderId());
+  public confirmDelete(): void {
+    this.folderStateService.deleteFolder(this.folder().id);
     this.isConfirmingDelete.set(false);
   }
 
-  public toggleRename(event: Event): void {
-    event.stopPropagation();
+  public toggleRename(): void {
     if (!this.isRenaming()) {
-      this.renameControl.setValue(this.folderData()?.name || '');
+      this.renameControl.setValue(this.folder().name);
     }
-    this.isRenaming.set(!this.isRenaming());
+    this.isRenaming.update((v) => !v);
   }
 
-  public confirmRename(event: Event): void {
-    event.stopPropagation();
-    if (this.renameControl.valid && this.renameControl.value) {
-      const newName = this.renameControl.value.trim();
-      const oldName = this.folderData()?.name;
-      if (!newName || newName === oldName) {
-        this.isRenaming.set(false);
-        return;
-      }
-
-      this.folderStateService.renameFolder(this.folderId(), newName);
-      this.isRenaming.set(false);
+  public confirmRename(): void {
+    if (this.renameControl.invalid) {
+      return;
     }
+
+    const newName = this.renameControl.value.trim();
+    if (newName !== this.folder().name) {
+      this.folderStateService.renameFolder(this.folder().id, newName);
+    }
+    this.isRenaming.set(false);
   }
-
-  public folderData = computed(() => {
-    return this.folderStateService.folders().find((f) => f.id === this.folderId());
-  });
-
-
-  public folderRoutes = computed(() => {
-    return this.routeStateService.routes().filter((r) => r.folderId === this.folderId());
-  });
-  public readonly selectedRouteId = this.routeStateService.selectedRouteId;
 }

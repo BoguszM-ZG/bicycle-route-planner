@@ -1,52 +1,27 @@
 .modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-
-
+  inset: 0;
   background: rgba(0, 0, 0, 0.4);
-
-
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-
-
   z-index: 2000;
-
-
   display: flex;
   justify-content: center;
   align-items: center;
-
-
   animation: fadeIn 0.3s ease-out;
 }
 
-
 .modal-glass {
-
   background: rgba(255, 255, 255, 0.25);
-
-
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 20px;
-
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-
   box-sizing: border-box;
   width: min(460px, 100% - 32px);
   padding: 30px;
   color: #1f2937;
-  font-family: 'Inter', 'Roboto', sans-serif;
-
   animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-
 
 h2 {
   margin: 0 0 10px 0;
@@ -61,30 +36,28 @@ label {
   color: #374151;
 }
 
-
-.route-name-input {
+.name-input {
   width: 100%;
   padding: 12px 15px;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   margin-bottom: 20px;
-
-
   background: rgba(255, 255, 255, 0.6);
   font-size: 1rem;
   color: #111827;
   outline: none;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
 }
 
-
-.route-name-input:focus {
+.name-input:focus {
   background: rgba(255, 255, 255, 0.9);
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
-
 
 .modal-actions {
   display: flex;
@@ -99,9 +72,10 @@ button {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
 }
-
 
 button:disabled {
   opacity: 0.6;
@@ -128,14 +102,12 @@ button:disabled {
   transform: translateY(-1px);
 }
 
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 @keyframes slideUp {
-   from { opacity: 0; transform: translateY(30px) scale(0.95); }
-
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }

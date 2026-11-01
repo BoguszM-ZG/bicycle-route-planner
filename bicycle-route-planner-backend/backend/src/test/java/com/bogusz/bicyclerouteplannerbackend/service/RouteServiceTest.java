@@ -23,11 +23,10 @@ import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.ElevationPointDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.FileExportDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RenameRouteRequestDto;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -248,106 +247,38 @@ class RouteServiceTest {
     }
 
     @Test
-    void shouldCalculateElevationPointsSuccessfully() {
+    void shouldReturnElevationProfileCalculatedByRepository() {
         // GIVEN
-        Route mockRoute = new Route();
+        List<ElevationPointDto> profile = List.of(
+                new ElevationPointDto(0.0, 200.0),
+                new ElevationPointDto(1112.0, 210.0)
+        );
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(new Route()));
+        given(routeRepository.findElevationProfileById(ROUTE_ID)).willReturn(profile);
 
-        Coordinate[] coords = new Coordinate[]{
-                new Coordinate(19.0, 50.0, 200.0),
-                new Coordinate(19.0, 50.01, 210.0)
-        };
-
-        GeometryFactory factory = new GeometryFactory();
-        mockRoute.setRouteGeom(factory.createLineString(coords));
-        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
         // WHEN
-        List<ElevationPointDto> result =
-                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+        List<ElevationPointDto> result = routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+
         // THEN
-        assertThat(result).hasSize(2);
-
-        assertThat(result.get(0).distance()).isEqualTo(0.0);
-        assertThat(result.get(0).elevation()).isEqualTo(200.0);
-
-assertThat(result.get(1).distance()).isGreaterThan(1000.0);
-        assertThat(result.get(1).elevation()).isEqualTo(210.0);
+        assertThat(result).containsExactlyElementsOf(profile);
     }
 
     @Test
     void shouldDownsampleWhenElevationPointsExceedDefaultMaxPoints() {
         // GIVEN
-        Route mockRoute = new Route();
-        Coordinate[] coords = new Coordinate[300];
-        for (int i = 0; i < 300; i++) {
-            coords[i] = new Coordinate(19.0 + (i * 0.001), 50.0 + (i * 0.001), 100.0 + i);
-        }
-
-        GeometryFactory factory = new GeometryFactory();
-        mockRoute.setRouteGeom(factory.createLineString(coords));
-        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
+        List<ElevationPointDto> profile = IntStream.range(0, 300)
+                .mapToObj(i -> new ElevationPointDto(i * 10.0, 100.0 + i))
+                .toList();
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(new Route()));
+        given(routeRepository.findElevationProfileById(ROUTE_ID)).willReturn(profile);
 
         // WHEN
-        List<ElevationPointDto> result =
-                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
+        List<ElevationPointDto> result = routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
 
         // THEN
         assertThat(result).hasSizeLessThanOrEqualTo(250);
-        assertThat(result.getFirst().distance()).isEqualTo(0.0);
-        assertThat(result.getFirst().elevation()).isEqualTo(100.0);
-        assertThat(result.getLast().elevation()).isEqualTo(100.0 + 300 - 1);
-        for (int i = 1; i < result.size(); i++) {
-            assertThat(result.get(i).distance()).isGreaterThan(result.get(i - 1).distance());
-        }
-    }
-
-    @Test
-    void shouldFilterOutNaNZCoordinates() {
-        // GIVEN
-        Route mockRoute = new Route();
-        Coordinate[] coords = new Coordinate[]{
-                new Coordinate(19.0, 50.0, 200.0),
-                new Coordinate(19.0, 50.01, Double.NaN),
-                new Coordinate(19.0 + 0.001, 50.01, 210.0)
-        };
-
-        GeometryFactory factory = new GeometryFactory();
-        mockRoute.setRouteGeom(factory.createLineString(coords));
-        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
-
-        // WHEN
-        List<ElevationPointDto> result =
-                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
-
-        // THEN
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).elevation()).isEqualTo(200.0);
-        assertThat(result.get(1).elevation()).isEqualTo(210.0);
-    }
-
-    @Test
-    void shouldHandleAntipodalAndIdenticalCoordinatesWithoutNaN() {
-        // GIVEN
-        Route mockRoute = new Route();
-        Coordinate[] coords = new Coordinate[]{
-                new Coordinate(0.0, 90.0, 100.0),
-                new Coordinate(0.0, 90.0, 150.0),
-                new Coordinate(0.0, -90.0, 200.0)
-        };
-
-        GeometryFactory factory = new GeometryFactory();
-        mockRoute.setRouteGeom(factory.createLineString(coords));
-        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(mockRoute));
-
-        // WHEN
-        List<ElevationPointDto> result =
-                routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID);
-
-        // THEN
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0).distance()).isEqualTo(0.0);
-        assertThat(result.get(1).distance()).isEqualTo(0.0);
-        assertThat(result.get(2).distance()).isGreaterThan(0.0);
-        assertThat(Double.isNaN(result.get(2).distance())).isFalse();
+        assertThat(result.getFirst()).isEqualTo(profile.getFirst());
+        assertThat(result.getLast()).isEqualTo(profile.getLast());
     }
 
     @Test

@@ -21,7 +21,7 @@
         type="text"
         [formControl]="routeNameControl"
         [placeholder]="'MODALS.SAVE_ROUTE_PLACEHOLDER' | translate"
-        class="route-name-input"
+        class="name-input"
         maxlength="150"
         (keyup.enter)="saveRoute()"
         (keyup.escape)="close()"
@@ -31,7 +31,7 @@
 
       <select id="folderSelect"
               [formControl]="selectedFolderControl"
-              class="route-name-input"
+              class="name-input"
               (keyup.escape)="close()">
         <option [ngValue]="null">{{ 'MODALS.NO_FOLDER' | translate }}</option>
 
@@ -41,14 +41,13 @@
       </select>
 
       <div class="modal-actions">
-        <button class="btn-cancel" (click)="close()" [disabled]="isLoading()">
+        <button type="button" class="btn-cancel" (click)="close()" [disabled]="isLoading()">
           {{ 'MODALS.CANCEL' | translate }}
         </button>
-        <button class="btn-save" (click)="saveRoute()" [disabled]="isLoading()" aria-live="polite">
+        <button type="button" class="btn-save" (click)="saveRoute()" [disabled]="isLoading()" aria-live="polite">
           {{ isLoading() ? ('MODALS.SAVING' | translate) : ('MODALS.SAVE' | translate) }}
         </button>
       </div>
-
     </dialog>
   </div>
 }

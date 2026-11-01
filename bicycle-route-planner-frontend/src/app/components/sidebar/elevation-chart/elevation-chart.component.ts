@@ -4,14 +4,6 @@ import { ChartConfiguration, ChartOptions } from 'chart.js';
 import { RouteStateService } from '../../../services/route-state.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
-const METERS_PER_KILOMETER = 1000;
-const CHART_BORDER_COLOR = '#3b82f6';
-const CHART_BACKGROUND_COLOR = 'rgba(59, 130, 246, 0.2)';
-const CHART_AXIS_COLOR = '#aaa';
-const CHART_LINE_BORDER_WIDTH = 2;
-const CHART_POINT_RADIUS = 0;
-const CHART_POINT_HIT_RADIUS = 10;
-
 @Component({
   selector: 'app-elevation-chart',
   imports: [BaseChartDirective, TranslatePipe],
@@ -20,6 +12,8 @@ const CHART_POINT_HIT_RADIUS = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ElevationChartComponent {
+  private static readonly AXIS_COLOR = '#6b7280';
+
   private readonly routeStateService = inject(RouteStateService);
   private readonly translate = inject(TranslateService);
 
@@ -28,24 +22,18 @@ export class ElevationChartComponent {
   public readonly elevationProfile = this.routeStateService.elevationProfile;
 
   public readonly chartData = computed<ChartConfiguration<'scatter'>['data'] | null>(() => {
-    const points = this.routeStateService.elevationProfile();
+    const points = this.elevationProfile();
     if (!points) {
       return null;
     }
 
-    const dataPoints = points.map((point) => ({
-      x: point.distance / METERS_PER_KILOMETER,
-      y: point.elevation,
-    }));
-
     return {
       datasets: [
         {
-          type: 'scatter',
           showLine: true,
-          data: dataPoints,
-          borderColor: CHART_BORDER_COLOR,
-          backgroundColor: CHART_BACKGROUND_COLOR,
+          data: points.map((point) => ({ x: point.distance / 1000, y: point.elevation })),
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.2)',
           fill: true,
         },
       ],
@@ -54,13 +42,9 @@ export class ElevationChartComponent {
 
   public readonly chartOptions = computed<ChartOptions<'scatter'>>(() => {
     this.translate.currentLang();
-    const points = this.routeStateService.elevationProfile();
-    const hasPoints = points && points.length > 0;
-    const lastPoint = hasPoints ? points.at(-1) : undefined;
-    const maxX =
-      lastPoint && lastPoint.distance > 0
-        ? lastPoint.distance / METERS_PER_KILOMETER
-        : undefined;
+    const lastDistance = this.elevationProfile()?.at(-1)?.distance;
+    const maxX = lastDistance ? lastDistance / 1000 : undefined;
+    const axisColor = ElevationChartComponent.AXIS_COLOR;
 
     return {
       normalized: true,
@@ -68,8 +52,8 @@ export class ElevationChartComponent {
       responsive: true,
       maintainAspectRatio: false,
       elements: {
-        point: { radius: CHART_POINT_RADIUS, hitRadius: CHART_POINT_HIT_RADIUS },
-        line: { borderWidth: CHART_LINE_BORDER_WIDTH, cubicInterpolationMode: 'monotone' },
+        point: { radius: 0, hitRadius: 10 },
+        line: { borderWidth: 2, cubicInterpolationMode: 'monotone' },
       },
       scales: {
         x: {
@@ -78,18 +62,18 @@ export class ElevationChartComponent {
           title: {
             display: true,
             text: this.translate.instant('SIDEBAR.CHART_DISTANCE_KM'),
-            color: CHART_AXIS_COLOR,
+            color: axisColor,
           },
-          ticks: { color: CHART_AXIS_COLOR },
+          ticks: { color: axisColor },
           grid: { display: false },
         },
         y: {
           title: {
             display: true,
             text: this.translate.instant('SIDEBAR.CHART_ELEVATION_M'),
-            color: CHART_AXIS_COLOR,
+            color: axisColor,
           },
-          ticks: { color: CHART_AXIS_COLOR },
+          ticks: { color: axisColor },
         },
       },
       plugins: {

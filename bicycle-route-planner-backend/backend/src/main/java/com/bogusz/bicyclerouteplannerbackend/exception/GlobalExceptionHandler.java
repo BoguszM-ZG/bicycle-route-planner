@@ -53,26 +53,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(InvalidGeometryException.class)
     public ProblemDetail handleInvalidGeometryException(InvalidGeometryException ex) {
-        log.warn("Invalid geometry provided: {}", ex.getMessage());
+        log.debug("Invalid geometry provided: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.BAD_REQUEST, "Invalid Geometry Parsing Error",
                 ex.getMessage(), "invalid-geometry");
     }
 
     @ExceptionHandler(RouteNotFoundException.class)
     public ProblemDetail handleRouteNotFoundException(RouteNotFoundException ex) {
-        log.warn("Route not found: {}", ex.getMessage());
+        log.debug("Route not found: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.NOT_FOUND, "Route Not Found", ex.getMessage(), "route-not-found");
     }
 
     @ExceptionHandler(FolderNotFoundException.class)
     public ProblemDetail handleFolderNotFoundException(FolderNotFoundException ex) {
-        log.warn("Folder not found: {}", ex.getMessage());
+        log.debug("Folder not found: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.NOT_FOUND, "Folder Not Found", ex.getMessage(), "folder-not-found");
     }
 
     @ExceptionHandler(AvoidanceZoneNotFoundException.class)
     public ProblemDetail handleAvoidanceZoneNotFoundException(AvoidanceZoneNotFoundException ex) {
-        log.warn("Avoidance zone not found: {}", ex.getMessage());
+        log.debug("Avoidance zone not found: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.NOT_FOUND, "Avoidance Zone Not Found",
                 ex.getMessage(), "avoidance-zone-not-found");
     }
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ProblemDetail handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
-        log.warn("User registration conflict: email already exists");
+        log.debug("User registration conflict: email already exists");
         return createProblemDetail(HttpStatus.CONFLICT, "User already exists",
                 ex.getMessage(), "user-already-exists");
     }
@@ -107,7 +107,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgumentException(IllegalArgumentException ex) {
-        log.warn("Invalid argument: {}", ex.getMessage());
+        log.debug("Invalid argument: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.BAD_REQUEST, "Invalid Argument", ex.getMessage(), "invalid-argument");
     }
 
@@ -128,7 +128,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
-        log.warn("Validation failed for field(s): {}", errors.keySet());
+        log.debug("Validation failed for field(s): {}", errors.keySet());
 
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
                 "Invalid request parameters", "validation-failure");
@@ -147,7 +147,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             String key = !field.isBlank() ? field : "parameter";
             errors.put(key, violation.getMessage());
         });
-        log.warn("Validation failed for constraint violation(s): {}", errors.keySet());
+        log.debug("Validation failed for constraint violation(s): {}", errors.keySet());
 
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
                 "Invalid request parameters", "validation-failure");
@@ -166,7 +166,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String name = ex.getPropertyName();
         String paramName = (name != null && !name.isBlank()) ? name : "parameter";
         Map<String, String> errors = Map.of(paramName, "Invalid format or type for parameter '" + paramName + "'");
-        log.warn("Type mismatch for parameter: {}", paramName);
+        log.debug("Type mismatch for parameter: {}", paramName);
 
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Validation Failure",
                 "Invalid request parameters", "validation-failure");
@@ -182,7 +182,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             @NonNull HttpStatusCode statusCode,
             @NonNull WebRequest request
     ) {
-        log.warn("Malformed HTTP request body received: {}", ex.getMostSpecificCause().getClass().getSimpleName());
+        log.debug("Malformed HTTP request body received: {}", ex.getMostSpecificCause().getClass().getSimpleName());
         ProblemDetail problemDetail = createProblemDetail(HttpStatus.BAD_REQUEST, "Unreadable request",
                 "Invalid request body", "unreadable-request");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
@@ -190,7 +190,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ResourceAccessException.class)
     public ProblemDetail handleResourceAccessException(ResourceAccessException ex) {
-        log.error("External service communication error: {}", ex.getMessage(), ex);
+        log.error("External service communication error: {}", ex.getMessage());
         if (ex.getCause() instanceof SocketTimeoutException || ex.getCause() instanceof HttpTimeoutException) {
             return createProblemDetail(HttpStatus.GATEWAY_TIMEOUT, "Gateway Timeout",
                     "External service timed out. Please try again later.", "gateway-timeout");
@@ -201,14 +201,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ExternalRoutingException.class)
     public ProblemDetail handleExternalRoutingException(ExternalRoutingException ex) {
-        log.error("External routing API error: {}", ex.getMessage(), ex);
+        log.error("External routing API error: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.BAD_GATEWAY, "External Routing API Error",
                 "An error occurred while communicating with the routing service.", "external-routing-error");
     }
 
     @ExceptionHandler(ExternalGeocodingException.class)
     public ProblemDetail handleExternalGeocodingException(ExternalGeocodingException ex) {
-        log.error("External geocoding API error: {}", ex.getMessage(), ex);
+        log.error("External geocoding API error: {}", ex.getMessage());
         return createProblemDetail(HttpStatus.BAD_GATEWAY, "Geocoding API Error",
                 "An error occurred while communicating with the geocoding service.", "external-geocoding-error");
     }

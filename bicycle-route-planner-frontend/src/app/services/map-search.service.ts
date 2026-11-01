@@ -20,7 +20,7 @@ export class MapSearchService {
       return of([]);
     }
 
-    this.logger.debug('[MapSearch] Searching for address:', { query: trimmed });
+    this.logger.debug('[MapSearch] Searching for address', { query: trimmed });
 
     return this.geocodingService.search({ ...params, query: trimmed }).pipe(
       rxMap((response) => this.mapToSearchResults(response?.features || [])),

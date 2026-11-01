@@ -1,6 +1,5 @@
-import { Component, output, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { MapEngineService } from '../../services/map-engine.service';
 
 @Component({
   selector: 'app-map-controls',
@@ -10,15 +9,16 @@ import { MapEngineService } from '../../services/map-engine.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapControlsComponent {
-  public readonly mapEngine = inject(MapEngineService);
+  public readonly isLocating = input(false);
 
-  save = output<void>();
-  clear = output<void>();
-  locate = output<void>();
+  public readonly save = output<void>();
+  public readonly clear = output<void>();
+  public readonly locate = output<void>();
 
   public onSaveClick(): void {
     this.save.emit();
   }
+
   public onClearClick(): void {
     this.clear.emit();
   }

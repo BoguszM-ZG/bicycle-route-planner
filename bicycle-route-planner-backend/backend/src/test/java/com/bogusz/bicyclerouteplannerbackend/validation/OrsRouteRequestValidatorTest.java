@@ -1,6 +1,8 @@
 package com.bogusz.bicyclerouteplannerbackend.validation;
 
+import com.bogusz.bicyclerouteplannerbackend.dto.routing.OrsOptionsDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.routing.OrsRouteRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.routing.RoundTripDto;
 import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -73,7 +74,7 @@ class OrsRouteRequestValidatorTest {
         // GIVEN
         OrsRouteRequestDto dto = new OrsRouteRequestDto(
                 List.of(List.of(19.0, 52.0)),
-                true, false, Map.of("round_trip", Map.of("length", 15000))
+                true, false, new OrsOptionsDto(null, new RoundTripDto(15000, null))
         );
 
         // WHEN
@@ -81,6 +82,22 @@ class OrsRouteRequestValidatorTest {
 
         // THEN
         assertThat(isValid).isTrue();
+    }
+
+    @Test
+    void shouldRejectRoundTripWithMoreThanOneCoordinate() {
+        // GIVEN
+        mockViolationBuilder();
+        OrsRouteRequestDto dto = new OrsRouteRequestDto(
+                List.of(List.of(19.0, 52.0), List.of(19.1, 52.1)),
+                true, false, new OrsOptionsDto(null, new RoundTripDto(15000, null))
+        );
+
+        // WHEN
+        boolean isValid = validator.isValid(dto, context);
+
+        // THEN
+        assertThat(isValid).isFalse();
     }
 
     @Test

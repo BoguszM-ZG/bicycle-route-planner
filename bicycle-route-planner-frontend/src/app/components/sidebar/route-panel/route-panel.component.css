@@ -1,6 +1,5 @@
 :host {
   display: block;
-  width: 100%;
 }
 
 .folder-actions {
@@ -10,16 +9,19 @@
 .create-folder-btn {
   width: 100%;
   padding: 10px;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   border: 1px dashed #9ca3af;
   border-radius: 8px;
   font-weight: 600;
   color: #4b5563;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
+
 .create-folder-btn:hover {
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   border-color: #6b7280;
 }
 
@@ -32,7 +34,7 @@
 .folder-input {
   flex: 1;
   padding: 5px;
-  border: 1px solid #ccc;
+  border: 1px solid #d1d5db;
   border-radius: 4px;
 }
 
@@ -42,24 +44,16 @@
   cursor: pointer;
 }
 
-.loading-state, .empty-state {
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.loading-state,
+.empty-state {
   text-align: center;
   margin-top: 30px;
   font-size: 0.95rem;
   color: #4b5563;
   font-style: italic;
 }
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-app-route-item, app-folder-item { display: block !important; width: 100% !important; }
-

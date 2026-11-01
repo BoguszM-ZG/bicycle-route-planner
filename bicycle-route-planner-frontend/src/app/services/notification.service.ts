@@ -13,11 +13,36 @@ export class NotificationService {
   private readonly activeTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private idCounter = 0;
 
-  public show(
+  public success(messageKey: string, params?: Record<string, unknown>): void {
+    this.show(messageKey, 'success', params);
+  }
+
+  public error(messageKey: string, params?: Record<string, unknown>): void {
+    this.show(messageKey, 'error', params, NotificationService.ERROR_DURATION_MS);
+  }
+
+  public info(messageKey: string, params?: Record<string, unknown>): void {
+    this.show(messageKey, 'info', params);
+  }
+
+  public warning(messageKey: string, params?: Record<string, unknown>): void {
+    this.show(messageKey, 'warning', params);
+  }
+
+  public remove(id: number): void {
+    const timer = this.activeTimers.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      this.activeTimers.delete(id);
+    }
+    this._notifications.update((n) => n.filter((x) => x.id !== id));
+  }
+
+  private show(
     messageKey: string,
-    type: NotificationType = 'info',
-    durationMs: number = NotificationService.DEFAULT_DURATION_MS,
+    type: NotificationType,
     translationParams?: Record<string, unknown>,
+    durationMs: number = NotificationService.DEFAULT_DURATION_MS,
   ): void {
     const id = this.idCounter++;
 
@@ -45,40 +70,10 @@ export class NotificationService {
       return updated;
     });
 
-    if (durationMs > 0) {
-      const timer = setTimeout(() => {
-        this.activeTimers.delete(id);
-        this.remove(id);
-      }, durationMs);
-      this.activeTimers.set(id, timer);
-    }
-  }
-
-  public success(messageKey: string, params?: Record<string, unknown>, durationMs?: number): void {
-    this.show(messageKey, 'success', durationMs, params);
-  }
-
-  public error(
-    messageKey: string,
-    params?: Record<string, unknown>,
-    durationMs: number = NotificationService.ERROR_DURATION_MS,
-  ): void {
-    this.show(messageKey, 'error', durationMs, params);
-  }
-
-  public info(messageKey: string, params?: Record<string, unknown>, durationMs?: number): void {
-    this.show(messageKey, 'info', durationMs, params);
-  }
-
-  public warning(messageKey: string, params?: Record<string, unknown>, durationMs?: number): void {
-    this.show(messageKey, 'warning', durationMs, params);
-  }
-  public remove(id: number): void {
-    const timer = this.activeTimers.get(id);
-    if (timer) {
-      clearTimeout(timer);
+    const timer = setTimeout(() => {
       this.activeTimers.delete(id);
-    }
-    this._notifications.update((n) => n.filter((x) => x.id !== id));
+      this.remove(id);
+    }, durationMs);
+    this.activeTimers.set(id, timer);
   }
 }

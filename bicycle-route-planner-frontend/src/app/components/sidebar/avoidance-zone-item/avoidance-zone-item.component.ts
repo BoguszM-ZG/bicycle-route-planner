@@ -16,26 +16,20 @@ export class AvoidanceZoneItemComponent {
   public readonly zone = input.required<AvoidanceZoneDto>();
   public readonly isConfirmingDelete = signal<boolean>(false);
 
-  public onToggleClick(): void {
+  public toggleActive(): void {
     this.zoneStateService.toggleActive(this.zone());
   }
 
-  public promptDelete(event: Event): void {
-    event.stopPropagation();
+  public promptDelete(): void {
     this.isConfirmingDelete.set(true);
   }
 
-  public cancelDelete(event: Event): void {
-    event.stopPropagation();
+  public cancelDelete(): void {
     this.isConfirmingDelete.set(false);
   }
 
-  public confirmDelete(event: Event): void {
-    event.stopPropagation();
-    const id = this.zone().id;
-    if (id !== undefined && id !== null) {
-      this.zoneStateService.deleteZone(id);
-    }
+  public confirmDelete(): void {
+    this.zoneStateService.deleteZone(this.zone().id);
     this.isConfirmingDelete.set(false);
   }
 }

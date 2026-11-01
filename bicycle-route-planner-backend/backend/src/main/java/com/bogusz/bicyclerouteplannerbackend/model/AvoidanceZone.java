@@ -33,7 +33,7 @@ public class AvoidanceZone {
     @Column(name = "zone_geom",nullable = false, columnDefinition = "geometry(Polygon, 4326)")
     private Polygon zoneGeom;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
 

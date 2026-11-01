@@ -4,6 +4,7 @@
 
 
 <app-map-controls
+  [isLocating]="isLocating()"
   (save)="saveRoute()"
   (clear)="clearRoute()"
   (locate)="locateMe()">

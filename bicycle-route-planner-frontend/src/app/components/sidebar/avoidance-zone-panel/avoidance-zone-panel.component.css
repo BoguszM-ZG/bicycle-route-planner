@@ -26,7 +26,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #2c3e50;
+  color: #374151;
 }
 
 .header-icon {
@@ -49,6 +49,13 @@
   border: 1px solid #e2e8f0;
 }
 
+.loading-message {
+  font-size: 0.85rem;
+  color: #475569;
+  text-align: center;
+  padding: 20px;
+}
+
 .empty-message {
   font-size: 0.85rem;
   color: #475569;
@@ -67,9 +74,11 @@
   overflow-y: auto;
   padding-right: 4px;
 }
+
 .zones-list::-webkit-scrollbar {
   width: 4px;
 }
+
 .zones-list::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
   border-radius: 4px;

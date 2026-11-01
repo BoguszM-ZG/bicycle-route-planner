@@ -23,7 +23,6 @@ import { SearchResult, GeocodingSearchParams } from '../../models/map-search.mod
 import { MapEngineService } from '../../services/map-engine.service';
 import { MapRouteLayerService } from '../../services/map-route-layer.service';
 import { MapSearchService } from '../../services/map-search.service';
-import { LoggerService } from '../../services/logger.service';
 import { MAP_CONSTANTS } from '../../constants/map.constants';
 
 @Component({
@@ -39,7 +38,7 @@ export class MapSearchComponent implements OnInit {
   private readonly mapRouteLayer = inject(MapRouteLayerService);
   private readonly destroyRef = inject(DestroyRef);
 
-  public readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly searchInput = viewChild.required<ElementRef<HTMLInputElement>>('searchInput');
   public readonly searchControl = new FormControl<string>('', { nonNullable: true });
 
   public readonly results = signal<SearchResult[]>([]);
@@ -69,16 +68,9 @@ export class MapSearchComponent implements OnInit {
           }
           return this.executeSearch(query);
         }),
-        tap((results) => this.handlePostSearchState(results)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((results) => {
-        if (this.searchControl.value.length >= MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS) {
-          this.results.set(results);
-        } else {
-          this.results.set([]);
-        }
-      });
+      .subscribe((results) => this.handleSearchResults(results));
   }
 
   private executeSearch(query: string): Observable<SearchResult[]> {
@@ -103,14 +95,11 @@ export class MapSearchComponent implements OnInit {
     }
   }
 
-  private handlePostSearchState(results: SearchResult[]): void {
+  private handleSearchResults(results: SearchResult[]): void {
+    const hasQuery = this.searchControl.value.length >= MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS;
     this.isSearching.set(false);
-    if (
-      results.length === 0 &&
-      this.searchControl.value.length >= MAP_CONSTANTS.SEARCH_CONFIG.MIN_CHARS
-    ) {
-      this.hasNoResults.set(true);
-    }
+    this.results.set(hasQuery ? results : []);
+    this.hasNoResults.set(hasQuery && results.length === 0);
   }
 
   public clearSearch(): void {
@@ -120,7 +109,7 @@ export class MapSearchComponent implements OnInit {
     this.isSearching.set(false);
     this.hasNoResults.set(false);
     this.mapRouteLayer.setSearchPin(null);
-    this.searchInput()?.nativeElement.focus();
+    this.searchInput().nativeElement.focus();
   }
 
   public selectResult(result: SearchResult): void {

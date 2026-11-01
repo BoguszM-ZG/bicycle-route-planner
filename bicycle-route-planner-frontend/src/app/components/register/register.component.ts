@@ -8,7 +8,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -24,16 +23,20 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  public registerForm = this.fb.group({
+  public readonly registerForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72)]],
     fullName: ['', [Validators.required, Validators.maxLength(255), Validators.pattern(/\S/)]],
   });
 
-  public isLoading = this.authService.isLoading;
-  public errorMessage = this.authService.error;
+  public readonly isLoading = this.authService.isLoading;
+  public readonly errorMessage = this.authService.error;
 
-  public onSubmit() {
+  constructor() {
+    this.authService.clearError();
+  }
+
+  public onSubmit(): void {
     if (this.isLoading()) {
       return;
     }
@@ -43,10 +46,8 @@ export class RegisterComponent {
       return;
     }
 
-    const { email, password, fullName } = this.registerForm.getRawValue();
-
     this.authService
-      .register({ email, password, fullName })
+      .register(this.registerForm.getRawValue())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

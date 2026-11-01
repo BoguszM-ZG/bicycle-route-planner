@@ -94,7 +94,10 @@ export class RouteStateService {
       .subscribe({
         next: (routes) => this._routes.set(routes),
         error: (err) => {
-          this.logger.error('[RouteStateService] Error fetching routes', { error: err });
+          this.logger.error('[RouteStateService] Error fetching routes', {
+            status: err.status,
+            type: err.error?.type,
+          });
           this.notificationService.error('ERRORS.FETCH_ROUTES_FAILED');
         },
       });
@@ -122,7 +125,10 @@ export class RouteStateService {
         },
         error: (err) => {
           this.clearSelectedRoute();
-          this.logger.error('[RouteStateService] Error fetching route details', { error: err });
+          this.logger.error('[RouteStateService] Error fetching route details', {
+            status: err.status,
+            type: err.error?.type,
+          });
           this.notificationService.error('ERRORS.FETCH_ROUTE_DETAILS_FAILED');
         },
       });
@@ -153,7 +159,10 @@ export class RouteStateService {
         if (err.status === HttpStatusCode.NotFound) {
           this.logger.debug('[RouteStateService] Route to delete not found', { routeId });
         } else {
-          this.logger.error('[RouteStateService] Error deleting route', { error: err });
+          this.logger.error('[RouteStateService] Error deleting route', {
+            status: err.status,
+            type: err.error?.type,
+          });
         }
         this.notificationService.error('ERRORS.DELETE_ROUTE_FAILED');
       },
@@ -172,6 +181,7 @@ export class RouteStateService {
       .pipe(finalize(() => this._isSaving.set(false)))
       .subscribe({
         next: (newRouteDetails) => {
+          this._isSaving.set(false);
           const summary: RouteSummaryDto = {
             id: newRouteDetails.id,
             name: newRouteDetails.name,
@@ -202,7 +212,10 @@ export class RouteStateService {
               hasGeometryError ? 'ERRORS.ROUTE_TOO_SHORT' : 'ERRORS.SAVE_ROUTE_FAILED',
             );
           } else {
-            this.logger.error('[RouteStateService] Error saving route', { error: err });
+            this.logger.error('[RouteStateService] Error saving route', {
+              status: err.status,
+              type: err.error?.type,
+            });
             this.notificationService.error('ERRORS.SAVE_ROUTE_FAILED');
           }
         },
@@ -223,7 +236,7 @@ export class RouteStateService {
         this.logger.error('[RouteStateService] Error exporting route', {
           routeId,
           format,
-          error: err,
+          status: err.status,
         });
         this.notificationService.error('ERRORS.DOWNLOAD_ROUTE_ERROR');
       },
@@ -259,7 +272,10 @@ export class RouteStateService {
             error: err.error,
           });
         } else {
-          this.logger.error('[RouteStateService] Error moving route', { error: err });
+          this.logger.error('[RouteStateService] Error moving route', {
+            status: err.status,
+            type: err.error?.type,
+          });
         }
         this.notificationService.error('ERRORS.MOVE_ROUTE_FAILED');
       },
@@ -307,7 +323,10 @@ export class RouteStateService {
             error: err.error,
           });
         } else {
-          this.logger.error('[RouteStateService] Error renaming route', { error: err });
+          this.logger.error('[RouteStateService] Error renaming route', {
+            status: err.status,
+            type: err.error?.type,
+          });
         }
         this.notificationService.error('ERRORS.RENAME_ROUTE_FAILED');
       },
@@ -331,7 +350,8 @@ export class RouteStateService {
         error: (err) => {
           this.logger.error('[RouteStateService] Error fetching elevation profile', {
             routeId,
-            error: err,
+            status: err.status,
+            type: err.error?.type,
           });
           this._hasElevationError.set(true);
           this._elevationProfile.set(null);

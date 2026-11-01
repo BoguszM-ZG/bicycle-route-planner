@@ -29,20 +29,20 @@ export class SaveRouteModalComponent {
   private readonly translate = inject(TranslateService);
   private readonly logger = inject(LoggerService);
 
-  public isVisible = signal<boolean>(false);
-  public isLoading = this.routeStateService.isSaving;
-  public folders = this.folderStateService.folders;
+  public readonly isVisible = signal<boolean>(false);
+  public readonly isLoading = this.routeStateService.isSaving;
+  public readonly folders = this.folderStateService.folders;
 
-  public routeNameControl = new FormControl('', {
+  public readonly routeNameControl = new FormControl('', {
     nonNullable: true,
     validators: [Validators.required, Validators.pattern(/\S/), Validators.maxLength(150)],
   });
 
-  public selectedFolderControl = new FormControl<number | null>(null);
+  public readonly selectedFolderControl = new FormControl<number | null>(null);
 
   private routeDataToSave: RouteDraft | null = null;
 
-  public routeInput = viewChild<ElementRef<HTMLInputElement>>('routeInput');
+  private readonly routeInput = viewChild<ElementRef<HTMLInputElement>>('routeInput');
 
   constructor() {
     effect(() => {
@@ -59,6 +59,9 @@ export class SaveRouteModalComponent {
   }
 
   public close(): void {
+    if (this.isLoading()) {
+      return;
+    }
     this.isVisible.set(false);
     this.routeNameControl.reset();
     this.selectedFolderControl.reset();

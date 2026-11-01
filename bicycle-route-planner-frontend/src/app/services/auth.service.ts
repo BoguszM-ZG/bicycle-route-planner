@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, finalize, shareReplay, switchMap, of } from 'rxjs';
+import { EMPTY, Observable, tap, catchError, throwError, finalize, shareReplay, switchMap, of } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 
 import { RegisterRequest, LoginRequest, AuthResponse, UserDto } from '../models/auth.model';
@@ -32,7 +32,10 @@ export class AuthService {
   private static readonly CURRENT_USER_KEY = 'currentUser';
   private static readonly CLOCK_SKEW_MS = 30_000;
   private static readonly LOGIN_ROUTE = '/login';
-  private static readonly DEFAULT_AUTH_ERROR_KEY = 'AUTH.INVALID_CREDENTIALS';
+  private static readonly AUTH_ERROR_KEYS: Record<number, string> = {
+    [HttpStatusCode.Unauthorized]: 'AUTH.INVALID_CREDENTIALS',
+    [HttpStatusCode.Conflict]: 'AUTH.EMAIL_TAKEN',
+  };
 
   private refreshInProgress$: Observable<AuthResponse> | null = null;
 
@@ -84,7 +87,7 @@ export class AuthService {
             this.getRefreshToken() !== refreshToken
           ) {
             this.logger.debug(
-              '[Auth] Session invalidated or changed during refresh. Discarding response.',
+              '[Auth] Session invalidated or changed during refresh. Discarding response',
             );
             return throwError(() => new Error('Session invalidated during token refresh'));
           }
@@ -103,17 +106,17 @@ export class AuthService {
               this.refreshInProgress$ === currentRefresh$ &&
               this.getRefreshToken() === refreshToken
             ) {
-              this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out.');
+              this.logger.debug('[Auth] Session expired or refresh token invalid. Logging out');
               this.logout();
             } else {
               this.logger.debug(
-                '[Auth] Refresh token rejected but session already changed or terminated.',
+                '[Auth] Refresh token rejected but session already changed or terminated',
               );
             }
           } else if (isHttp) {
             this.logger.error(
-              '[Auth] Failed to refresh session due to server or network error:',
-              error,
+              '[Auth] Failed to refresh session due to server or network error',
+              { status },
             );
           }
           return throwError(() => error);
@@ -127,6 +130,10 @@ export class AuthService {
       ));
 
     return this.refreshInProgress$;
+  }
+
+  public clearError(): void {
+    this._error.set(null);
   }
 
   public clearSession(): void {
@@ -216,19 +223,21 @@ export class AuthService {
   }
 
   private handleAuthError(error: HttpErrorResponse): Observable<never> {
-    if (error.status === 401 || error.status === 400) {
-      this.logger.debug('[Auth] Authentication failed with client error:', {
+    if (
+      error.status === HttpStatusCode.BadRequest ||
+      error.status === HttpStatusCode.Unauthorized ||
+      error.status === HttpStatusCode.Conflict
+    ) {
+      this.logger.debug('[Auth] Authentication failed with client error', {
         status: error.status,
       });
     } else {
-      this.logger.error('[Auth] Authentication server failure:', error);
+      this.logger.error('[Auth] Authentication server failure', {
+        status: error.status,
+        type: error.error?.type,
+      });
     }
-    const errorMsg =
-      error.status === 401
-        ? AuthService.DEFAULT_AUTH_ERROR_KEY
-        : error.error?.detail || error.error?.message || AuthService.DEFAULT_AUTH_ERROR_KEY;
-    this._error.set(errorMsg);
-
-    return throwError(() => error);
+    this._error.set(AuthService.AUTH_ERROR_KEYS[error.status] ?? 'AUTH.REQUEST_FAILED');
+    return EMPTY;
   }
 }

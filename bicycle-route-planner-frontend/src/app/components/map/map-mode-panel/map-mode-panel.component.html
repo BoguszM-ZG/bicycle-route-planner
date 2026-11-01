@@ -1,5 +1,4 @@
 <div class="mode-panel">
-
   <fieldset class="button-group">
     <legend class="sr-only">{{ 'MAP_MODE_PANEL.MODE_SELECTION_GROUP' | translate }}</legend>
     <button
@@ -20,19 +19,20 @@
   </fieldset>
 
   @if (routingMode() === 'roundTrip') {
-    <div class="slider-container with-margin">
+    <div class="slider-container">
       <label for="distance-slider">
         {{ 'MAP_MODE_PANEL.DISTANCE' | translate }}
         <strong>{{ roundTripDistanceKm() }} km</strong>
       </label>
       <input
+        #distanceSlider
         id="distance-slider"
         type="range"
         min="5"
         max="100"
         step="1"
         [value]="roundTripDistanceKm()"
-        (input)="onDistanceChange($event)"
+        (input)="setDistanceKm(distanceSlider.valueAsNumber)"
         aria-describedby="distance-hint"
       />
       <small id="distance-hint">{{ 'MAP_MODE_PANEL.ROUND_TRIP_HINT' | translate }}</small>
@@ -51,18 +51,15 @@
     </button>
 
     @if (routingMode() === 'avoidanceZone') {
-      <div class="zone-actions">
-        <button
-          type="button"
-          class="btn-cancel-zone"
-          (click)="cancelZone()">
-          {{ 'MAP_MODE_PANEL.CANCEL' | translate }}
-        </button>
-      </div>
+      <button
+        type="button"
+        class="btn-cancel-zone"
+        (click)="cancelZone()">
+        {{ 'MAP_MODE_PANEL.CANCEL' | translate }}
+      </button>
       <small class="zone-hint" aria-live="polite">
         {{ 'MAP_MODE_PANEL.ZONE_HINT_DRAW' | translate }}
       </small>
     }
   </div>
-
 </div>

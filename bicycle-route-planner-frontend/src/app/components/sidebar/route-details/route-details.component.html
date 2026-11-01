@@ -1,39 +1,41 @@
 @if (isLoadingDetails()) {
   <div class="loading-state" aria-live="polite">
-    <span>{{ 'SIDEBAR.LOADING_DETAILS' | translate }}</span>
+    {{ 'SIDEBAR.LOADING_DETAILS' | translate }}
   </div>
 } @else if (routeDetail(); as detail) {
-<div class="details-container">
-  <div class="detail-row">
-    <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_CREATED' | translate }}</span>
-    <span class="detail-value">{{ detail.createdAt | date:'mediumDate'}}</span>
-  </div>
-
-  <div class="detail-row">
-    <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_DISTANCE' | translate }}</span>
-    <span class="detail-value"> {{( detail.distanceMeters / 1000 ) | number:'1.2-2' }} km</span>
-  </div>
-
-  <div class="detail-row stats-row">
-    <div class="stat-box gain">
-      <span class="stat-icon" aria-hidden="true">⬆️</span>
-      <span class="stat-value">{{ detail.elevationGain | number:'1.0-0' }} m</span>
-      <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_GAIN' | translate }}</span>
+  <div class="details-container">
+    <div class="detail-row">
+      <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_CREATED' | translate }}</span>
+      <span class="detail-value">{{ detail.createdAt | date: 'dd.MM.yyyy' }}</span>
     </div>
 
-    <div class="stat-box loss">
-      <span class="stat-icon" aria-hidden="true">⬇️</span>
-      <span class="stat-value"> {{ detail.elevationLoss | number:'1.0-0' }} m</span>
-      <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_LOSS' | translate }}</span>
+    <div class="detail-row">
+      <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_DISTANCE' | translate }}</span>
+      <span class="detail-value">{{ (detail.distanceMeters / 1000) | number: '1.2-2' }} km</span>
     </div>
 
-  </div>
+    @if (detail.routeType === 'LOOP' && detail.targetDistance !== null) {
+      <div class="detail-row">
+        <span class="detail-label">{{ 'SIDEBAR.ROUTE_DETAILS_TARGET_DISTANCE' | translate }}</span>
+        <span class="detail-value">{{ (detail.targetDistance / 1000) | number: '1.0-0' }} km</span>
+      </div>
+    }
 
-  <div class="elevation-section">
+    <div class="detail-row stats-row">
+      <div class="stat-box gain">
+        <span class="stat-icon" aria-hidden="true">⬆️</span>
+        <span class="stat-value">{{ detail.elevationGain | number: '1.0-0' }} m</span>
+        <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_GAIN' | translate }}</span>
+      </div>
+
+      <div class="stat-box loss">
+        <span class="stat-icon" aria-hidden="true">⬇️</span>
+        <span class="stat-value">{{ detail.elevationLoss | number: '1.0-0' }} m</span>
+        <span class="stat-title">{{ 'SIDEBAR.ROUTE_DETAILS_LOSS' | translate }}</span>
+      </div>
+    </div>
+
     <h3>{{ 'SIDEBAR.ROUTE_DETAILS_CHART_TITLE' | translate }}</h3>
     <app-elevation-chart />
   </div>
-
-
-</div>
 }

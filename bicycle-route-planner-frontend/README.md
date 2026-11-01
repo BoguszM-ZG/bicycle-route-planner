@@ -6,156 +6,124 @@
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-green?logo=leaflet)](https://leafletjs.com/)
 [![Nginx](https://img.shields.io/badge/Nginx-Non--Root-2496ED?logo=nginx)](https://nginx.org/)
 
-Kliencka aplikacja SPA (Single Page Application) systemu **Bicycle Route Planner**, zrealizowana w oparciu o framework **Angular 22** oraz język **TypeScript**. Moduł zapewnia responsywny, nowoczesny interfejs użytkownika z interaktywną mapą wektorową (**Leaflet**, **Leaflet-Draw**), reaktywnym zarządzaniem stanem (**Angular Signals**), dynamicznym profilem wysokościowym (**Chart.js**) oraz bezpieczną komunikacją z REST API za pośrednictwem tokenów JWT.
+Aplikacja kliencka (SPA) systemu **Bicycle Route Planner** w **Angular 22** i **TypeScript**. Zawiera mapę **Leaflet** z rysowaniem stref (**Leaflet.draw**), stan aplikacji w sygnałach Angulara, wykres profilu wysokości (**Chart.js**), interfejs w języku polskim i angielskim (**ngx-translate**) oraz komunikację z REST API z uwierzytelnianiem JWT.
 
 ---
 
-## 🏛️ Architektura Warstwowa i Wzorce Projektowe
-
-Frontend został zaprojektowany zgodnie z zasadami **Clean Code** i nowoczesnymi standardami ekosystemu Angulara:
+## 🏛️ Struktura i Wzorce
 
 ```text
 src
-├── environments/        # Konfiguracja środowiskowa (adres API backendu, poziomy logowania)
-│   ├── environment.development.ts # Środowisko lokalne / deweloperskie
-│   └── environment.ts             # Środowisko produkcyjne
+├── environments/        # Adres API i poziom logowania (deweloperski / produkcyjny)
 └── app/
-    ├── components/      # Komponenty interfejsu (Standalone Components, nowa składnia Control Flow)
-    │   ├── login/           # Uwierzytelnianie użytkownika
-    │   ├── register/        # Rejestracja nowych kont
-    │   ├── map/             # Główny kontener mapy Leaflet oraz panel wyboru trybów (MapModePanel)
-    │   ├── map-controls/    # Pływające kontrolki mapy (zoom, centrowanie, geolokalizacja GPS)
-    │   ├── map-search/      # Wyszukiwarka adresów (autouzupełnianie, geokodowanie Photon)
-    │   ├── sidebar/         # Panel boczny: trasy, foldery, strefy omijane, wykres przewyższeń
-    │   ├── save-route-modal/# Modal zapisu trasy i przypisania do folderu
-    │   ├── save-zone-modal/ # Modal definiowania nowej strefy omijanej
-    │   └── toast/           # Reaktywny system powiadomień (NotificationService)
-    ├── core/            # Globalna obsługa błędów (GlobalErrorHandler zintegrowany z telemetrią)
-    ├── guards/          # Strażnicy routingu (AuthGuard chroniący widok mapy)
-    ├── interceptors/    # Interceptory HTTP (AuthInterceptor dołączający nagłówek Bearer JWT)
-    ├── models/          # Ścisłe interfejsy domenowe TypeScript (Route, Folder, AvoidanceZone itp.)
-    ├── constants/       # Stałe konfiguracyjne (geokodowanie, kafelki mapy, ograniczenia)
-    └── services/        # Architektura serwisów: HTTP, zarządzanie stanem (*StateService), obsługa mapy
+    ├── components/
+    │   ├── login/, register/    # Logowanie i rejestracja
+    │   ├── map/                 # Kontener mapy Leaflet i panel wyboru trybu (trasa / pętla / strefa)
+    │   ├── map-controls/        # Przyciski pod mapą: „Gdzie jestem?”, „Zapisz”, „Wyczyść”
+    │   ├── map-search/          # Wyszukiwarka adresów z podpowiedziami
+    │   ├── sidebar/             # Panel boczny: profil, trasy i foldery, szczegóły trasy, wykres, strefy
+    │   ├── save-route-modal/    # Zapis trasy z wyborem folderu
+    │   ├── save-zone-modal/     # Zapis narysowanej strefy omijanej
+    │   └── toast/               # Powiadomienia (NotificationService)
+    ├── core/errors/     # GlobalErrorHandler – przechwytuje nieobsłużone wyjątki i przekazuje je do telemetrii
+    ├── guards/          # authGuard (mapa tylko dla zalogowanych), guestGuard (logowanie tylko dla niezalogowanych)
+    ├── interceptors/    # Dołączanie tokenu JWT i odświeżanie go po odpowiedzi 401
+    ├── models/          # Interfejsy danych (trasy, foldery, strefy, ORS)
+    ├── constants/       # Stałe mapy (kafelki, ikony, wyszukiwarka)
+    └── services/        # Serwisy HTTP, stanu (*StateService) i mapy (Map*Service)
 ```
 
-### Kluczowe standardy implementacyjne:
-- **Modern Angular 22 API:** 100% Standalone Components (całkowity brak modułów `NgModule`), reaktywne zarządzanie stanem w oparciu o **Signals** (`signal()`, `computed()`) oraz nowa składnia szablonów **Control Flow** (`@if`, `@for`).
-- **Separation of Concerns (Podział Odpowiedzialności Serwisów):**
-  - **Serwisy HTTP (`*Service`):** Odpowiadają wyłącznie za bezpośrednią komunikację z backendem (`RouteService`, `FolderService`, `AvoidanceZoneService`).
-  - **Serwisy Stanu (`*StateService`):** Utrzymują niemutowalny stan aplikacji w sygnałach, udostępniając komponentom właściwości read-only (`routes`, `folders`, `avoidanceZones`).
-- **Ochrona Serwera Telemetrii (Logging Standards):**
-  - Błędy walidacji użytkownika (400, 401, 404, 409, odmowa GPS) są logowane lokalnie w konsoli przeglądarki na poziomie `debug()`, aby nie obciążać sieci i nie zaśmiecać logów serwera.
-  - Na backend do endpointu `/api/telemetry/logs` wysyłane są wyłącznie faktyczne awarie systemu (`error`: 5xx, brak połączenia z siecią, nieobsłużone wyjątki aplikacji przechwytywane przez `GlobalErrorHandler`).
-  - Ustrukturyzowane logi z prefiksami domenowymi (np. `[Route]`, `[Folder]`, `[Auth]`).
-- **Optymalizacja Zapytań Sieciowych (Request Guarding):** Blokowanie nadmiarowych requestów HTTP (np. weryfikacja braku zmian nazwy przed wysłaniem zapytania rename, blokada zapisu pustych tras 0 m).
+### Przyjęte zasady:
+- **Angular 22:** komponenty standalone, sygnały (`signal()`, `computed()`, `input()`, `output()`), składnia `@if` / `@for`, tryb bez Zone.js, `ChangeDetectionStrategy.OnPush`.
+- **Podział serwisów:**
+  - **serwisy HTTP** (`RouteService`, `FolderService`, `AvoidanceZoneService`, `OrsService`, `GeocodingService`) tylko komunikują się z backendem;
+  - **serwisy stanu** (`*StateService`) trzymają dane w prywatnych sygnałach i udostępniają je komponentom tylko do odczytu (`asReadonly()`).
+- **Logowanie i telemetria:** błędy po stronie użytkownika (np. 400, 404, 409) logowane są w konsoli na poziomie `debug`. Do backendu (`/api/telemetry/logs`) trafiają tylko logi poziomu `error` i tylko pola potrzebne do diagnozy (np. status HTTP i typ błędu).
+- **Bez zbędnych żądań:** zmiana nazwy trasy lub folderu na identyczną nie wysyła zapytania; wyszukiwarka czeka 350 ms po ostatnim znaku i wymaga min. 3 znaków.
 
 ---
 
-## 🗺️ Moduł Mapowy i Integracja Przestrzenna (Leaflet)
+## 🗺️ Moduł Mapowy (Leaflet)
 
-Interaktywna obsługa danych przestrzennych została podzielona na wyspecjalizowane serwisy mapowe:
+### 1. Mapa i trasy (`MapEngineService`, `MapRouteLayerService`, `RoutePlanningStateService`)
+- Kafelki OpenStreetMap, przelot do wybranego miejsca, znacznik lokalizacji użytkownika.
+- Dodawanie punktów trasy kliknięciem, przeciąganie i usuwanie ich (menu kontekstowe lub przycisk w dymku); trasa jest wyznaczana ponownie po każdej zmianie.
+- Tryb pętli: kliknięcie wyznacza trasę okrężną o długości wybranej suwakiem (5–100 km).
+- Wyświetlanie szkicu trasy, zapisanej trasy i pinezki z wyszukiwarki na osobnych warstwach.
 
-### 1. Wizualizacja i Trasowanie (`MapRenderService`, `MapRouteLayerService`, `RoutePlanningStateService`)
-- Wyświetlanie kafelków OpenStreetMap z płynnym skalowaniem.
-- Interaktywne dodawanie punktów trasy (waypointów) z obsługą przeciągania (drag-and-drop markerów) i automatycznym przeliczaniem geometrii w czasie rzeczywistym.
-- Rysowanie geometrii tras w formacie wektorowym `L.polyline` z podziałem na kolory i podświetlenia.
+### 2. Strefy omijane (`MapDrawService`, `AvoidanceZoneStateService`)
+- Rysowanie wielokątów wtyczką **Leaflet.draw**; geometria zamieniana jest na WKT (`POLYGON(...)`) i po nadaniu nazwy zapisywana w backendzie.
+- Aktywne strefy są dołączane do zapytania o trasę (`avoid_polygons`); trasa jest przeliczana po włączeniu lub wyłączeniu strefy.
+- Punkt trasy wewnątrz aktywnej strefy jest wykrywany przed wysłaniem zapytania (`RouteGeometryService`).
 
-### 2. Kreślenie Stref Omijanych (`MapDrawService`)
-- Integracja z wtyczką **Leaflet-Draw** umożliwiająca swobodne rysowanie dowolnych wielokątów (`Polygon`) na podkładzie mapowym.
-- Konwersja geometrii warstw Leafleta do formatu OGC WKT (`POLYGON(...)`) i natychmiastowe przesyłanie ich do silnika nawigacyjnego w celu omijania przeszkód.
+### 3. Profil wysokości (`ElevationChartComponent`)
+- Punkty profilu (odległość od startu, wysokość) pobierane są z backendu (`GET /api/routes/{id}/elevation`), gdzie liczy je PostGIS.
+- Wykres liniowy **Chart.js** (`ng2-charts`).
 
-### 3. Profil Wysokościowy (`ElevationChartComponent`)
-- Renderowanie wykresu profilu wysokościowego trasy w oparciu o bibliotekę **Chart.js** (`ng2-charts`).
-- Ekstrakcja trzeciego wymiaru ($Z$ - wysokość n.p.m.) z geometrii `LineString Z` i synchronizacja kursora na wykresie z pozycją na mapie.
-
-### 4. Narzędzia Pomocnicze
-- **Wyszukiwarka adresowa (`MapSearchService`):** Wyszukiwanie adresów za pośrednictwem API Photon z mechanizmem *debounce* zapobiegającym zalewaniu serwera zapytaniami.
-- **Geolokalizacja (`MapControlsComponent`):** Lokalizacja aktualnej pozycji użytkownika przy użyciu przeglądarkowego API Geolocation.
+### 4. Narzędzia pomocnicze
+- **Wyszukiwarka adresów** (`MapSearchService`): zapytania przez backend do usługi Photon.
+- **Geolokalizacja:** API Geolocation przeglądarki.
+- **Eksport:** pobranie trasy jako GPX lub GeoJSON; nazwa pliku pochodzi z nagłówka `Content-Disposition`.
 
 ---
 
-## 📋 Przegląd Serwisów Aplikacji
+## 📋 Przegląd Serwisów
 
 | Serwis | Kategoria | Odpowiedzialność |
 |---|---|---|
-| `RouteStateService` | Stan (Signals) | Centralny stan załadowanych tras, aktywnej trasy i parametrów kalkulacji |
-| `RoutePlanningStateService` | Stan (Signals) | Centralny stan punktów trasy (waypointów), trybu routingu i komunikacji z ORS API |
-| `FolderStateService` | Stan (Signals) | Zarządzanie listą folderów, filtrowaniem i relacjami tras |
-| `AvoidanceZoneStateService` | Stan (Signals) | Stan zdefiniowanych poligonów unikania i ich aktywności |
-| `MapRouteLayerService` | Mapa (Leaflet) | Warstwy interaktywne trasy: markery waypointów, zdarzenia przeciągania (drag), linie polilinii roboczych |
-| `MapDrawService` | Mapa (Leaflet-Draw) | Narzędzie do interaktywnego rysowania wielokątów stref omijanych (`L.Draw.Polygon`) |
-| `MapRenderService` | Mapa (Leaflet) | Inicjalizacja instancji mapy, warstwy kafelkowe, centrowanie, marker GPS i renderowanie tras zapisanych |
-| `MapSearchService` | Mapa / API | Autouzupełnianie i geokodowanie zapytań adresowych |
-| `RouteGeometryService` | Logika GIS |Formatowanie geometrii WKT (LineString Z), uzupełnianie brakujących wysokości i kalkulacja sumy przewyższeń |
-| `AuthService` | Bezpieczeństwo | Logowanie, rejestracja, zarządzanie tokenami JWT w `localStorage` |
-| `LoggerService` | Telemetria | Scentralizowany logger z asynchronicznym wysyłaniem błędów na backend |
-| `NotificationService` | UI | Emisja powiadomień typu Toast (sukces, błąd, ostrzeżenie) |
+| `RouteStateService` | Stan | Lista zapisanych tras, wybrana trasa, profil wysokości, zapis, zmiana nazwy i folderu, eksport |
+| `RoutePlanningStateService` | Stan | Punkty trasy, tryb mapy, szkic trasy, zapytania do ORS (trasa i pętla) |
+| `FolderStateService` | Stan | Lista folderów, tworzenie, zmiana nazwy, usuwanie (zdarzenie `folderDeleted$` dla tras) |
+| `AvoidanceZoneStateService` | Stan | Strefy omijane, ich aktywność i szkic rysowanej strefy |
+| `MapEngineService` | Mapa | Inicjalizacja mapy, warstwy (panes), kafelki, przelot, geolokalizacja |
+| `MapRouteLayerService` | Mapa | Znaczniki punktów trasy, szkic trasy, zapisana trasa, pinezka wyszukiwania |
+| `MapDrawService` | Mapa | Rysowanie i wyświetlanie stref omijanych (Leaflet.draw) |
+| `MapSearchService` | Mapa / API | Wyszukiwanie adresów i zamiana wyników na podpowiedzi |
+| `RouteGeometryService` | Geometria | Budowa WKT trasy (`LineString` z wysokością), odczyt wielokątów z WKT, sprawdzanie punktu w wielokącie |
+| `AuthService` | Bezpieczeństwo | Logowanie, rejestracja, odświeżanie i przechowywanie tokenów JWT (`localStorage`) |
+| `LoggerService` | Telemetria | Logowanie w konsoli i wysyłanie błędów do backendu |
+| `NotificationService` | UI | Powiadomienia (sukces, informacja, ostrzeżenie, błąd) |
 
 ---
 
-## ⚙️ Wymagania i Konfiguracja Środowiska
+## ⚙️ Wymagania i Konfiguracja
 
 ### Wymagania:
-- **Node.js:** Wersja **22+** (LTS rekomendowana).
-- **Menedżer pakietów:** **npm 10+**.
-- Działający backend REST API pod adresem `http://localhost:8080`.
+- **Node.js 24** (z dołączonym npm).
+- Backend REST API pod adresem `http://localhost:8080` (tryb deweloperski).
 
-### Konfiguracja Adresu API i Poziomu Logowania:
-Adres bazowy backendu REST API oraz domyślna czułość loggera zdefiniowane są w plikach środowiskowych Angulara:
-- **Środowisko deweloperskie (`src/environments/environment.development.ts`):**
-  - `apiUrl: 'http://localhost:8080/api'`
-  - `logLevel: LogLevel.DEBUG` *(szczegółowe logi diagnostyczne w konsoli przeglądarki)*
-- **Środowisko produkcyjne (`src/environments/environment.ts`):**
-  - `apiUrl: 'http://localhost:8080/api'`
-  - `logLevel: LogLevel.ERROR` *(minimalizacja logowania na produkcji, raportowanie wyłącznie awarii do telemetrii)*
-
-W przypadku uruchomienia backendu na innym porcie lub zdalnym serwerze (np. na serwerze produkcyjnym VPS), wystarczy zmodyfikować wartość `apiUrl` w odpowiednim pliku konfiguracyjnym.
+### Adres API i poziom logowania:
+- **Deweloperski (`src/environments/environment.development.ts`):** `apiUrl: 'http://localhost:8080/api'`, `logLevel: LogLevel.DEBUG`.
+- **Produkcyjny (`src/environments/environment.ts`):** `apiUrl: '/api'` (nginx przekazuje `/api` do backendu), `logLevel: LogLevel.ERROR`.
 
 ---
 
-## 🚀 Uruchomienie Lokalne (Developerskie)
+## 🚀 Uruchomienie Lokalne
 
-Aplikacja wykorzystuje nowoczesny system budowania Angulara zintegrowany z silnikiem **Vite** jako serwerem deweloperskim:
-
-### 1. Instalacja zależności
 ```cmd
-# Z poziomu katalogu bicycle-route-planner-frontend:
+# Z katalogu bicycle-route-planner-frontend:
 npm ci
-```
-
-### 2. Uruchomienie serwera deweloperskiego
-```cmd
-npm start
-```
-
-Aplikacja wystartuje pod adresem:
-👉 **[http://localhost:4200/](http://localhost:4200/)**
-*(Zmiany w kodzie źródłowym są automatycznie aplikowane w przeglądarce dzięki mechanizmowi Hot Module Replacement).*
-
-### 3. Weryfikacja kompilacji produkcyjnej
-```cmd
-npm run build
+npm start        # serwer deweloperski: http://localhost:4200
+npm test         # testy (Vitest przez ng test)
+npm run build    # build produkcyjny
 ```
 
 ---
 
-## 🐳 Konteneryzacja (Docker & Nginx)
+## 🐳 Konteneryzacja (Docker i nginx)
 
-Moduł frontendu posiada produkcyjny, dwuetapowy plik `Dockerfile` zoptymalizowany pod kątem bezpieczeństwa i wydajności:
-- **Stage 1 (Builder):** Kompilacja aplikacji produkcyjnej (`ng build`) w kontenerze `node:24-alpine`.
-- **Stage 2 (Runner):** Serwowanie statycznych plików SPA przez zoptymalizowany serwer **Nginx 1.27 Alpine**.
-- **Bezpieczeństwo Non-root:** Nginx został skonfigurowany do działania jako użytkownik nieuprzywilejowany (`USER nginx`) na porcie `8080`.
+`Dockerfile` jest dwuetapowy:
+- **Budowanie:** `ng build` w obrazie `node:24-alpine`.
+- **Serwowanie:** `nginx:1.27-alpine` jako użytkownik bez uprawnień roota (`USER nginx`) na porcie `8080`.
 
-### Konfiguracja Nginx (`nginx.conf`):
-- Obsługa routingu SPA (`try_files $uri $uri/ /index.html`).
-- Włączona kompresja Gzip dla zasobów tekstowych i JSON.
-- Wymuszone nagłówki bezpieczeństwa (`X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection`).
-- Agresywne buforowanie zasobów statycznych (hashe w nazwach plików JS/CSS).
+### Konfiguracja nginx (`nginx.conf`):
+- Routing SPA (`try_files $uri $uri/ /index.html`) i przekazywanie `/api/` do kontenera `backend`.
+- Limit żądań do `/api/telemetry/` (`limit_req`: 1 żądanie/s z jednego IP, zapas 30, nadmiar – `429`).
+- Nagłówki bezpieczeństwa: `Content-Security-Policy` (m.in. `script-src 'self'`, kafelki tylko z `tile.osm.org`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`.
+- Kompresja gzip i długie buforowanie plików statycznych (nazwy z hashem).
+- Build produkcyjny ma wyłączone `inlineCritical` (`angular.json`), bo ładowanie stylów przez `onload` blokowałoby CSP.
 
+Frontend przekazuje `/api` do kontenera `backend`, więc uruchamia się go razem z resztą przez Docker Compose z katalogu głównego projektu:
 ```bash
-# Budowanie obrazu:
-docker build -t bicycle-route-planner-frontend .
-
-# Uruchomienie kontenera (mapowanie portu 4200 na wewnętrzny 8080):
-docker run -d -p 4200:8080 --name bicycle_frontend bicycle-route-planner-frontend
+docker compose up -d --build
 ```

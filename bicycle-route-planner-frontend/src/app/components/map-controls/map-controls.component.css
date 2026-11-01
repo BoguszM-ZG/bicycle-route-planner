@@ -1,34 +1,21 @@
 .map-floating-controls {
   position: fixed;
-
   bottom: 30px;
-
-
-  left: calc(50% + (360px + 2vh) / 2);
+  left: calc(50% + (var(--sidebar-width) + 2vh) / 2);
   transform: translateX(-50%);
-
-
   z-index: 999;
-
-
   display: flex;
   gap: 15px;
   align-items: center;
-
-
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
   padding: 10px 15px;
   border-radius: 50px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
-
 .control-btn {
-
   display: flex;
   white-space: nowrap;
   align-items: center;
@@ -36,15 +23,14 @@
   padding: 12px 24px;
   border: none;
   border-radius: 30px;
-  font-family: 'Inter', 'Roboto', sans-serif;
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-
-
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 
 .btn-save {
   background: #1d4ed8;
@@ -57,7 +43,6 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
 }
-
 
 .btn-clear {
   background: transparent;
@@ -72,8 +57,6 @@
 .control-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
 }
 
 .control-btn.locating svg {

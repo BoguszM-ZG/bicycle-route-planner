@@ -15,7 +15,6 @@ public class OrsRouteRequestValidator implements ConstraintValidator<ValidOrsRou
     private static final double MAX_LATITUDE = 90.0;
     private static final int MIN_COORDINATE_DIMENSIONS = 2;
     private static final int MAX_COORDINATE_DIMENSIONS = 3;
-    private static final String ROUND_TRIP_KEY = "round_trip";
 
     @Override
     public boolean isValid(OrsRouteRequestDto dto, ConstraintValidatorContext context) {
@@ -36,7 +35,10 @@ public class OrsRouteRequestValidator implements ConstraintValidator<ValidOrsRou
             return buildCoordinateViolation(context, "Coordinates list cannot be empty");
         }
 
-        boolean isRoundTrip = dto.options() != null && dto.options().containsKey(ROUND_TRIP_KEY);
+        boolean isRoundTrip = dto.options() != null && dto.options().roundTrip() != null;
+        if (isRoundTrip && coordinates.size() != 1) {
+            return buildCoordinateViolation(context, "Exactly one coordinate is required for round trip routing");
+        }
         if (!isRoundTrip && coordinates.size() < 2) {
             return buildCoordinateViolation(context, "At least two coordinates are required for direct routing");
         }

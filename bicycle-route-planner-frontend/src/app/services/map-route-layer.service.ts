@@ -52,7 +52,7 @@ export class MapRouteLayerService {
   private roundTripMarker?: L.Marker;
   private searchMarker?: L.Marker;
 
-  public readonly searchPin = signal<L.LatLngLiteral | null>(null);
+  private readonly searchPin = signal<L.LatLngLiteral | null>(null);
 
   constructor() {
     effect(() => {
@@ -173,15 +173,7 @@ export class MapRouteLayerService {
     }
   };
 
-  public addWaypoint(latLng: L.LatLng): void {
-    if (this.routePlanningStateService.routingMode() === 'avoidanceZone') {
-      return;
-    }
-
-    if (!this.currentMap) {
-      return;
-    }
-
+  private addWaypoint(latLng: L.LatLng): void {
     this.createAndAddWaypointMarker(latLng);
     this.routePlanningStateService.addWaypoint(latLng);
   }
@@ -279,13 +271,13 @@ export class MapRouteLayerService {
     });
   }
 
-  public deleteWaypoint(target: L.Marker | number): void {
-    const index = typeof target === 'number' ? target : this.waypointMarkers.indexOf(target);
-    if (index < 0 || index >= this.waypointMarkers.length) {
+  private deleteWaypoint(marker: L.Marker): void {
+    const index = this.waypointMarkers.indexOf(marker);
+    if (index < 0) {
       return;
     }
 
-    this.removeWaypointMarker(this.waypointMarkers[index]);
+    this.removeWaypointMarker(marker);
     this.waypointMarkers.splice(index, 1);
     this.routePlanningStateService.deleteWaypoint(index);
   }
@@ -474,7 +466,7 @@ export class MapRouteLayerService {
     this.clearWaypointMarkers();
   }
 
-  public clearWaypointMarkers(): void {
+  private clearWaypointMarkers(): void {
     this.waypointMarkers.forEach((marker) => this.removeWaypointMarker(marker));
     this.waypointMarkers = [];
   }

@@ -1,6 +1,6 @@
 <div class="folder-actions">
   @if (!isCreatingFolder()) {
-    <button class="create-folder-btn" (click)="toggleCreateFolder()">
+    <button type="button" class="create-folder-btn" (click)="toggleCreateFolder()">
       {{ 'SIDEBAR.NEW_FOLDER' | translate }}
     </button>
   } @else {
@@ -16,10 +16,21 @@
         (keyup.enter)="submitNewFolder()"
         (keyup.escape)="toggleCreateFolder()"
       >
-      <button class="icon-btn" (click)="submitNewFolder()" [disabled]="newFolderName.invalid" [title]="'SIDEBAR.CONFIRM' | translate">
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="submitNewFolder()"
+        [disabled]="newFolderName.invalid"
+        [title]="'SIDEBAR.CONFIRM' | translate"
+      >
         <span aria-hidden="true">✔</span>
       </button>
-      <button class="icon-btn danger-btn" (click)="toggleCreateFolder()" [title]="'SIDEBAR.CANCEL' | translate">
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="toggleCreateFolder()"
+        [title]="'SIDEBAR.CANCEL' | translate"
+      >
         <span aria-hidden="true">✖</span>
       </button>
     </div>
@@ -28,19 +39,15 @@
 
 @if (isLoadingRoutes()) {
   <div class="loading-state" aria-live="polite">
-    <span>{{ 'SIDEBAR.LOADING_ROUTES' | translate }}</span>
+    {{ 'SIDEBAR.LOADING_ROUTES' | translate }}
   </div>
-}
-
-@if (!isLoadingRoutes() && unassignedRoutes().length === 0 && folders().length === 0) {
+} @else if (unassignedRoutes().length === 0 && folders().length === 0) {
   <div class="empty-state" aria-live="polite">
     {{ 'SIDEBAR.EMPTY_STATE' | translate }}
   </div>
-}
-
-@if (!isLoadingRoutes() && (unassignedRoutes().length > 0 || folders().length > 0)) {
+} @else {
   @for (folder of folders(); track folder.id) {
-    <app-folder-item [folderId]="folder.id"></app-folder-item>
+    <app-folder-item [folder]="folder"></app-folder-item>
   }
 
   @for (route of unassignedRoutes(); track route.id) {

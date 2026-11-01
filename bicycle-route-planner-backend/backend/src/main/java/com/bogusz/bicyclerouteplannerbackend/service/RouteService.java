@@ -14,11 +14,9 @@ import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.locationtech.jts.geom.*;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -27,7 +25,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class RouteService {
     private static final int MAX_ELEVATION_PROFILE_POINTS = 250;
-    private static final double EARTH_RADIUS_METERS = 6_371_000.0;
 
     private final RouteRepository routeRepository;
     private final UserRepository userRepository;
@@ -86,27 +83,8 @@ public class RouteService {
 
     @Transactional(readOnly = true)
     public List<ElevationPointDto> getElevationPointsForRoute(Long routeId, Long userId) {
-        Route route = getValidRouteForUser(routeId, userId);
-        Coordinate[] coordinates = route.getRouteGeom().getCoordinates();
-        List<ElevationPointDto> elevationProfile = new ArrayList<>(coordinates.length);
-        double totalDistance = 0.0;
-
-        for (int i = 0; i < coordinates.length; i++) {
-            Coordinate current = coordinates[i];
-
-            if (i > 0) {
-                Coordinate previous = coordinates[i - 1];
-                double distanceMeters = calculateHaversineDistance(
-                        previous.getY(), previous.getX(),
-                        current.getY(), current.getX()
-                );
-                totalDistance += distanceMeters;
-            }
-            if (!Double.isNaN(current.getZ())) {
-                elevationProfile.add(new ElevationPointDto(totalDistance, current.getZ()));
-            }
-        }
-
+        getValidRouteForUser(routeId, userId);
+        List<ElevationPointDto> elevationProfile = routeRepository.findElevationProfileById(routeId);
         return elevationProfileDownsampler.downsample(elevationProfile, MAX_ELEVATION_PROFILE_POINTS);
     }
 
@@ -126,17 +104,6 @@ public class RouteService {
     public void renameRoute(Long routeId, RenameRouteRequestDto request, Long userId) {
         Route route = getValidRouteForUser(routeId, userId);
         route.setName(request.name());
-    }
-
-    private double calculateHaversineDistance(double lat1, double lon1, double lat2, double lon2) {
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double clampedA = Math.clamp(a, 0.0, 1.0);
-        double c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
-        return EARTH_RADIUS_METERS * c;
     }
 
     private Route getValidRouteForUser(Long routeId, Long userId){

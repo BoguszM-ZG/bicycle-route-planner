@@ -238,6 +238,32 @@ class RouteControllerTest {
     }
 
     @Test
+    void shouldReturn400BadRequestWhenDistanceIsMissing() throws Exception {
+        // GIVEN
+        CreateRouteRequestDto badRequest = new CreateRouteRequestDto(
+                ROUTE_NAME,
+                RouteType.POINT_TO_POINT,
+                5000.0,
+                null,
+                100.0,
+                50.0,
+                START_POINT,
+                "LINESTRING(19.945 50.0647, 19.946 50.0648)",
+                null
+        );
+
+        // WHEN
+        ResultActions resultActions = mockMvc.perform(post(ROUTES_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(badRequest)));
+
+        // THEN
+        resultActions.andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.distanceMeters").value("Distance is required"));
+        then(routeService).shouldHaveNoInteractions();
+    }
+
+    @Test
     void shouldReturn400BadRequestWhenRouteGeometryHasCoordinatesOutOfBounds() throws Exception {
         // GIVEN
         CreateRouteRequestDto badRequest = new CreateRouteRequestDto(

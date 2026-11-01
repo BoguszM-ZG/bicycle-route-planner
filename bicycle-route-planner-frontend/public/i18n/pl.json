@@ -1,10 +1,8 @@
 {
   "MAP": {
     "DRAW_ROUTE_FIRST": "Najpierw wyznacz trasę, żeby ją zapisać.",
-    "LOGIN_REQUIRED": "Musisz być zalogowany, aby zapisać trasę.",
     "LOCATION_FOUND": "Tu jesteś!",
     "LOCATION_ERROR": "Nie udało się pobrać lokalizacji. Upewnij się, że przeglądarka ma odpowiednie uprawnienia.",
-    "MAP_CLICK_START": "Kliknij na mapie, aby wybrać punkt startowy",
     "MAP_REGION_LABEL": "Interaktywna mapa trasy",
     "WAYPOINT_POPUP_TITLE": "Punkt trasy",
     "DELETE_WAYPOINT": "Usuń punkt",
@@ -13,28 +11,18 @@
     "MARKER_END": "Koniec",
     "MARKER_LOOP": "Start/Koniec (Pętla)"
   },
-  "ROUTE": {
-    "ENTER_NAME": "Proszę wpisać nazwę trasy",
-    "SAVE_SUCCESS": "Trasa została zapisana pomyślnie!"
-  },
   "ZONE": {
-    "ENTER_NAME": "Proszę wpisać prawidłową nazwę strefy",
-    "ZONE_POPUP_TITLE": "Strefa omijana:"
-  },
-  "GPX": {
-    "DOWNLOAD_START": "Rozpoczęto pobieranie pliku GPX",
-    "DOWNLOAD_ERROR": "Nie udało się pobrać pliku GPX"
+    "ZONE_POPUP_TITLE": "Strefa omijania:"
   },
   "MAP_MODE_PANEL": {
     "DIRECT": "Trasa Punktowa",
     "ROUND_TRIP": "Pętla (Auto)",
-    "DISTANCE": "Odległość (km):",
+    "DISTANCE": "Odległość:",
     "ROUND_TRIP_HINT": "Wybierz długość trasy i wybierz na mapie punkt startowy",
     "DRAW_ZONE": "Rysuj Strefę Omijania",
-    "SAVE": "Zapisz",
     "CANCEL": "Anuluj",
     "ZONE_HINT_DRAW": "Naklikaj wielokąt i zamknij figurę.",
-    "ZONE_HINT_DONE": "Figura zamknięta. Możesz zapisać."
+    "MODE_SELECTION_GROUP": "Wybór trybu mapy"
   },
   "MODALS": {
     "SAVE_ROUTE_TITLE": "Zapisz Trasę",
@@ -46,12 +34,11 @@
     "SAVE": "Zapisz",
     "SAVING": "Zapisywanie...",
     "SAVE_ZONE_TITLE": "Zapisz Strefę Omijania",
-    "SAVE_ZONE_LABEL": "Podaj nazwę dla tej strefy omijalnej",
+    "SAVE_ZONE_LABEL": "Podaj nazwę dla tej strefy omijania",
     "SAVE_ZONE_PLACEHOLDER": "Nowa strefa omijania",
     "DEFAULT_ZONE_NAME": "Nowa strefa omijania",
     "EMPTY_ROUTE_NAME": "Proszę wpisać nazwę trasy",
     "DEFAULT_ROUTE_NAME": "Nowa trasa rowerowa",
-    "ROUTE_SAVED": "Trasa została zapisana pomyślnie!",
     "EMPTY_ZONE_NAME": "Proszę wpisać prawidłową nazwę strefy"
   },
   "MAP_CONTROLS": {
@@ -64,7 +51,9 @@
     "SEARCH_PLACEHOLDER": "Szukaj miasta, adresu...",
     "SEARCH_LABEL": "Szukaj adresu",
     "CLEAR_SEARCH": "Wyczyść",
-    "UNKNOWN_PLACE": "Nieznane miejsce"
+    "UNKNOWN_PLACE": "Nieznane miejsce",
+    "SEARCHING": "Wyszukiwanie…",
+    "TOOLBAR_LABEL": "Akcje mapy"
   },
   "SIDEBAR": {
     "PROFILE_TITLE": "Twój profil",
@@ -97,10 +86,11 @@
     "FOLDER_ITEM_TOGGLE": "Rozwiń/Zwiń",
     "FOLDER_ITEM_RENAME": "Zmień nazwę",
     "FOLDER_ITEM_DELETE": "Usuń folder",
-    "ZONES_PANEL_TITLE": "Strefy omijalne",
-    "ZONES_PANEL_EMPTY": "Brak stref omijalnych",
+    "ZONES_PANEL_TITLE": "Strefy omijania",
+    "ZONES_PANEL_EMPTY": "Brak stref omijania",
     "ROUTE_DETAILS_CREATED": "Data utworzenia",
     "ROUTE_DETAILS_DISTANCE": "Dystans",
+    "ROUTE_DETAILS_TARGET_DISTANCE": "Zadany dystans",
     "ROUTE_DETAILS_GAIN": "Podjazdy",
     "ROUTE_DETAILS_LOSS": "Zjazdy",
     "ROUTE_DETAILS_CHART_TITLE": "Profil Przewyższeń",
@@ -111,7 +101,9 @@
     "CHART_ERROR": "Nie udało się załadować profilu wysokości.",
     "CHART_NO_DATA": "Brak danych o wysokości dla tej trasy.",
     "CHART_DISTANCE_KM": "Dystans (km)",
-    "CHART_ELEVATION_M": "Wysokość (m n.p.m)"
+    "CHART_ELEVATION_M": "Wysokość (m n.p.m)",
+    "LOADING": "Ładowanie…",
+    "NEW_FOLDER_LABEL": "Nazwa nowego folderu"
   },
   "AUTH": {
     "LOGIN_TITLE": "Witaj ponownie",
@@ -135,13 +127,20 @@
     "PASSWORD_MIN_LENGTH": "Hasło musi składać się z co najmniej 8 znaków.",
     "REGISTER_BUTTON": "Zarejestruj się",
     "HAVE_ACCOUNT": "Masz już konto?",
-    "LOGIN_LINK": "Zaloguj się tutaj"
+    "LOGIN_LINK": "Zaloguj się tutaj",
+    "LOADING": "Trwa przetwarzanie…",
+    "EMAIL_TAKEN": "Konto z tym adresem e-mail już istnieje.",
+    "REQUEST_FAILED": "Nie udało się wykonać operacji. Spróbuj ponownie."
   },
   "ERRORS": {
     "GLOBAL_UNKNOWN_ERROR": "Wystąpił nieoczekiwany błąd aplikacji. Przepraszamy za utrudnienia.",
     "DOWNLOAD_ROUTE_ERROR": "Nie udało się pobrać pliku trasy. Spróbuj ponownie później.",
     "ROUTE_NOT_FOUND": "Nie znaleziono drogi w pobliżu wybranego punktu.",
     "ROUND_TRIP_NOT_FOUND": "Nie można wyznaczyć pętli w tym obszarze (brak dróg).",
+    "ROUTING_FAILED": "Nie udało się wyznaczyć trasy. Przesuń punkty lub spróbuj ponownie później.",
+    "ROUTING_TIMEOUT": "Usługa wyznaczania tras nie odpowiada. Spróbuj ponownie za chwilę.",
+    "ROUTING_NO_CONNECTION": "Brak połączenia z serwerem. Sprawdź połączenie z internetem.",
+    "ROUTING_INVALID_REQUEST": "Zapytanie przekracza limity usługi wyznaczania tras (np. ponad 50 punktów).",
     "ROUTE_TOO_SHORT": "Trasa jest zbyt krótka, aby ją zapisać (wymaga minimum 2 punktów).",
     "FETCH_ROUTES_FAILED": "Nie udało się pobrać listy tras.",
     "FETCH_ROUTE_DETAILS_FAILED": "Nie udało się pobrać szczegółów trasy.",
@@ -153,24 +152,27 @@
     "CREATE_FOLDER_FAILED": "Nie udało się utworzyć folderu.",
     "DELETE_FOLDER_FAILED": "Nie udało się usunąć folderu.",
     "RENAME_FOLDER_FAILED": "Nie udało się zmienić nazwy folderu.",
-    "LOAD_ZONES_FAILED": "Nie udało się załadować stref wykluczeń.",
-    "SAVE_ZONE_FAILED": "Nie udało się zapisać strefy wykluczeń.",
-    "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy wykluczeń.",
+    "LOAD_ZONES_FAILED": "Nie udało się załadować stref omijania.",
+    "SAVE_ZONE_FAILED": "Nie udało się zapisać strefy omijania.",
+    "DELETE_ZONE_FAILED": "Nie udało się usunąć strefy omijania.",
     "TOGGLE_ZONE_FAILED": "Nie udało się zmienić statusu strefy.",
     "ZONE_LIMIT_EXCEEDED": "Strefa przekracza limity silnika tras: maks. 20 km szerokości i wysokości, a łączna powierzchnia aktywnych stref maks. 200 km². Zmniejsz strefę lub wyłącz inną.",
-    "WAYPOINT_IN_AVOIDANCE_ZONE": "Punkt trasy znajduje się wewnątrz strefy omijanej. Przesuń punkt poza strefę."
+    "WAYPOINT_IN_AVOIDANCE_ZONE": "Punkt trasy znajduje się wewnątrz strefy omijania. Przesuń punkt poza strefę."
   },
   "SUCCESS": {
     "CREATE_ROUTE": "Trasa została pomyślnie zapisana.",
-    "SAVE_ZONE": "Strefa omijana została pomyślnie zapisana.",
+    "SAVE_ZONE": "Strefa omijania została pomyślnie zapisana.",
     "CREATE_FOLDER": "Folder został pomyślnie utworzony.",
     "RENAME_ROUTE": "Nazwa trasy została pomyślnie zmieniona.",
     "MOVE_ROUTE": "Trasa została pomyślnie przeniesiona.",
     "RENAME_FOLDER": "Nazwa folderu została pomyślnie zmieniona.",
     "DELETE_ROUTE": "Trasa została pomyślnie usunięta.",
     "DELETE_FOLDER": "Folder został pomyślnie usunięty.",
-    "DELETE_ZONE": "Strefa omijana została pomyślnie usunięta.",
+    "DELETE_ZONE": "Strefa omijania została pomyślnie usunięta.",
     "TOGGLE_ZONE": "Status aktywności strefy został pomyślnie zmieniony."
+  },
+  "TOAST": {
+    "CLOSE": "Zamknij powiadomienie"
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "woj. lubuskie",

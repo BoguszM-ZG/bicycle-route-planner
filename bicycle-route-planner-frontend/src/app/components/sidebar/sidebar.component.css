@@ -1,5 +1,5 @@
 .sidebar-container {
-  width: 360px;
+  width: var(--sidebar-width);
   height: 96vh;
   position: absolute;
   left: 2vh;
@@ -8,14 +8,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  font-family: 'Inter', 'Roboto', sans-serif;
   color: #1f2937;
 }
 
 .profile-section {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 20px;
   box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.1);
@@ -39,6 +37,9 @@
 }
 
 .logout-link {
+  background: none;
+  border: none;
+  padding: 0;
   font-size: 0.9rem;
   font-weight: 600;
   color: #374151;
@@ -48,7 +49,7 @@
 }
 
 .logout-link:hover {
-  color: #000;
+  color: #111827;
 }
 
 .profile-avatar {
@@ -71,7 +72,6 @@
   flex-grow: 1;
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 20px;
   box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.1);
@@ -106,7 +106,10 @@
   font-weight: 600;
   color: #4b5563;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
 }
 
 .segment-btn.active {
@@ -125,6 +128,7 @@
 .sidebar-content::-webkit-scrollbar {
   width: 4px;
 }
+
 .sidebar-content::-webkit-scrollbar-thumb {
   background: rgba(0,0,0,0.2);
   border-radius: 4px;

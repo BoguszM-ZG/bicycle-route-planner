@@ -66,7 +66,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
-                            log.warn("Unauthorized access attempt to {}: {}", request.getRequestURI(), authException.getMessage());
+                            log.debug("Unauthorized access attempt to {}: {}", request.getRequestURI(), authException.getMessage());
                             if (response.isCommitted()) {
                                 return;
                             }
@@ -100,7 +100,6 @@ public class SecurityConfig {
         configuration.setAllowedMethods(ALLOWED_HTTP_METHODS);
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Content-Disposition"));
-        configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

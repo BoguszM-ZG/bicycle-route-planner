@@ -1,13 +1,10 @@
 :host {
   display: block;
-  width: 100%;
 }
 
 .folder-container {
   display: flex;
   flex-direction: column;
-  width: 100% !important;
-  box-sizing: border-box !important;
   margin-bottom: 4px;
 }
 
@@ -21,6 +18,13 @@
   padding: 4px;
   text-align: left;
   transition: background-color 0.2s ease;
+}
+
+.folder-header.expanded {
+  background-color: #e5e7eb;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 2px solid #3b82f6;
 }
 
 .folder-expand-btn {
@@ -40,13 +44,6 @@
   transform: scale(0.99);
 }
 
-.folder-header.expanded {
-  background-color: #e5e7eb;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: 2px solid #3b82f6;
-}
-
 .folder-icon {
   font-size: 1.1rem;
 }
@@ -58,7 +55,6 @@
 .folder-children {
   display: flex;
   flex-direction: column;
-
   padding-left: 16px;
   margin-left: 8px;
   border-left: 2px dashed #d1d5db;
@@ -68,10 +64,6 @@
 
 .padded-icon {
   padding-left: 8px;
-}
-
-.hidden-label {
-  display: none;
 }
 
 .rename-input {
@@ -87,12 +79,71 @@
   margin-left: 8px;
 }
 
-.right-aligned {
-  margin-left: auto;
+.folder-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
 }
 
-.folder-header .confirm-btn {
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn.delete-icon:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.warning-text {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.confirm-btn {
   flex-shrink: 0;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
+.confirm-btn.cancel {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
 
+.confirm-btn.cancel:hover {
+  background-color: #d1d5db;
+}
+
+.confirm-btn.primary {
+  background-color: #1d4ed8;
+  color: white;
+}
+
+.confirm-btn.primary:hover {
+  background-color: #2563eb;
+}
+
+.confirm-btn.danger {
+  background-color: #dc2626;
+  color: white;
+}
+
+.confirm-btn.danger:hover {
+  background-color: #b91c1c;
+}

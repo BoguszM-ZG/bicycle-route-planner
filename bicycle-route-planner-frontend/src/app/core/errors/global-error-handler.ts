@@ -13,6 +13,14 @@ export class GlobalErrorHandler implements ErrorHandler {
     const logger = this.injector.get(LoggerService);
     const notificationService = this.injector.get(NotificationService);
 
+    if (unwrappedError instanceof HttpErrorResponse) {
+      logger.error('[GlobalError] Unhandled HTTP error', {
+        status: unwrappedError.status,
+        type: unwrappedError.error?.type,
+      });
+      return;
+    }
+
     const message =
       unwrappedError instanceof Error
         ? unwrappedError.message
@@ -36,10 +44,6 @@ export class GlobalErrorHandler implements ErrorHandler {
     }
 
     logger.error(`[GlobalError] ${message}`, { originalError });
-
-    if (unwrappedError instanceof HttpErrorResponse) {
-      return;
-    }
 
     notificationService.error('ERRORS.GLOBAL_UNKNOWN_ERROR');
   }

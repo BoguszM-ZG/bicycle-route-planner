@@ -1,8 +1,8 @@
 export interface AvoidanceZoneDto{
-  id?:number;
+  id: number;
   name: string;
   zoneGeom: string;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 export interface CreateAvoidanceZoneRequestDto {

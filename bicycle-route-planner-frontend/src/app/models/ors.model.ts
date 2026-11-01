@@ -17,10 +17,8 @@ export interface OrsRouteRequestDto {
     avoid_polygons?: AvoidPolygonsGeoJson;
     round_trip?: {
       length: number;
-      points?: number;
       seed?: number;
     };
-    [key: string]: unknown;
   };
 }
 
@@ -38,8 +36,4 @@ export interface OrsGeoJsonResponse {
       [key: string]: unknown;
     }
   >[];
-  error?: {
-    code?: number;
-    message: string;
-  };
 }

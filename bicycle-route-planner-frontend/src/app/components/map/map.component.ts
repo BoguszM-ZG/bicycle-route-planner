@@ -8,7 +8,6 @@ import {
   effect,
   untracked,
 } from '@angular/core';
-import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -41,7 +40,6 @@ import { AvoidanceZoneStateService } from '../../services/avoidance-zone-state.s
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapComponent implements AfterViewInit {
-  private readonly authService = inject(AuthService);
   private readonly mapEngine = inject(MapEngineService);
   private readonly routePlanningState = inject(RoutePlanningStateService);
   private readonly mapRouteLayer = inject(MapRouteLayerService);
@@ -54,7 +52,8 @@ export class MapComponent implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
 
   public readonly saveRouteModal = viewChild.required<SaveRouteModalComponent>('saveRouteModal');
-  public readonly saveZoneModal = viewChild<SaveZoneModalComponent>('saveZoneModal');
+  public readonly saveZoneModal = viewChild.required<SaveZoneModalComponent>('saveZoneModal');
+  public readonly isLocating = this.mapEngine.isLocating;
 
   constructor() {
     effect(() => {
@@ -63,16 +62,14 @@ export class MapComponent implements AfterViewInit {
         return;
       }
       const modal = this.saveZoneModal();
-      if (modal && !untracked(() => modal.isVisible())) {
-        untracked(() => modal.open(draft));
+      if (!untracked(() => modal.isVisible())) {
+        untracked(() => modal.open());
       }
     });
   }
 
   ngAfterViewInit(): void {
     this.mapEngine.initMap('map');
-
-    this.logger.debug('[Map] Leaflet map successfully initialized');
 
     this.destroyRef.onDestroy(() => {
       this.mapEngine.destroyMap();
@@ -87,16 +84,11 @@ export class MapComponent implements AfterViewInit {
   public saveRoute(): void {
     const draft = this.routePlanningState.currentRouteDraft();
 
-    if (!draft?.geometryWkt || !draft.distanceMeters || draft.distanceMeters <= 0) {
+    if (!draft?.distanceMeters) {
       this.logger.debug(
         '[Map] User tried to save a route, but no route is drawn or distance is zero',
       );
       this.notificationService.warning('MAP.DRAW_ROUTE_FIRST');
-      return;
-    }
-
-    if (!this.authService.isAuthenticated()) {
-      this.notificationService.warning('MAP.LOGIN_REQUIRED');
       return;
     }
 

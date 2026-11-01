@@ -1,5 +1,5 @@
 import { Injectable, inject, effect, untracked } from '@angular/core';
-import * as L from 'leaflet';
+import L from 'leaflet';
 import 'leaflet-draw';
 import * as wellknown from 'wellknown';
 import type { GeoJSONGeometry } from 'wellknown';
@@ -111,7 +111,7 @@ export class MapDrawService {
       );
       this.currentDrawer.enable();
     } catch (err) {
-      this.logger.debug('[MapDraw] Could not enable polygon drawer:', { error: err });
+      this.logger.debug('[MapDraw] Could not enable polygon drawer', { error: err });
     }
   }
 
@@ -121,7 +121,7 @@ export class MapDrawService {
       this.currentDrawer = undefined;
     }
     this.tempDrawFeatureGroup.clearLayers();
-    this.avoidanceZoneStateService.currentZoneDraft.set(null);
+    this.avoidanceZoneStateService.setZoneDraft(null);
   }
 
   private readonly onDrawCreated = (event: L.LeafletEvent): void => {
@@ -130,10 +130,10 @@ export class MapDrawService {
     this.tempDrawFeatureGroup.addLayer(layer);
 
     const geoJson = layer.toGeoJSON();
-    this.logger.debug('[AvoidanceZone] New polygon drawn on map.');
+    this.logger.debug('[AvoidanceZone] New polygon drawn on map');
     const wktString = wellknown.stringify(geoJson.geometry as unknown as GeoJSONGeometry);
 
-    this.avoidanceZoneStateService.currentZoneDraft.set(wktString);
+    this.avoidanceZoneStateService.setZoneDraft(wktString);
   };
 
   private setupDrawEvents(map: L.Map): void {

@@ -1,4 +1,5 @@
 import { Injectable, inject, signal, effect, untracked } from '@angular/core';
+import { HttpStatusCode } from '@angular/common/http';
 import { Subscription, Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { FolderService } from './folder.service';
@@ -56,7 +57,10 @@ export class FolderStateService {
           this._folders.set(fetchedFolders);
         },
         error: (err) => {
-          this.logger.error('[FolderStateService] Error occurred while fetching folders.', { error: err });
+          this.logger.error('[FolderStateService] Error occurred while fetching folders', {
+            status: err.status,
+            type: err.error?.type,
+          });
           this.notificationService.error('ERRORS.FETCH_FOLDERS_FAILED');
         },
       });
@@ -72,17 +76,20 @@ export class FolderStateService {
         next: (createdFolder: FolderDto) => {
           this._folders.update((currentFolders) => [...currentFolders, createdFolder]);
 
-          this.logger.info('[FolderStateService] Folder successfully created.', {
+          this.logger.info('[FolderStateService] Folder successfully created', {
             folderId: createdFolder.id,
             folderName: createdFolder.name,
           });
           this.notificationService.success('SUCCESS.CREATE_FOLDER');
         },
         error: (err) => {
-          if (err.status === 400 || err.status === 409) {
-            this.logger.debug('[FolderStateService] Folder creation validation error:', { error: err.error });
+          if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.Conflict) {
+            this.logger.debug('[FolderStateService] Folder creation validation error', { error: err.error });
           } else {
-            this.logger.error('[FolderStateService] Error occurred while creating folder:', { error: err });
+            this.logger.error('[FolderStateService] Error occurred while creating folder', {
+              status: err.status,
+              type: err.error?.type,
+            });
           }
           this.notificationService.error('ERRORS.CREATE_FOLDER_FAILED');
         },
@@ -94,16 +101,19 @@ export class FolderStateService {
       next: () => {
         this._folders.update((folders) => folders.filter((f) => f.id !== folderId));
         this._folderDeleted$.next(folderId);
-        this.logger.info('[FolderStateService] Folder successfully deleted.', {
+        this.logger.info('[FolderStateService] Folder successfully deleted', {
           deletedFolderId: folderId,
         });
         this.notificationService.success('SUCCESS.DELETE_FOLDER');
       },
       error: (err) => {
-        if (err.status === 404) {
-          this.logger.debug('[FolderStateService] Folder to delete not found:', { folderId });
+        if (err.status === HttpStatusCode.NotFound) {
+          this.logger.debug('[FolderStateService] Folder to delete not found', { folderId });
         } else {
-          this.logger.error('[FolderStateService] Error deleting folder:', { error: err });
+          this.logger.error('[FolderStateService] Error deleting folder', {
+            status: err.status,
+            type: err.error?.type,
+          });
         }
         this.notificationService.error('ERRORS.DELETE_FOLDER_FAILED');
       },
@@ -126,21 +136,28 @@ export class FolderStateService {
         this._folders.update((folders) =>
           folders.map((f) => (f.id === folderId ? { ...f, name: trimmed } : f)),
         );
-        this.logger.info('[FolderStateService] Folder renamed successfully.', {
+        this.logger.info('[FolderStateService] Folder renamed successfully', {
           folderId,
           newName: trimmed,
         });
         this.notificationService.success('SUCCESS.RENAME_FOLDER');
       },
       error: (err) => {
-        if (err.status === 400 || err.status === 404 || err.status === 409) {
-          this.logger.debug('[FolderStateService] Folder rename validation error:', {
+        if (
+          err.status === HttpStatusCode.BadRequest ||
+          err.status === HttpStatusCode.NotFound ||
+          err.status === HttpStatusCode.Conflict
+        ) {
+          this.logger.debug('[FolderStateService] Folder rename validation error', {
             folderId,
             newName: trimmed,
             error: err.error,
           });
         } else {
-          this.logger.error('[FolderStateService] Error renaming folder:', { error: err });
+          this.logger.error('[FolderStateService] Error renaming folder', {
+            status: err.status,
+            type: err.error?.type,
+          });
         }
         this.notificationService.error('ERRORS.RENAME_FOLDER_FAILED');
       },

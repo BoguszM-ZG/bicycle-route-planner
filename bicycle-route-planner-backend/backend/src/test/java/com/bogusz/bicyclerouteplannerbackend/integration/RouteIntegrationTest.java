@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -44,6 +45,7 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     private static final double TEST_ELEVATION_LOSS = 20.0;
     private static final String VALID_WKT_POINT = "POINT(15.0 50.0)";
     private static final String VALID_WKT_LINESTRING = "LINESTRING Z(15.0 50.0 100.0, 15.1 50.1 110.0)";
+    private static final double GEODESIC_DISTANCE_METERS = 13_229.4;
     private static final String TEST_EMAIL = "routeuser@test.com";
     private static final String TEST_PASSWORD = "Password123!";
 
@@ -158,7 +160,7 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    void shouldGetElevationPoints() throws Exception {
+    void shouldCalculateElevationProfileWithGeodesicDistanceInDatabase() throws Exception {
         // Given
         long routeId = createRouteAndGetId();
 
@@ -167,7 +169,11 @@ class RouteIntegrationTest extends BaseIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken))
                 // Then
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").isNumber());
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].distance").value(0.0))
+                .andExpect(jsonPath("$[0].elevation").value(100.0))
+                .andExpect(jsonPath("$[1].distance").value(closeTo(GEODESIC_DISTANCE_METERS, 1.0)))
+                .andExpect(jsonPath("$[1].elevation").value(110.0));
     }
 
     @Test

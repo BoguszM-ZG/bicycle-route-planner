@@ -1,10 +1,8 @@
 {
   "MAP": {
     "DRAW_ROUTE_FIRST": "Please draw a route first before saving.",
-    "LOGIN_REQUIRED": "You must be logged in to save a route.",
     "LOCATION_FOUND": "You are here!",
     "LOCATION_ERROR": "Failed to get location. Make sure your browser has the necessary permissions.",
-    "MAP_CLICK_START": "Click on the map to set the start point",
     "MAP_REGION_LABEL": "Interactive route map",
     "WAYPOINT_POPUP_TITLE": "Waypoint",
     "DELETE_WAYPOINT": "Delete waypoint",
@@ -16,25 +14,15 @@
   "MAP_MODE_PANEL": {
     "DIRECT": "Point to Point",
     "ROUND_TRIP": "Loop (Auto)",
-    "DISTANCE": "Distance (km):",
+    "DISTANCE": "Distance:",
     "ROUND_TRIP_HINT": "Choose route length and select a start point on the map",
     "DRAW_ZONE": "Draw Avoidance Zone",
-    "SAVE": "Save",
     "CANCEL": "Cancel",
     "ZONE_HINT_DRAW": "Click to draw a polygon and close the shape.",
-    "ZONE_HINT_DONE": "Shape closed. You can save it now."
-  },
-  "ROUTE": {
-    "ENTER_NAME": "Please enter a route name",
-    "SAVE_SUCCESS": "Route saved successfully!"
+    "MODE_SELECTION_GROUP": "Map mode selection"
   },
   "ZONE": {
-    "ENTER_NAME": "Please enter a valid zone name",
     "ZONE_POPUP_TITLE": "Avoidance Zone:"
-  },
-  "GPX": {
-    "DOWNLOAD_START": "GPX file download started",
-    "DOWNLOAD_ERROR": "Failed to download GPX file"
   },
   "MODALS": {
     "SAVE_ROUTE_TITLE": "Save Route",
@@ -51,7 +39,6 @@
     "DEFAULT_ZONE_NAME": "New avoidance zone",
     "EMPTY_ROUTE_NAME": "Please enter a route name",
     "DEFAULT_ROUTE_NAME": "New cycling route",
-    "ROUTE_SAVED": "Route saved successfully!",
     "EMPTY_ZONE_NAME": "Please enter a valid zone name"
   },
   "MAP_CONTROLS": {
@@ -64,7 +51,9 @@
     "SEARCH_PLACEHOLDER": "Search city, address...",
     "SEARCH_LABEL": "Search address",
     "CLEAR_SEARCH": "Clear",
-    "UNKNOWN_PLACE": "Unknown place"
+    "UNKNOWN_PLACE": "Unknown place",
+    "SEARCHING": "Searching…",
+    "TOOLBAR_LABEL": "Map actions"
   },
   "SIDEBAR": {
     "PROFILE_TITLE": "Your Profile",
@@ -101,6 +90,7 @@
     "ZONES_PANEL_EMPTY": "No avoidance zones",
     "ROUTE_DETAILS_CREATED": "Created At",
     "ROUTE_DETAILS_DISTANCE": "Distance",
+    "ROUTE_DETAILS_TARGET_DISTANCE": "Target distance",
     "ROUTE_DETAILS_GAIN": "Elevation Gain",
     "ROUTE_DETAILS_LOSS": "Elevation Loss",
     "ROUTE_DETAILS_CHART_TITLE": "Elevation Profile",
@@ -111,7 +101,9 @@
     "CHART_ERROR": "Failed to load elevation profile.",
     "CHART_NO_DATA": "No elevation data for this route.",
     "CHART_DISTANCE_KM": "Distance (km)",
-    "CHART_ELEVATION_M": "Elevation (m a.s.l.)"
+    "CHART_ELEVATION_M": "Elevation (m a.s.l.)",
+    "LOADING": "Loading…",
+    "NEW_FOLDER_LABEL": "New folder name"
   },
   "AUTH": {
     "LOGIN_TITLE": "Welcome back",
@@ -135,13 +127,20 @@
     "PASSWORD_MIN_LENGTH": "Password must be at least 8 characters long.",
     "REGISTER_BUTTON": "Register",
     "HAVE_ACCOUNT": "Already have an account?",
-    "LOGIN_LINK": "Log in here"
+    "LOGIN_LINK": "Log in here",
+    "LOADING": "Processing…",
+    "EMAIL_TAKEN": "An account with this email address already exists.",
+    "REQUEST_FAILED": "The operation could not be completed. Please try again."
   },
   "ERRORS": {
     "GLOBAL_UNKNOWN_ERROR": "An unexpected application error occurred. We apologize for the inconvenience.",
     "DOWNLOAD_ROUTE_ERROR": "Failed to download route file. Please try again later.",
     "ROUTE_NOT_FOUND": "No roads were found near the point.",
     "ROUND_TRIP_NOT_FOUND": "Unable to generate a loop in this area (no roads available).",
+    "ROUTING_FAILED": "Could not calculate the route. Move the points or try again later.",
+    "ROUTING_TIMEOUT": "The routing service is not responding. Please try again in a moment.",
+    "ROUTING_NO_CONNECTION": "No connection to the server. Check your internet connection.",
+    "ROUTING_INVALID_REQUEST": "The request exceeds the routing service limits (e.g. more than 50 points).",
     "ROUTE_TOO_SHORT": "The route is too short to be saved (requires at least 2 points).",
     "FETCH_ROUTES_FAILED": "Failed to fetch routes list.",
     "FETCH_ROUTE_DETAILS_FAILED": "Failed to fetch route details.",
@@ -171,6 +170,9 @@
     "DELETE_FOLDER": "Folder deleted successfully.",
     "DELETE_ZONE": "Avoidance zone deleted successfully.",
     "TOGGLE_ZONE": "Avoidance zone status updated successfully."
+  },
+  "TOAST": {
+    "CLOSE": "Close notification"
   },
   "VOIVODESHIPS": {
     "LUBUSZ": "Lubusz Province",

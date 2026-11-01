@@ -12,7 +12,6 @@ import { TranslatePipe } from '@ngx-translate/core';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RouteDetailsComponent {
-
   private readonly routeStateService = inject(RouteStateService);
 
   public readonly routeDetail = this.routeStateService.selectedRoute;

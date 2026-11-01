@@ -45,11 +45,11 @@ export class RoutePanelComponent {
   }
 
   public submitNewFolder(): void {
-    if (this.newFolderName.invalid) return;
-    const folderName = this.newFolderName.value.trim();
-    if (!folderName) return;
+    if (this.newFolderName.invalid) {
+      return;
+    }
 
-    this.folderStateService.createFolder({ name: folderName });
+    this.folderStateService.createFolder({ name: this.newFolderName.value.trim() });
     this.toggleCreateFolder();
   }
 }

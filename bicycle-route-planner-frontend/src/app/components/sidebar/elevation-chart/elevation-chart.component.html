@@ -4,13 +4,13 @@
   <div class="chart-error">{{ 'SIDEBAR.CHART_ERROR' | translate }}</div>
 } @else if (elevationProfile()?.length === 0) {
   <div class="chart-empty">{{ 'SIDEBAR.CHART_NO_DATA' | translate }}</div>
-} @else if (chartData()) {
+} @else if (chartData(); as data) {
   <div class="chart-container">
     <canvas baseChart
-            [data]="chartData()!"
+            [data]="data"
             [options]="chartOptions()"
             [type]="'scatter'">
-      <span class="sr-only">{{ 'SIDEBAR.ROUTE_DETAILS_CHART_TITLE' | translate }}</span>
+      {{ 'SIDEBAR.ROUTE_DETAILS_CHART_TITLE' | translate }}
     </canvas>
   </div>
 }

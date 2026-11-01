@@ -46,29 +46,29 @@ public class Route {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "route_type", length = 50)
+    @Column(name = "route_type", nullable = false, length = 50)
     private RouteType routeType;
 
     @Column(name = "target_distance")
     private Double targetDistance;
 
-    @Column(name = "distance_meters")
+    @Column(name = "distance_meters", nullable = false)
     private Double distanceMeters;
 
-    @Column(name = "elevation_gain")
+    @Column(name = "elevation_gain", nullable = false)
     private Double elevationGain;
 
-    @Column(name = "elevation_loss")
+    @Column(name = "elevation_loss", nullable = false)
     private Double elevationLoss;
 
-    @Column(name = "start_point", columnDefinition = "geometry(Point, 4326)")
+    @Column(name = "start_point", nullable = false, columnDefinition = "geometry(Point, 4326)")
     private Point startPoint;
 
     @Column(name = "route_geom", nullable = false, columnDefinition = "geometry(LineStringZ, 4326)")
     private LineString routeGeom;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
 

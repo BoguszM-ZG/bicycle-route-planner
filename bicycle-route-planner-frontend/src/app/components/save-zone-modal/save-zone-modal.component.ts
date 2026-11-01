@@ -31,19 +31,16 @@ export class SaveZoneModalComponent {
   public readonly isVisible = signal<boolean>(false);
   public readonly isLoading = this.zoneStateService.isSaving;
 
-  public readonly zoneInput = viewChild<ElementRef<HTMLInputElement>>('zoneInput');
+  private readonly zoneInput = viewChild<ElementRef<HTMLInputElement>>('zoneInput');
 
   public readonly zoneNameControl = new FormControl('', {
     nonNullable: true,
     validators: [
       Validators.required,
       Validators.pattern(/\S/),
-      Validators.minLength(1),
       Validators.maxLength(100),
     ],
   });
-
-  private wktStringToSave: string | null = null;
 
   constructor() {
     effect(() => {
@@ -53,8 +50,7 @@ export class SaveZoneModalComponent {
     });
   }
 
-  public open(wktString?: string): void {
-    this.wktStringToSave = wktString ?? this.zoneStateService.currentZoneDraft();
+  public open(): void {
     this.zoneNameControl.setValue(this.translate.instant('MODALS.DEFAULT_ZONE_NAME'));
     this.isVisible.set(true);
   }
@@ -65,8 +61,7 @@ export class SaveZoneModalComponent {
     }
     this.isVisible.set(false);
     this.zoneNameControl.reset();
-    this.wktStringToSave = null;
-    this.zoneStateService.currentZoneDraft.set(null);
+    this.zoneStateService.setZoneDraft(null);
     this.routePlanningState.setRoutingMode('direct');
   }
 
@@ -81,7 +76,7 @@ export class SaveZoneModalComponent {
       return;
     }
 
-    const wkt = this.zoneStateService.currentZoneDraft() ?? this.wktStringToSave;
+    const wkt = this.zoneStateService.currentZoneDraft();
     if (!wkt || this.isLoading()) {
       return;
     }

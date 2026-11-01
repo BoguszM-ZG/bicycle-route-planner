@@ -2,15 +2,15 @@
   <div class="profile-section">
     <div class="profile-info">
       <h2>{{ 'SIDEBAR.PROFILE_TITLE' | translate }}</h2>
-      @if (currentUser()) {
+      @if (currentUser(); as user) {
         <p class="user-email">
-          {{ 'SIDEBAR.LOGGED_IN_AS' | translate }} <strong>{{ currentUser()?.fullName }}</strong>
+          {{ 'SIDEBAR.LOGGED_IN_AS' | translate }} <strong>{{ user.fullName }}</strong>
         </p>
       }
-      <button class="logout-link" (click)="logout()">{{ 'SIDEBAR.LOGOUT' | translate }}</button>
+      <button type="button" class="logout-link" (click)="logout()">{{ 'SIDEBAR.LOGOUT' | translate }}</button>
     </div>
     <div class="profile-avatar">
-      <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+      <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
       </svg>
     </div>
@@ -18,19 +18,23 @@
 
   <div class="panel-section">
     <h3>{{ 'SIDEBAR.PANEL_TITLE' | translate }}</h3>
-    <div class="segmented-control" role="tablist">
-      <button class="segment-btn"
-              role="tab"
-              [attr.aria-selected]="activeTab() === 'routes'"
-              [class.active]="activeTab() === 'routes'"
-              (click)="activeTab.set('routes')">
+    <div class="segmented-control">
+      <button
+        type="button"
+        class="segment-btn"
+        [attr.aria-pressed]="activeTab() === 'routes'"
+        [class.active]="activeTab() === 'routes'"
+        (click)="activeTab.set('routes')"
+      >
         {{ 'SIDEBAR.TAB_ROUTES' | translate }}
       </button>
-      <button class="segment-btn"
-              role="tab"
-              [attr.aria-selected]="activeTab() === 'zones'"
-              [class.active]="activeTab() === 'zones'"
-              (click)="activeTab.set('zones')">
+      <button
+        type="button"
+        class="segment-btn"
+        [attr.aria-pressed]="activeTab() === 'zones'"
+        [class.active]="activeTab() === 'zones'"
+        (click)="activeTab.set('zones')"
+      >
         {{ 'SIDEBAR.TAB_ZONES' | translate }}
       </button>
     </div>
@@ -42,6 +46,5 @@
         <app-avoidance-zone-panel></app-avoidance-zone-panel>
       }
     </div>
-
   </div>
 </div>

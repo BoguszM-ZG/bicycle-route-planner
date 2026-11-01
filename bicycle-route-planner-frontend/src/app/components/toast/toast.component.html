@@ -1,18 +1,19 @@
-<div class="toast-container" aria-live="polite" aria-atomic="true">
+<div class="toast-container" aria-live="polite">
   @for (toast of notifications(); track toast.id) {
-    <div class="toast" [ngClass]="toast.type" role="alert">
+    <div class="toast {{ toast.type }}">
       <div class="toast-icon" aria-hidden="true">
-        @if (toast.type === 'success') { <span>✓</span> }
-        @if (toast.type === 'error') { <span>✖</span> }
-        @if (toast.type === 'warning') { <span>⚠</span> }
-        @if (toast.type === 'info') { <span>ℹ</span> }
+        @switch (toast.type) {
+          @case ('success') { ✓ }
+          @case ('error') { ✖ }
+          @case ('warning') { ⚠ }
+          @case ('info') { ℹ }
+        }
       </div>
-
       <div class="toast-message">{{ toast.message | translate: toast.translationParams }}</div>
-
       <button
+        type="button"
         class="toast-close"
-        aria-label="Close notification"
+        [attr.aria-label]="'TOAST.CLOSE' | translate"
         (click)="removeToast(toast.id)">
         &times;
       </button>

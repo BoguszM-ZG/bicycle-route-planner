@@ -1,11 +1,10 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-toast',
-  imports: [NgClass, TranslatePipe],
+  imports: [TranslatePipe],
   templateUrl: './toast.component.html',
   styleUrl: './toast.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

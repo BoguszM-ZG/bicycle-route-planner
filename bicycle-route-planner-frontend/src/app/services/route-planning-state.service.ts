@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import * as L from 'leaflet';
 import { Observable, Subscription } from 'rxjs';
 import type { Position } from 'geojson';
@@ -20,6 +20,11 @@ export class RoutePlanningStateService {
   private static readonly MIN_WAYPOINTS_FOR_ROUTE = 2;
   private static readonly DEFAULT_ROUND_TRIP_DISTANCE_M = 20_000;
   private static readonly MAX_ROUND_TRIP_SEED = 100;
+  private static readonly ROUTING_ERROR_KEYS: Record<number, string> = {
+    0: 'ERRORS.ROUTING_NO_CONNECTION',
+    [HttpStatusCode.BadRequest]: 'ERRORS.ROUTING_INVALID_REQUEST',
+    [HttpStatusCode.GatewayTimeout]: 'ERRORS.ROUTING_TIMEOUT',
+  };
 
   private readonly orsService = inject(OrsService);
   private readonly routeGeometryService = inject(RouteGeometryService);
@@ -55,7 +60,7 @@ export class RoutePlanningStateService {
     this.avoidanceZoneStateService
       .zones()
       .filter((zone) => zone.isActive)
-      .map((zone) => String(zone.id ?? zone.zoneGeom))
+      .map((zone) => String(zone.id))
       .sort()
       .join(','),
   );
@@ -151,7 +156,6 @@ export class RoutePlanningStateService {
 
     this.request(
       this.orsService.getRouteGeoJson(coords, avoidPolygons),
-      'ERRORS.ROUTE_NOT_FOUND',
       '[RoutePlanningState] Route error from ORS',
       (data) => this.applyRoute(data, 'POINT_TO_POINT'),
       waypoints.length,
@@ -208,7 +212,6 @@ export class RoutePlanningStateService {
 
     this.request(
       request$,
-      'ERRORS.ROUND_TRIP_NOT_FOUND',
       '[RoutePlanningState] Round trip error',
       (data) => this.applyRoute(data, 'LOOP', startPoint, distance),
     );
@@ -216,14 +219,14 @@ export class RoutePlanningStateService {
 
   private request(
     request$: Observable<OrsGeoJsonResponse>,
-    errorKey: string,
     logMessage: string,
     onSuccess: (data: OrsGeoJsonResponse) => void,
     waypointsCount?: number,
   ): void {
     this.pendingRequest = request$.subscribe({
       next: onSuccess,
-      error: (err) => this.handleRoutingFailure(errorKey, logMessage, err, waypointsCount),
+      error: (err) =>
+        this.handleRoutingFailure(this.routingErrorKey(err), logMessage, err, waypointsCount),
     });
   }
 
@@ -231,9 +234,9 @@ export class RoutePlanningStateService {
     data: OrsGeoJsonResponse,
     routeType: RouteType,
     startPoint?: L.LatLng,
-    targetDistance = 0,
+    targetDistance: number | null = null,
   ): void {
-    const feature = data.error ? undefined : data.features?.[0];
+    const feature = data.features?.[0];
     if (!feature?.geometry?.coordinates?.length) {
       const errorKey =
         routeType === 'LOOP' ? 'ERRORS.ROUND_TRIP_NOT_FOUND' : 'ERRORS.ROUTE_NOT_FOUND';
@@ -275,13 +278,20 @@ export class RoutePlanningStateService {
 
     this.logger.error(logMessage, {
       status: httpErr?.status,
-      orsErrorCode: httpErr?.error?.error?.code ?? httpErr?.error?.code,
       ...(waypointsCount !== undefined && { waypointsCount }),
       isNetworkError: httpErr?.status === 0,
     });
 
     this.resetRouteResult();
     this.notificationService.error(errorKey);
+  }
+
+  private routingErrorKey(err: unknown): string {
+    const status = err instanceof HttpErrorResponse ? err.status : undefined;
+    return (
+      (status !== undefined && RoutePlanningStateService.ROUTING_ERROR_KEYS[status]) ||
+      'ERRORS.ROUTING_FAILED'
+    );
   }
 
   private handleAvoidanceZonesChanged(): void {

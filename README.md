@@ -10,45 +10,43 @@
 
 ---
 
-## 🎓 Metryka Pracy Inżynierskiej 
+## 🎓 Metryka Pracy Inżynierskiej
 
 - **Temat pracy:** *Planowanie i analiza przestrzenna tras rowerowych.*
-- **Cel pracy:** Zaprojektowanie i implementacja aplikacji webowej do zaawansowanego planowania oraz analizy przestrzennej tras rowerowych, zintegrowanej z relacyjną bazą danych geograficznych. Aplikacja oferuje użytkownikom system kont, interaktywną mapę do przeglądania i modyfikacji geometrii tras, jak również narzędzia do ich automatycznego planowania oraz eksportu.
+- **Cel pracy:** Zaprojektowanie i implementacja aplikacji webowej do planowania i analizy tras rowerowych, korzystającej z relacyjnej bazy danych przestrzennych. Aplikacja udostępnia konta użytkowników, interaktywną mapę do wyznaczania i edycji tras, automatyczne generowanie pętli, strefy omijane oraz eksport tras do plików.
 
 ### Zakres pracy:
-1. **Relacyjna Baza Danych Przestrzennych:** Schemat bazy przystosowany do natywnego składowania, indeksowania przestrzennego (GIST) oraz przetwarzania obiektów geograficznych 3D (`LineString Z`, `Polygon` z SRID 4326).
-2. **Warstwa Serwerowa REST API:** Implementacja backendu w oparciu o Java 21 i Spring Boot 4.1.0 integrującego silnik routingu wektorowego (OpenRouteService).
-3. **Reaktywna Aplikacja Kliencka:** Opracowanie interfejsu użytkownika w Angular 22 opartego o Standalone Components, Signals oraz bibliotekę Leaflet.
-4. **Strefy Omijane (Avoidance Zones):** Mechanizm swobodnego kreślenia poligonów na mapie z dynamicznym uwzględnianiem barier w kalkulacji trasy.
-5. **Eksport Danych:** Transformacja geometrii przestrzennych do formatu GPS Exchange Format (`.gpx`).
-6. **Generator Pętli (Loop Generator):** Automatyczne wyznaczanie tras okrężnych na podstawie punktu startowego i zadanego dystansu.
-7. **Autoryzacja i Katalogowanie:** Bezpieczny system kont (JWT) z kategoryzacją tras w ramach płaskiej struktury kolekcji/folderów.
-8. **Narzędzia Przestrzenne (Funkcje Dodatkowe):** Integracja z zewnętrznym API Photon (Komoot) w celu geokodowania i wyszukiwania adresów oraz obsługa geolokalizacji po stronie przeglądarki (GPS).
+1. **Baza danych przestrzennych:** PostgreSQL z PostGIS – geometrie `LineStringZ` (trasa z wysokością), `Polygon` (strefy) i `Point` w układzie WGS84 (SRID 4326), indeksy GiST, migracje Flyway. Część obliczeń wykonuje baza: profil wysokości z odległościami geodezyjnymi, eksport GeoJSON, pole i rozpiętość stref.
+2. **Backend REST API:** Java 21 i Spring Boot 4.1.0, pośredniczący w komunikacji z usługą wyznaczania tras OpenRouteService (klucz API pozostaje na serwerze, zapytania są walidowane pod kątem limitów usługi).
+3. **Aplikacja kliencka:** Angular 22 (komponenty standalone, sygnały) z mapą Leaflet.
+4. **Strefy omijane:** rysowanie wielokątów na mapie; aktywne strefy są uwzględniane przy wyznaczaniu trasy, a ich rozmiar sprawdzany w bazie względem limitów ORS.
+5. **Eksport danych:** zapis trasy do formatów GPX (`.gpx`) i GeoJSON (`.geojson`).
+6. **Generator pętli:** wyznaczanie tras okrężnych z punktu startowego o zadanej długości (5–100 km).
+7. **Konta i foldery:** uwierzytelnianie tokenami JWT; trasy użytkownika można grupować w folderach (hierarchia użytkownik → folder → trasa, jeden poziom folderów).
+8. **Funkcje dodatkowe:** wyszukiwanie adresów przez usługę Photon (Komoot), geolokalizacja przeglądarki, wykres profilu wysokości, interfejs w języku polskim i angielskim.
 
 ---
-
-
 
 ## 🏗️ Stos Technologiczny
 
 | Warstwa | Technologia | Zastosowanie |
 |---|---|---|
-| **Backend** | Java 21, Spring Boot 4.1.x | Logika biznesowa REST API, Spring Security, Spring Data JPA |
-| **Baza Danych** | PostgreSQL 15, PostGIS 3.4, Flyway | Składowanie geometrii `LineString Z` oraz wersjonowanie schematu bazy danych|
-| **Frontend** | TypeScript, Angular 22 | Interfejs klienta, reaktywne zarządzanie stanem (RxJS, Signals) |
-| **Moduł Mapowy** | Leaflet, Leaflet-Draw | Wizualizacja wektorowa, interakcja przestrzenna i obsługa zdarzeń mapy |
-| **Nawigacja** | OpenRouteService API | Zewnętrzny silnik wyznaczania geometrii tras i omijania stref |
-| **Testy** | JUnit 5, Testcontainers, Mockito | Izolowane testy bazy PostGIS (123 testy backendu) |
-| **Infrastruktura** | Docker, Docker Compose | Środowisko uruchomieniowe (multi-stage builds, tryb unprivileged: `nginx` & `spring`) |
+| **Backend** | Java 21, Spring Boot 4.1.0 | REST API, Spring Security (JWT), Spring Data JPA, Hibernate Spatial |
+| **Baza Danych** | PostgreSQL 15, PostGIS 3.4, Flyway | Składowanie i przetwarzanie geometrii, wersjonowanie schematu |
+| **Frontend** | TypeScript, Angular 22 | Interfejs użytkownika, stan w sygnałach Angulara, RxJS do komunikacji HTTP |
+| **Moduł Mapowy** | Leaflet 1.9, Leaflet.draw, Chart.js | Mapa OSM, warstwy wektorowe, rysowanie stref, wykres wysokości |
+| **Usługi zewnętrzne** | OpenRouteService, Photon | Wyznaczanie tras i pętli z omijaniem stref; geokodowanie adresów |
+| **Testy** | JUnit 5, Mockito, Testcontainers, WireMock, Vitest | Testy backendu (w tym na prawdziwej bazie PostGIS) i frontendu |
+| **Infrastruktura** | Docker, Docker Compose, nginx | Uruchomienie całości; obrazy wieloetapowe, procesy bez uprawnień roota |
 
 ---
 
 ## 🚀 Szybki Start (Docker Compose)
 
-Cały stos aplikacji (PostGIS, Backend, Frontend) można uruchomić w trybie produkcyjnym za pomocą jednej komendy:
+Cały stos (PostGIS, backend, frontend) można uruchomić jedną komendą.
 
 ### Wymagania:
-- Zainstalowany [Docker Desktop](https://www.docker.com/products/docker-desktop/) (lub Docker Engine z Docker Compose).
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (lub Docker Engine z Docker Compose).
 
 ### Uruchomienie:
 ```bash
@@ -60,31 +58,35 @@ cd bicycle-route-planner
 cp .env.example .env
 
 # UWAGA: Przed uruchomieniem edytuj plik .env i ustaw:
-# - ORS_API_KEY (darmowy klucz uzyskasz na: https://openrouteservice.org/dev/#/signup)
-# - Własny JWT_SECRET oraz dane dostępowe do bazy danych
+# - ORS_API_KEY (darmowy klucz: https://openrouteservice.org/dev/#/signup)
+# - własny JWT_SECRET oraz dane dostępowe do bazy danych
 
 # 3. Uruchomienie kontenerów w tle
-docker compose up -d
+docker compose up -d --build
 ```
 
 Dostęp do usług:
-- 🌐 **Frontend (Web UI):** [http://localhost:4200](http://localhost:4200)
+- 🌐 **Aplikacja:** [http://localhost:4200](http://localhost:4200) (nginx serwuje frontend i przekazuje `/api` do backendu)
 - ⚙️ **Backend REST API:** [http://localhost:8080](http://localhost:8080)
-- 📖 **Swagger / OpenAPI Documentation:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- 📖 **Swagger / OpenAPI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 - 🗄️ **Baza PostGIS:** `localhost:5432`
+
+Porty backendu i bazy są dostępne tylko z tego komputera (`127.0.0.1`); z sieci widoczny jest wyłącznie frontend na porcie 4200.
 
 ---
 
-## 🛠️ Uruchomienie Developerskie (Lokalne)
+## 🛠️ Uruchomienie Deweloperskie (Lokalne)
 
-W przypadku pracy deweloperskiej w IDE, samą bazę danych uruchamia się bezpiecznie przez Compose (zmienne pobierane są automatycznie z pliku `.env`):
+Przy pracy w IDE w Dockerze uruchamia się tylko bazę danych (zmienne są pobierane z pliku `.env`).
 
-### 1. Uruchomienie samej bazy danych PostGIS
+### 1. Baza danych PostGIS
 ```bash
-docker compose up postgis_db -d
+docker compose up -d postgis_db
 ```
 
-Dane bazy są przechowywane w trwałym wolumenie Dockera (`postgis_data`), więc zostają po `docker compose stop` / `down` i restarcie komputera. Usuwa je dopiero `docker compose down -v`.
+Dane bazy są przechowywane w wolumenie Dockera (`postgis_data`), więc zostają po `docker compose stop` / `down` i restarcie komputera. Usuwa je dopiero `docker compose down -v`.
+
+Jeśli wcześniej działał pełny stos, przed startem backendu w IDE zatrzymaj kontenery aplikacji (`docker compose stop backend frontend`), bo zajmują porty 8080 i 4200.
 
 ### 2. Backend (Spring Boot 4.1.0)
 Wymagane: **JDK 21**.
@@ -103,38 +105,46 @@ npm start
 
 ---
 
-## 🧪 Testy Automatyczne i Jakość Kodu
+## 🧪 Testy Automatyczne
 
-Wszystkie testy są automatycznie weryfikowane przez pipeline CI/CD na GitHub Actions przy każdym commicie. Architektura testów backendu (łącznie 123 scenariusze) została podzielona na trzy poziomy izolacji:
+Testy uruchamia GitHub Actions przy każdym `push` i pull requeście zmieniającym kod danego modułu (osobne potoki dla backendu i frontendu).
 
-*   **Testy jednostkowe (Unit Tests):** Szybka weryfikacja logiki biznesowej w serwisach z wykorzystaniem JUnit 5 oraz Mockito.
-*   **Testy wycinkowe (Slice Tests):** Izolowane testowanie warstwy webowej (`@WebMvcTest`) w celu weryfikacji endpointów REST, walidacji wejścia (DTO) oraz globalnej obsługi błędów (RFC 7807), bez podnoszenia całego kontekstu Springa.
-*   **Testy integracyjne (Integration Tests):** Kompleksowa weryfikacja pełnych procesów biznesowych i persystencji danych przy użyciu biblioteki **Testcontainers**, podnoszącej na czas testów rzeczywisty kontener z bazą PostGIS.
+**Backend** (JUnit 5) – 235 metod testowych (stan: październik 2026):
+*   **Testy jednostkowe (131):** serwisy, walidatory i klasy bezpieczeństwa z użyciem Mockito.
+*   **Testy warstwy webowej (57, `@WebMvcTest`):** endpointy REST, walidacja wejścia (DTO) i format błędów `ProblemDetail`, bez pełnego kontekstu Springa.
+*   **Testy integracyjne (47):** pełne przepływy od żądania HTTP do bazy na kontenerze `postgis/postgis:15-3.4` uruchamianym przez **Testcontainers** (z migracjami Flyway); usługi zewnętrzne zastępuje **WireMock**.
 
-### Uruchomienie zestawu testów:
+**Frontend** (Vitest przez `ng test`) – testy komponentów, serwisów stanu, serwisów mapy, strażników i interceptorów.
+
+### Uruchomienie testów:
 ```cmd
 cd bicycle-route-planner-backend/backend
 mvnw clean verify
 
-  ```
+cd bicycle-route-planner-frontend
+npm test
+```
 
 ---
 
 ## 📂 Struktura Projektu
 
 ```text
-├── .github/workflows/                 # Pipeline'y CI/CD (Backend CI, Frontend CI, CD GHCR)
-├── bicycle-route-planner-backend/     # Kod backendu (Java 21, Spring Boot 4.1.0)
+├── .github/workflows/                 # CI backendu i frontendu, publikacja obrazów Docker (GHCR) z gałęzi master
+├── bicycle-route-planner-backend/
+│   ├── BACKEND_DOCUMENTATION.md       # Szczegółowa dokumentacja klas backendu
 │   └── backend/
-│       ├── src/main/java/             # Architektura warstwowa (Controller, Service, Domain)
-│       └── src/test/java/             # Testy jednostkowe oraz integracyjne Testcontainers
-├── bicycle-route-planner-frontend/    # Kod frontendu (Angular 22, Signals, Leaflet)
+│       ├── src/main/java/             # Warstwy: controller, service, repository, model, dto, security, validation
+│       ├── src/main/resources/db/migration/   # Migracje Flyway (schemat bazy)
+│       └── src/test/java/             # Testy jednostkowe, webowe i integracyjne
+├── bicycle-route-planner-frontend/
+│   ├── nginx.conf                     # Serwer frontendu w Dockerze (proxy /api, CSP, limit telemetrii)
 │   └── src/app/
-│       ├── components/                # Standalone Components (Map, Sidebar, Modals)
-│       └── services/                  # Serwisy domenowe i stanowe (*StateService)
-├── docker-compose.yml                 # Definicja kontenerów dla środowiska developerskiego
+│       ├── components/                # Komponenty (mapa, panel boczny, modale, logowanie)
+│       └── services/                  # Serwisy HTTP, stanu (*StateService) i mapy (Map*Service)
+├── docker-compose.yml                 # Baza, backend i frontend
 ├── .env.example                       # Szablon zmiennych środowiskowych
-└── README.md                          # Główna dokumentacja projektu
+└── README.md
 ```
 
 ---

@@ -10,7 +10,7 @@ export interface RouteDetailDto {
   id: number;
   name: string;
   routeType: RouteType;
-  targetDistance: number;
+  targetDistance: number | null;
   distanceMeters: number;
   elevationGain: number;
   elevationLoss: number;
@@ -30,7 +30,7 @@ export interface RouteSummaryDto {
 export interface CreateRouteRequestDto {
   name: string;
   routeType: RouteType;
-  targetDistance: number;
+  targetDistance: number | null;
   distanceMeters: number;
   elevationGain: number;
   elevationLoss: number;
@@ -42,7 +42,7 @@ export interface CreateRouteRequestDto {
 export interface RouteDraft {
   geometryWkt: string;
   distanceMeters: number;
-  targetDistance: number;
+  targetDistance: number | null;
   elevationGain: number;
   elevationLoss: number;
   routeType: RouteType;

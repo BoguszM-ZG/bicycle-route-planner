@@ -26,14 +26,14 @@ CREATE TABLE routes (
                         folder_id BIGINT REFERENCES folders(id) ON DELETE SET NULL,
 
                         name VARCHAR(150) NOT NULL,
-                        route_type VARCHAR(50),             -- Np. 'LOOP', 'CUSTOM', 'POINT_TO_POINT'
-                        target_distance DOUBLE PRECISION,   -- Oczekiwany dystans podany przez użytkownika (w metrach)
-                        distance_meters DOUBLE PRECISION,   -- Rzeczywisty dystans wygenerowanej geometrii (w metrach)
-                        elevation_gain DOUBLE PRECISION,    -- Suma przewyższeń
-                        elevation_loss DOUBLE PRECISION,    -- Suma spadków
+                        route_type VARCHAR(50),
+                        target_distance DOUBLE PRECISION,
+                        distance_meters DOUBLE PRECISION,
+                        elevation_gain DOUBLE PRECISION,
+                        elevation_loss DOUBLE PRECISION,
 
-                        start_point GEOMETRY(Point, 4326),               -- Wyodrębniony punkt startowy dla szybkich zapytań
-                        route_geom GEOMETRY(LineStringZ, 4326) NOT NULL, -- Główna geometria wektorowa 3D (X, Y, Z)
+                        start_point GEOMETRY(Point, 4326),
+                        route_geom GEOMETRY(LineStringZ, 4326) NOT NULL,
 
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

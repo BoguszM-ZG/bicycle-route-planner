@@ -5,6 +5,7 @@ import com.bogusz.bicyclerouteplannerbackend.validation.GeometryType;
 import com.bogusz.bicyclerouteplannerbackend.validation.ValidWktGeometry;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -16,15 +17,18 @@ public record CreateRouteRequestDto(
         @NotNull(message = "Type of the route is required")
         RouteType routeType,
 
-        @PositiveOrZero(message = "Distance must be positive")
+        @Positive(message = "Target distance must be positive")
         Double targetDistance,
 
+        @NotNull(message = "Distance is required")
         @PositiveOrZero(message = "Distance must be positive")
         Double distanceMeters,
 
+        @NotNull(message = "Elevation gain is required")
         @PositiveOrZero(message = "Elevation gain must be positive")
         Double elevationGain,
 
+        @NotNull(message = "Elevation loss is required")
         @PositiveOrZero(message = "Elevation loss must be positive")
         Double elevationLoss,
 

@@ -24,15 +24,19 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
-  public loginForm = this.fb.group({
+  public readonly loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.maxLength(72)]],
+    password: ['', Validators.required],
   });
 
-  public isLoading = this.authService.isLoading;
-  public errorMessage = this.authService.error;
+  public readonly isLoading = this.authService.isLoading;
+  public readonly errorMessage = this.authService.error;
 
-  public onSubmit() {
+  constructor() {
+    this.authService.clearError();
+  }
+
+  public onSubmit(): void {
     if (this.isLoading()) {
       return;
     }
@@ -42,10 +46,8 @@ export class LoginComponent {
       return;
     }
 
-    const { email, password } = this.loginForm.getRawValue();
-
     this.authService
-      .login({ email, password })
+      .login(this.loginForm.getRawValue())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
