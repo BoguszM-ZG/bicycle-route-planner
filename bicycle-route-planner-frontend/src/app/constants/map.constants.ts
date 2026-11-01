@@ -1,9 +1,8 @@
-import { LatLngTuple } from 'leaflet';
 import * as L from 'leaflet';
 
 export const MAP_CONSTANTS = {
   // Initial map view (Poland)
-  DEFAULT_CENTER: [52.069, 19.47] as LatLngTuple,
+  DEFAULT_CENTER: [52.069, 19.47] as L.LatLngTuple,
   DEFAULT_ZOOM: 6,
 
   // Tile layer configuration (OpenStreetMap)

@@ -12,7 +12,7 @@ export class GeocodingService {
   private readonly apiUrl = `${environment.apiUrl}/geocoding/search`;
 
   public search(params: GeocodingSearchParams): Observable<GeoResponse> {
-    let httpParams = new HttpParams().set('q', (params.query ?? '').trim());
+    let httpParams = new HttpParams().set('q', params.query);
     if (Number.isFinite(params.lat) && Number.isFinite(params.lon)) {
       httpParams = httpParams.set('lat', params.lat!.toString()).set('lon', params.lon!.toString());
     }

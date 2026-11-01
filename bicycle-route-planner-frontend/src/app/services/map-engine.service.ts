@@ -1,10 +1,9 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import * as L from 'leaflet';
 import { MAP_CONSTANTS, MAP_PANES } from '../constants/map.constants';
 import { LoggerService } from './logger.service';
 import { NotificationService } from './notification.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +12,6 @@ export class MapEngineService {
   private readonly logger = inject(LoggerService);
   private readonly notificationService = inject(NotificationService);
   private readonly translate = inject(TranslateService);
-  private readonly authService = inject(AuthService);
 
   private readonly _mapInstance = signal<L.Map | null>(null);
   public readonly mapInstance = this._mapInstance.asReadonly();
@@ -22,15 +20,6 @@ export class MapEngineService {
   public readonly isLocating = this._isLocating.asReadonly();
 
   private userLocationMarker?: L.Marker;
-
-  constructor() {
-    effect(() => {
-      const user = this.authService.currentUser();
-      if (!user) {
-        this.clearUserLocationMarker();
-      }
-    });
-  }
 
   public initMap(elementId: string): void {
     if (this.mapInstance()) {
@@ -88,8 +77,7 @@ export class MapEngineService {
     if (!map || !bounds.isValid()) {
       return;
     }
-    const options: L.FitBoundsOptions = padding ? { padding } : {};
-    map.fitBounds(bounds, options);
+    map.fitBounds(bounds, { padding });
   }
 
   public getCenter(): { lat: number; lng: number } | null {
@@ -152,18 +140,10 @@ export class MapEngineService {
 
     map.once('locationfound', onLocationFound);
     map.once('locationerror', onLocationError);
-
-    try {
-      map.locate({ setView: true, maxZoom: MAP_CONSTANTS.SEARCH_CONFIG.MAP_ZOOM });
-    } catch (err) {
-      map.off('locationfound', onLocationFound).off('locationerror', onLocationError);
-      this._isLocating.set(false);
-      this.logger.error('[Geolocation] Failed to initiate locate', { error: err });
-      this.notificationService.error('MAP.LOCATION_ERROR');
-    }
+    map.locate({ setView: true, maxZoom: MAP_CONSTANTS.SEARCH_CONFIG.MAP_ZOOM });
   }
 
-  public clearUserLocationMarker(): void {
+  private clearUserLocationMarker(): void {
     if (this.userLocationMarker) {
       this.userLocationMarker.remove();
       this.userLocationMarker.off();

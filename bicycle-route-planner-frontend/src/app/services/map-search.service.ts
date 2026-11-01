@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map as rxMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,7 +16,7 @@ export class MapSearchService {
   private readonly translate = inject(TranslateService);
 
   public searchLocation(params: GeocodingSearchParams): Observable<SearchResult[]> {
-    const trimmed = (params.query ?? '').trim();
+    const trimmed = params.query.trim();
     if (!trimmed) {
       return of([]);
     }
@@ -24,14 +25,10 @@ export class MapSearchService {
 
     return this.geocodingService.search({ ...params, query: trimmed }).pipe(
       rxMap((response) => this.mapToSearchResults(response?.features || [])),
-      catchError((err: unknown) => {
-        const httpErr = err as { status?: number; statusText?: string } | null;
+      catchError((err: HttpErrorResponse) => {
         this.logger.error('[MapSearch] Error in Geocoding (Backend Proxy)', {
-          status: httpErr?.status,
-          statusText: httpErr?.statusText,
-          queryLength: trimmed.length,
-          hasProximityBias: params.lat !== undefined,
-          isNetworkError: httpErr?.status === 0,
+          status: err.status,
+          type: err.error?.type,
         });
         return of([]);
       }),
@@ -50,7 +47,8 @@ export class MapSearchService {
     const props = feature.properties ?? {};
     const [x, y] = feature.geometry.coordinates;
 
-    const mainName = props.name || props.street || props.city || this.getFallbackName();
+    const mainName =
+      props.name || props.street || props.city || this.translate.instant('MAP_CONTROLS.UNKNOWN_PLACE');
     const details: string[] = [];
 
     if (props.city && props.city !== mainName) {
@@ -78,10 +76,6 @@ export class MapSearchService {
     const translatedState = this.translate.instant(translationKey);
 
     return translatedState !== translationKey ? translatedState : state;
-  }
-
-  private getFallbackName(): string {
-    return this.translate.instant('MAP_CONTROLS.UNKNOWN_PLACE');
   }
 
   private deduplicateResults(results: SearchResult[]): SearchResult[] {

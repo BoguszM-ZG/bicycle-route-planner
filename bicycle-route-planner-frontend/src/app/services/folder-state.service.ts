@@ -1,7 +1,6 @@
 import { Injectable, inject, signal, effect, untracked } from '@angular/core';
 import { HttpStatusCode } from '@angular/common/http';
 import { Subscription, Subject } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 import { FolderService } from './folder.service';
 import { FolderDto, FolderRequestDto } from '../models/folder.model';
 import { LoggerService } from './logger.service';
@@ -16,21 +15,18 @@ export class FolderStateService {
   private readonly logger = inject(LoggerService);
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
-  private readonly _folderDeleted$ = new Subject<number>();
-  public readonly folderDeleted$ = this._folderDeleted$.asObservable();
 
   private fetchFoldersSubscription?: Subscription;
 
   private readonly _folders = signal<FolderDto[]>([]);
-  private readonly _isLoading = signal<boolean>(false);
+  private readonly _folderDeleted$ = new Subject<number>();
 
   public readonly folders = this._folders.asReadonly();
-  public readonly isLoading = this._isLoading.asReadonly();
+  public readonly folderDeleted$ = this._folderDeleted$.asObservable();
 
   constructor() {
     effect(() => {
-      const user = this.authService.currentUser();
-      if (user) {
+      if (this.authService.isAuthenticated()) {
         untracked(() => this.fetchFolders());
       } else {
         this.logger.debug('[FolderStateService] User logged out, clearing FolderStateService');
@@ -42,16 +38,13 @@ export class FolderStateService {
   private clearState(): void {
     this.fetchFoldersSubscription?.unsubscribe();
     this._folders.set([]);
-    this._isLoading.set(false);
   }
 
-  public fetchFolders(): void {
+  private fetchFolders(): void {
     this.fetchFoldersSubscription?.unsubscribe();
-    this._isLoading.set(true);
 
     this.fetchFoldersSubscription = this.folderService
       .getUserFolders()
-      .pipe(finalize(() => this._isLoading.set(false)))
       .subscribe({
         next: (fetchedFolders) => {
           this._folders.set(fetchedFolders);
@@ -67,11 +60,8 @@ export class FolderStateService {
   }
 
   public createFolder(request: FolderRequestDto): void {
-    this._isLoading.set(true);
-
     this.folderService
       .createFolder(request)
-      .pipe(finalize(() => this._isLoading.set(false)))
       .subscribe({
         next: (createdFolder: FolderDto) => {
           this._folders.update((currentFolders) => [...currentFolders, createdFolder]);
@@ -84,7 +74,10 @@ export class FolderStateService {
         },
         error: (err) => {
           if (err.status === HttpStatusCode.BadRequest || err.status === HttpStatusCode.Conflict) {
-            this.logger.debug('[FolderStateService] Folder creation validation error', { error: err.error });
+            this.logger.debug('[FolderStateService] Folder creation validation error', {
+              status: err.status,
+              type: err.error?.type,
+            });
           } else {
             this.logger.error('[FolderStateService] Error occurred while creating folder', {
               status: err.status,
@@ -150,8 +143,8 @@ export class FolderStateService {
         ) {
           this.logger.debug('[FolderStateService] Folder rename validation error', {
             folderId,
-            newName: trimmed,
-            error: err.error,
+            status: err.status,
+            type: err.error?.type,
           });
         } else {
           this.logger.error('[FolderStateService] Error renaming folder', {

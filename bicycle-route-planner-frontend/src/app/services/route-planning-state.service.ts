@@ -60,14 +60,14 @@ export class RoutePlanningStateService {
     this.avoidanceZoneStateService
       .zones()
       .filter((zone) => zone.isActive)
-      .map((zone) => String(zone.id))
-      .sort()
+      .map((zone) => zone.id)
+      .sort((a, b) => a - b)
       .join(','),
   );
 
   constructor() {
     effect(() => {
-      if (!this.authService.currentUser()) {
+      if (!this.authService.isAuthenticated()) {
         this.logger.debug('[RoutePlanningState] User logged out, clearing planning state');
         this.clearRoute();
         this._routingMode.set('direct');
@@ -135,7 +135,7 @@ export class RoutePlanningStateService {
     }
   }
 
-  public recalculateDirectRoute(): void {
+  private recalculateDirectRoute(): void {
     const waypoints = this._waypoints();
     if (!this.hasEnoughWaypoints()) {
       return;
@@ -158,7 +158,6 @@ export class RoutePlanningStateService {
       this.orsService.getRouteGeoJson(coords, avoidPolygons),
       '[RoutePlanningState] Route error from ORS',
       (data) => this.applyRoute(data, 'POINT_TO_POINT'),
-      waypoints.length,
     );
   }
 
@@ -168,7 +167,7 @@ export class RoutePlanningStateService {
       this._waypoints.set([]);
     }
 
-    this.requestRoundTrip(L.latLng(startPoint), this.randomSeed());
+    this.requestRoundTrip(startPoint, this.randomSeed());
   }
 
   public clearRoute(): void {
@@ -197,11 +196,7 @@ export class RoutePlanningStateService {
     }
 
     this.roundTripSeed = seed;
-    this.logger.debug('[RoutePlanningState] Generating round trip from ORS', {
-      startPoint,
-      distance,
-      seed,
-    });
+    this.logger.debug('[RoutePlanningState] Generating round trip from ORS', { distance, seed });
 
     const request$ = this.orsService.getRoundTripGeoJson({
       startCoord: [startPoint.lng, startPoint.lat],
@@ -221,12 +216,10 @@ export class RoutePlanningStateService {
     request$: Observable<OrsGeoJsonResponse>,
     logMessage: string,
     onSuccess: (data: OrsGeoJsonResponse) => void,
-    waypointsCount?: number,
   ): void {
     this.pendingRequest = request$.subscribe({
       next: onSuccess,
-      error: (err) =>
-        this.handleRoutingFailure(this.routingErrorKey(err), logMessage, err, waypointsCount),
+      error: (err) => this.handleRoutingFailure(this.routingErrorKey(err), logMessage, err),
     });
   }
 
@@ -268,18 +261,12 @@ export class RoutePlanningStateService {
     });
   }
 
-  private handleRoutingFailure(
-    errorKey: string,
-    logMessage: string,
-    err?: unknown,
-    waypointsCount?: number,
-  ): void {
+  private handleRoutingFailure(errorKey: string, logMessage: string, err?: unknown): void {
     const httpErr = err instanceof HttpErrorResponse ? err : undefined;
 
     this.logger.error(logMessage, {
       status: httpErr?.status,
-      ...(waypointsCount !== undefined && { waypointsCount }),
-      isNetworkError: httpErr?.status === 0,
+      type: httpErr?.error?.type,
     });
 
     this.resetRouteResult();
@@ -287,11 +274,8 @@ export class RoutePlanningStateService {
   }
 
   private routingErrorKey(err: unknown): string {
-    const status = err instanceof HttpErrorResponse ? err.status : undefined;
-    return (
-      (status !== undefined && RoutePlanningStateService.ROUTING_ERROR_KEYS[status]) ||
-      'ERRORS.ROUTING_FAILED'
-    );
+    const errorKeys = RoutePlanningStateService.ROUTING_ERROR_KEYS;
+    return (err instanceof HttpErrorResponse && errorKeys[err.status]) || 'ERRORS.ROUTING_FAILED';
   }
 
   private handleAvoidanceZonesChanged(): void {
@@ -311,7 +295,7 @@ export class RoutePlanningStateService {
   private getAvoidanceZones(): AvoidPolygonsGeoJson | undefined {
     const coordinates = this.avoidanceZoneStateService
       .zones()
-      .filter((zone) => zone.isActive && !!zone.zoneGeom)
+      .filter((zone) => zone.isActive)
       .flatMap((zone) => this.routeGeometryService.extractPolygonCoordinates(zone.zoneGeom));
 
     return coordinates.length > 0 ? { type: 'MultiPolygon', coordinates } : undefined;

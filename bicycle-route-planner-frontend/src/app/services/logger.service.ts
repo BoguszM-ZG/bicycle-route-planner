@@ -38,15 +38,12 @@ export class LoggerService {
         case LogLevel.INFO:
           console.info(prefix, msg, ...optionalParams);
           break;
-        case LogLevel.WARN:
-          console.warn(prefix, msg, ...optionalParams);
-          break;
         case LogLevel.ERROR:
           console.error(prefix, msg, ...optionalParams);
           break;
       }
 
-      if (level >= LogLevel.WARN) {
+      if (level === LogLevel.ERROR) {
         this.sendToServer(levelName, msg, timestamp, optionalParams);
       }
     }
@@ -73,7 +70,7 @@ export class LoggerService {
 
       const logRequest: ClientLogRequestDto = {
         level: levelName as keyof typeof LogLevel,
-        message: (msg ?? '').trim().slice(0, 490) || '[Empty message]',
+        message: msg.trim().slice(0, 490) || '[Empty message]',
         timestamp: timestamp,
         details: parsedDetails ? parsedDetails.slice(0, 1990) : undefined,
       };
