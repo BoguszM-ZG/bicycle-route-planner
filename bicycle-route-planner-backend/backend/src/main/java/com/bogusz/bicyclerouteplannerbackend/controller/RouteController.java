@@ -81,6 +81,13 @@ public class RouteController {
         return ResponseEntity.ok(elevationPoints);
     }
 
+    @GetMapping("/{id}/intersecting-zones")
+    @Operation(summary = "Get intersecting avoidance zones", description = "Returns IDs of the user's avoidance zones that the route crosses (PostGIS ST_Intersects).")
+    public ResponseEntity<List<Long>> getIntersectingZoneIds(
+            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(routeService.getIntersectingZoneIds(id, principal.id()));
+    }
+
     @PatchMapping("/{id}/folder")
     @Operation(summary = "Move route to folder", description = "Moves a route to a different folder.")
     public ResponseEntity<Void> updateRouteFolder(

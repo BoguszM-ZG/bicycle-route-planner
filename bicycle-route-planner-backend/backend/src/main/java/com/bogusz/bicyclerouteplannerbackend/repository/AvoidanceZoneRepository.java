@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface AvoidanceZoneRepository extends JpaRepository<AvoidanceZone, Long> {
@@ -28,4 +29,12 @@ public interface AvoidanceZoneRepository extends JpaRepository<AvoidanceZone, Lo
             FROM avoidance_zones
             WHERE user_id = :userId AND (is_active OR id = :includedZoneId)""", nativeQuery = true)
     double sumActiveAreaSquareMeters(@Param("userId") Long userId, @Param("includedZoneId") Long includedZoneId);
+
+    @Query(value = """
+            SELECT z.id
+            FROM avoidance_zones z
+            JOIN routes r ON r.id = :routeId
+            WHERE z.user_id = :userId AND ST_Intersects(z.zone_geom, r.route_geom)
+            ORDER BY z.id""", nativeQuery = true)
+    List<Long> findIdsIntersectingRoute(@Param("routeId") Long routeId, @Param("userId") Long userId);
 }

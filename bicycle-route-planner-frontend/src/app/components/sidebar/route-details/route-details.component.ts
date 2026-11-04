@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { ElevationChartComponent } from '../elevation-chart/elevation-chart.component';
 import { RouteStateService } from '../../../services/route-state.service';
@@ -16,4 +16,10 @@ export class RouteDetailsComponent {
 
   public readonly routeDetail = this.routeStateService.selectedRoute;
   public readonly isLoadingDetails = this.routeStateService.isLoadingDetails;
+  public readonly intersectingZoneNames = computed(() =>
+    this.routeStateService
+      .intersectingZones()
+      .map((zone) => zone.name)
+      .join(', '),
+  );
 }

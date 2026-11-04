@@ -2,6 +2,9 @@ package com.bogusz.bicyclerouteplannerbackend.integration;
 
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.RegisterRequest;
 import com.bogusz.bicyclerouteplannerbackend.dto.auth.AuthResponse;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.AvoidanceZoneDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.CreateAvoidanceZoneRequestDto;
+import com.bogusz.bicyclerouteplannerbackend.dto.avoidance_zone.UpdateAvoidanceZoneStatusDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.folder.UpdateRouteFolderDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.CreateRouteRequestDto;
 import com.bogusz.bicyclerouteplannerbackend.dto.route.RouteDetailDto;
@@ -37,6 +40,9 @@ class RouteIntegrationTest extends BaseIntegrationTest {
 
     private static final String ROUTES_URL = "/api/routes";
     private static final String REGISTER_URL = "/api/auth/register";
+    private static final String AVOIDANCE_ZONES_URL = "/api/avoidance-zones";
+    private static final String ZONE_CROSSING_ROUTE = "POLYGON ((15.04 50.04, 15.06 50.04, 15.06 50.06, 15.04 50.06, 15.04 50.04))";
+    private static final String ZONE_AWAY_FROM_ROUTE = "POLYGON ((15.2 50.0, 15.21 50.0, 15.21 50.01, 15.2 50.01, 15.2 50.0))";
     private static final String TEST_ROUTE_NAME = "My Test Route";
     private static final RouteType TEST_ROUTE_TYPE = RouteType.POINT_TO_POINT;
     private static final double TEST_TARGET_DISTANCE = 2000.0;
@@ -271,6 +277,45 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldReturnIdsOfZonesCrossedByRouteIncludingInactiveOnes() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+        long crossingZoneId = createZoneAndGetId(ZONE_CROSSING_ROUTE, userAccessToken);
+        long inactiveCrossingZoneId = createZoneAndGetId(ZONE_CROSSING_ROUTE, userAccessToken);
+        createZoneAndGetId(ZONE_AWAY_FROM_ROUTE, userAccessToken);
+        mockMvc.perform(patch(AVOIDANCE_ZONES_URL + "/" + inactiveCrossingZoneId + "/active")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(new UpdateAvoidanceZoneStatusDto(false))))
+                .andExpect(status().isNoContent());
+        String otherUserToken = registerUserAndGetAccessToken("other@test.com", "Password123!", "Other User");
+        createZoneAndGetId(ZONE_CROSSING_ROUTE, otherUserToken);
+
+        // When
+        mockMvc.perform(get(ROUTES_URL + "/" + routeId + "/intersecting-zones")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken))
+                // Then
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0]").value(crossingZoneId))
+                .andExpect(jsonPath("$[1]").value(inactiveCrossingZoneId));
+    }
+
+    @Test
+    void shouldReturn404WhenGettingIntersectingZonesOfAnotherUserRoute() throws Exception {
+        // Given
+        long routeId = createRouteAndGetId();
+        String otherUserToken = registerUserAndGetAccessToken("other@test.com", "Password123!", "Other User");
+
+        // When
+        mockMvc.perform(get(ROUTES_URL + "/" + routeId + "/intersecting-zones")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherUserToken))
+                // Then
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Route Not Found"));
+    }
+
+    @Test
     void shouldRenameRoute() throws Exception {
         // Given
         long routeId = createRouteAndGetId();
@@ -373,6 +418,18 @@ class RouteIntegrationTest extends BaseIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
 
         return jsonMapper.readValue(responseStr, RouteDetailDto.class).id();
+    }
+
+    private long createZoneAndGetId(String wkt, String accessToken) throws Exception {
+        CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto("Zone", wkt);
+        String responseStr = mockMvc.perform(post(AVOIDANCE_ZONES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        return jsonMapper.readValue(responseStr, AvoidanceZoneDto.class).id();
     }
 
     private CreateRouteRequestDto createValidRouteRequest() {

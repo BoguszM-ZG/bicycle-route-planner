@@ -94,6 +94,7 @@
     "ROUTE_DETAILS_GAIN": "Podjazdy",
     "ROUTE_DETAILS_LOSS": "Zjazdy",
     "ROUTE_DETAILS_CHART_TITLE": "Profil Przewyższeń",
+    "ROUTE_DETAILS_CROSSES_ZONES": "Trasa przechodzi przez aktywne strefy omijania:",
     "ZONE_ITEM_TOGGLE": "Przełącz aktywność strefy",
     "ZONE_ITEM_DELETE": "Usuń strefę",
     "ZONE_ITEM_CONFIRM_DELETE": "Usunąć strefę?",

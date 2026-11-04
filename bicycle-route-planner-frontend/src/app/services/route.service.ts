@@ -46,6 +46,10 @@ export class RouteService {
     return this.http.get<ElevationPointDto[]>(`${this.apiUrl}/${routeId}/elevation`);
   }
 
+  public getIntersectingZoneIds(routeId: number): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiUrl}/${routeId}/intersecting-zones`);
+  }
+
   public updateRouteFolder(routeId: number, request: UpdateRouteFolderDto): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${routeId}/folder`, request);
   }

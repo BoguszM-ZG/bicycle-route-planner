@@ -50,12 +50,13 @@ Baza PostgreSQL 15 z rozszerzeniem **PostGIS 3.4**, układ współrzędnych **WG
 ### 3. Indeksy
 - **GiST:** `idx_routes_geom`, `idx_routes_start_point`, `idx_avoidance_geom`.
 - **B-tree** na kluczach obcych (`user_id`, `folder_id`).
-- Obecne zapytania filtrują po `id` / `user_id`, więc korzystają z indeksów B-tree. Indeksy GiST zostałyby użyte przez zapytania z predykatem przestrzennym (np. `ST_DWithin`, `ST_Intersects`).
+- Zapytania filtrujące po `id` / `user_id` korzystają z indeksów B-tree. Zapytanie `ST_Intersects` (strefy na trasie) korzysta z `idx_avoidance_geom`; planista wybiera indeks, który bardziej zawęża wynik: GiST (`zone_geom && route_geom`) albo B-tree po `user_id` (eksperyment: `experiments/gist-intersects.sql`).
 
 ### 4. Podział obliczeń przestrzennych: PostGIS i JTS
 - **PostGIS (zapytania natywne):**
   - profil wysokości trasy z odległościami geodezyjnymi na elipsoidzie WGS84 (`ST_DumpPoints`, `ST_Distance` na `geography`, funkcje okna),
   - eksport trasy do GeoJSON (`ST_AsGeoJSON`),
+  - strefy, przez które przechodzi zapisana trasa (`ST_Intersects`),
   - limity stref omijanych: pole (`ST_Area`) i rozpiętość (`ST_Distance`) na `geography`.
 - **JTS w pamięci JVM:**
   - walidacja geometrii WKT (`ValidWktGeometry`, `WktGeometryValidator`),
@@ -81,7 +82,7 @@ Baza PostgreSQL 15 z rozszerzeniem **PostGIS 3.4**, układ współrzędnych **WG
 | Kontroler | Ścieżka bazowa | Odpowiedzialność |
 |---|---|---|
 | `AuthController` | `/api/auth` | Rejestracja, logowanie, odświeżanie tokenów JWT |
-| `RouteController` | `/api/routes` | Zapis, odczyt i usuwanie tras, zmiana nazwy i folderu, profil wysokości (`GET /{id}/elevation`), eksport GPX i GeoJSON (`GET /{id}/export/gpx`, `/{id}/export/geojson`) |
+| `RouteController` | `/api/routes` | Zapis, odczyt i usuwanie tras, zmiana nazwy i folderu, profil wysokości (`GET /{id}/elevation`), strefy na trasie (`GET /{id}/intersecting-zones`), eksport GPX i GeoJSON (`GET /{id}/export/gpx`, `/{id}/export/geojson`) |
 | `RoutingController` | `/api/routing` | Pośrednik do OpenRouteService (`POST /directions`) – trasy punkt-do-punktu i pętle |
 | `AvoidanceZoneController` | `/api/avoidance-zones` | Zapis, włączanie/wyłączanie i usuwanie stref omijanych |
 | `FolderController` | `/api/folders` | Foldery użytkownika (jeden poziom: użytkownik → folder → trasa) |

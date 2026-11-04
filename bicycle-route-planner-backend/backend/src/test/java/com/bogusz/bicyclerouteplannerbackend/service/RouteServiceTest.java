@@ -10,6 +10,7 @@ import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.model.RouteType;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
+import com.bogusz.bicyclerouteplannerbackend.repository.AvoidanceZoneRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -52,6 +53,7 @@ class RouteServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private GpxExportService gpxExportService;
     @Mock private FolderRepository folderRepository;
+    @Mock private AvoidanceZoneRepository avoidanceZoneRepository;
     @Mock private RouteMapper routeMapper;
     @Spy private ElevationProfileDownsampler elevationProfileDownsampler = new ElevationProfileDownsampler();
 
@@ -368,6 +370,32 @@ class RouteServiceTest {
         assertThatThrownBy(() -> routeService.getElevationPointsForRoute(ROUTE_ID, USER_ID))
                 .isInstanceOf(RouteNotFoundException.class)
                 .hasMessageContaining("Route not found");
+    }
+
+    @Test
+    void shouldReturnIntersectingZoneIdsFromRepository() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.of(new Route()));
+        given(avoidanceZoneRepository.findIdsIntersectingRoute(ROUTE_ID, USER_ID)).willReturn(List.of(1L, 2L));
+
+        // WHEN
+        List<Long> result = routeService.getIntersectingZoneIds(ROUTE_ID, USER_ID);
+
+        // THEN
+        assertThat(result).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void shouldThrowRouteNotFoundExceptionWhenGettingIntersectingZonesForNonExistentRoute() {
+        // GIVEN
+        given(routeRepository.findByIdAndUserId(ROUTE_ID, USER_ID)).willReturn(Optional.empty());
+
+        // WHEN & THEN
+        assertThatThrownBy(() -> routeService.getIntersectingZoneIds(ROUTE_ID, USER_ID))
+                .isInstanceOf(RouteNotFoundException.class)
+                .hasMessageContaining("Route not found");
+
+        then(avoidanceZoneRepository).shouldHaveNoInteractions();
     }
 
     @Test

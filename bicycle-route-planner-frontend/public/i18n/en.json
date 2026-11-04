@@ -94,6 +94,7 @@
     "ROUTE_DETAILS_GAIN": "Elevation Gain",
     "ROUTE_DETAILS_LOSS": "Elevation Loss",
     "ROUTE_DETAILS_CHART_TITLE": "Elevation Profile",
+    "ROUTE_DETAILS_CROSSES_ZONES": "The route crosses active avoidance zones:",
     "ZONE_ITEM_TOGGLE": "Toggle zone activity",
     "ZONE_ITEM_DELETE": "Delete zone",
     "ZONE_ITEM_CONFIRM_DELETE": "Delete zone?",

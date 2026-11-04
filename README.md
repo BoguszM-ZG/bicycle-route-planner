@@ -16,7 +16,7 @@
 - **Cel pracy:** Zaprojektowanie i implementacja aplikacji webowej do planowania i analizy tras rowerowych, korzystającej z relacyjnej bazy danych przestrzennych. Aplikacja udostępnia konta użytkowników, interaktywną mapę do wyznaczania i edycji tras, automatyczne generowanie pętli, strefy omijane oraz eksport tras do plików.
 
 ### Zakres pracy:
-1. **Baza danych przestrzennych:** PostgreSQL z PostGIS – geometrie `LineStringZ` (trasa z wysokością), `Polygon` (strefy) i `Point` w układzie WGS84 (SRID 4326), indeksy GiST, migracje Flyway. Część obliczeń wykonuje baza: profil wysokości z odległościami geodezyjnymi, eksport GeoJSON, pole i rozpiętość stref.
+1. **Baza danych przestrzennych:** PostgreSQL z PostGIS – geometrie `LineStringZ` (trasa z wysokością), `Polygon` (strefy) i `Point` w układzie WGS84 (SRID 4326), indeksy GiST, migracje Flyway. Część obliczeń wykonuje baza: profil wysokości z odległościami geodezyjnymi, eksport GeoJSON, pole i rozpiętość stref, wykrywanie stref na trasie (`ST_Intersects`).
 2. **Backend REST API:** Java 21 i Spring Boot 4.1.0, pośredniczący w komunikacji z usługą wyznaczania tras OpenRouteService (klucz API pozostaje na serwerze, zapytania są walidowane pod kątem limitów usługi).
 3. **Aplikacja kliencka:** Angular 22 (komponenty standalone, sygnały) z mapą Leaflet.
 4. **Strefy omijane:** rysowanie wielokątów na mapie; aktywne strefy są uwzględniane przy wyznaczaniu trasy, a ich rozmiar sprawdzany w bazie względem limitów ORS.
@@ -109,10 +109,10 @@ npm start
 
 Testy uruchamia GitHub Actions przy każdym `push` i pull requeście zmieniającym kod danego modułu (osobne potoki dla backendu i frontendu).
 
-**Backend** (JUnit 5) – 235 metod testowych (stan: październik 2026):
-*   **Testy jednostkowe (131):** serwisy, walidatory i klasy bezpieczeństwa z użyciem Mockito.
-*   **Testy warstwy webowej (57, `@WebMvcTest`):** endpointy REST, walidacja wejścia (DTO) i format błędów `ProblemDetail`, bez pełnego kontekstu Springa.
-*   **Testy integracyjne (47):** pełne przepływy od żądania HTTP do bazy na kontenerze `postgis/postgis:15-3.4` uruchamianym przez **Testcontainers** (z migracjami Flyway); usługi zewnętrzne zastępuje **WireMock**.
+**Backend** (JUnit 5) – 242 metody testowe (stan: listopad 2026):
+*   **Testy jednostkowe (135):** serwisy, walidatory i klasy bezpieczeństwa z użyciem Mockito.
+*   **Testy warstwy webowej (58, `@WebMvcTest`):** endpointy REST, walidacja wejścia (DTO) i format błędów `ProblemDetail`, bez pełnego kontekstu Springa.
+*   **Testy integracyjne (49):** pełne przepływy od żądania HTTP do bazy na kontenerze `postgis/postgis:15-3.4` uruchamianym przez **Testcontainers** (z migracjami Flyway); usługi zewnętrzne zastępuje **WireMock**.
 
 **Frontend** (Vitest przez `ng test`) – testy komponentów, serwisów stanu, serwisów mapy, strażników i interceptorów.
 

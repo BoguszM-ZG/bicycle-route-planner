@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect, untracked } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpStatusCode } from '@angular/common/http';
 import { Subscription } from 'rxjs';
@@ -16,6 +16,7 @@ import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 import { NotificationService } from './notification.service';
 import { FolderStateService } from './folder-state.service';
+import { AvoidanceZoneStateService } from './avoidance-zone-state.service';
 
 @Injectable({
   providedIn: 'root',
@@ -26,15 +27,18 @@ export class RouteStateService {
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
   private readonly folderStateService = inject(FolderStateService);
+  private readonly avoidanceZoneStateService = inject(AvoidanceZoneStateService);
 
   private fetchRoutesSubscription?: Subscription;
   private selectRouteSubscription?: Subscription;
   private fetchElevationSubscription?: Subscription;
+  private fetchIntersectingZonesSubscription?: Subscription;
 
   private readonly _routes = signal<RouteSummaryDto[]>([]);
   private readonly _selectedRouteId = signal<number | null>(null);
   private readonly _selectedRoute = signal<RouteDetailDto | null>(null);
   private readonly _elevationProfile = signal<ElevationPointDto[] | null>(null);
+  private readonly _intersectingZones = signal<{ routeId: number; zoneIds: number[] } | null>(null);
 
   private readonly _isLoadingList = signal<boolean>(false);
   private readonly _isLoadingDetails = signal<boolean>(false);
@@ -53,6 +57,23 @@ export class RouteStateService {
   public readonly isLoadingElevation = this._isLoadingElevation.asReadonly();
   public readonly hasElevationError = this._hasElevationError.asReadonly();
 
+  public readonly intersectingZones = computed(() => {
+    const intersecting = this._intersectingZones();
+    if (!intersecting || intersecting.routeId !== this.selectedRouteId()) {
+      return [];
+    }
+    return this.avoidanceZoneStateService
+      .zones()
+      .filter((zone) => zone.isActive && intersecting.zoneIds.includes(zone.id));
+  });
+
+  private readonly zoneIdsKey = computed(() =>
+    this.avoidanceZoneStateService
+      .zones()
+      .map((zone) => zone.id)
+      .join(','),
+  );
+
   constructor() {
     effect(() => {
       if (this.authService.isAuthenticated()) {
@@ -66,16 +87,24 @@ export class RouteStateService {
     this.folderStateService.folderDeleted$
       .pipe(takeUntilDestroyed())
       .subscribe((folderId) => this.handleFolderDeleted(folderId));
+
+    effect(() => {
+      const routeId = this.selectedRouteId();
+      this.zoneIdsKey();
+      untracked(() => this.fetchIntersectingZones(routeId));
+    });
   }
 
   private clearState(): void {
     this.fetchRoutesSubscription?.unsubscribe();
     this.selectRouteSubscription?.unsubscribe();
     this.fetchElevationSubscription?.unsubscribe();
+    this.fetchIntersectingZonesSubscription?.unsubscribe();
     this._routes.set([]);
     this._selectedRouteId.set(null);
     this._selectedRoute.set(null);
     this._elevationProfile.set(null);
+    this._intersectingZones.set(null);
     this._isLoadingList.set(false);
     this._isLoadingDetails.set(false);
     this._isSaving.set(false);
@@ -98,6 +127,27 @@ export class RouteStateService {
             type: err.error?.type,
           });
           this.notificationService.error('ERRORS.FETCH_ROUTES_FAILED');
+        },
+      });
+  }
+
+  private fetchIntersectingZones(routeId: number | null): void {
+    this.fetchIntersectingZonesSubscription?.unsubscribe();
+    if (routeId === null) {
+      this._intersectingZones.set(null);
+      return;
+    }
+
+    this.fetchIntersectingZonesSubscription = this.routeService
+      .getIntersectingZoneIds(routeId)
+      .subscribe({
+        next: (zoneIds) => this._intersectingZones.set({ routeId, zoneIds }),
+        error: (err) => {
+          this.logger.error('[RouteState] Error fetching intersecting zones', {
+            routeId,
+            status: err.status,
+            type: err.error?.type,
+          });
         },
       });
   }

@@ -180,6 +180,21 @@ class RouteControllerTest {
     }
 
     @Test
+    void shouldReturn200AndZoneIdsWhenGettingIntersectingZones() throws Exception {
+        // GIVEN
+        given(routeService.getIntersectingZoneIds(ROUTE_ID, USER_ID)).willReturn(List.of(3L, 7L));
+
+        // WHEN
+        ResultActions resultActions = mockMvc.perform(get(ROUTES_URL + "/" + ROUTE_ID + "/intersecting-zones"));
+
+        // THEN
+        resultActions.andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0]").value(3))
+                .andExpect(jsonPath("$[1]").value(7));
+    }
+
+    @Test
     void shouldReturn200AndElevationPointsWhenGettingElevation() throws Exception {
         // GIVEN
         ElevationPointDto point = new ElevationPointDto(0.0, 150.0);

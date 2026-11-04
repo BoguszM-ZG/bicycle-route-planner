@@ -27,7 +27,7 @@ src
     │   └── toast/               # Powiadomienia (NotificationService)
     ├── core/errors/     # GlobalErrorHandler – przechwytuje nieobsłużone wyjątki i przekazuje je do telemetrii
     ├── guards/          # authGuard (mapa tylko dla zalogowanych), guestGuard (logowanie tylko dla niezalogowanych)
-    ├── interceptors/    # Dołączanie tokenu JWT i odświeżanie go po odpowiedzi 401
+    ├── interceptors/    # Dołączanie tokenu JWT, odświeżanie go (po 401 lub gdy wygasł) i wylogowanie, gdy wygasły oba tokeny
     ├── models/          # Interfejsy danych (trasy, foldery, strefy, ORS)
     ├── constants/       # Stałe mapy (kafelki, ikony, wyszukiwarka)
     └── services/        # Serwisy HTTP, stanu (*StateService) i mapy (Map*Service)
@@ -35,10 +35,12 @@ src
 
 ### Przyjęte zasady:
 - **Angular 22:** komponenty standalone, sygnały (`signal()`, `computed()`, `input()`, `output()`), składnia `@if` / `@for`, tryb bez Zone.js, `ChangeDetectionStrategy.OnPush`.
-- **Podział serwisów:**
-  - **serwisy HTTP** (`RouteService`, `FolderService`, `AvoidanceZoneService`, `OrsService`, `GeocodingService`) tylko komunikują się z backendem;
-  - **serwisy stanu** (`*StateService`) trzymają dane w prywatnych sygnałach i udostępniają je komponentom tylko do odczytu (`asReadonly()`).
-- **Logowanie i telemetria:** błędy po stronie użytkownika (np. 400, 404, 409) logowane są w konsoli na poziomie `debug`. Do backendu (`/api/telemetry/logs`) trafiają tylko logi poziomu `error` i tylko pola potrzebne do diagnozy (np. status HTTP i typ błędu).
+- **Podział serwisów na warstwy** (zależności tylko w jedną stronę: komponenty → stan → HTTP, a obok mapa, która czyta stan i zgłasza akcje):
+  - **HTTP** (`RouteService`, `FolderService`, `AvoidanceZoneService`, `OrsService`, `GeocodingService`) – tylko komunikacja z backendem, bez stanu i logiki;
+  - **stan** (`*StateService`, `AuthService`) – dane w prywatnych sygnałach udostępniane komponentom tylko do odczytu (`asReadonly()`); dane użytkownika pobierane po zalogowaniu i czyszczone po wylogowaniu (reakcja na `isAuthenticated`, a nie na każde odświeżenie tokenu);
+  - **mapa** (`Map*Service`) – zamiana stanu na warstwy Leaflet i zdarzeń mapy na akcje;
+  - **pomocnicze** (`RouteGeometryService`, `MapSearchService`, `LoggerService`, `NotificationService`).
+- **Logowanie i telemetria:** każdy log ma prefiks `[NazwaKlasy]` bez końcówki `Service`/`Component` (np. `[RouteState]`, `[MapEngine]`). Poziom `debug` – oczekiwane zdarzenia i błędy po stronie użytkownika (np. 400, 404, 409), `info` – udane operacje, `error` – awarie. Do backendu (`/api/telemetry/logs`) trafiają tylko logi poziomu `error` i tylko pola potrzebne do diagnozy (`status` i `type` błędu, identyfikatory) – bez treści odpowiedzi, nazw, adresów i współrzędnych.
 - **Bez zbędnych żądań:** zmiana nazwy trasy lub folderu na identyczną nie wysyła zapytania; wyszukiwarka czeka 350 ms po ostatnim znaku i wymaga min. 3 znaków.
 
 ---
@@ -55,6 +57,7 @@ src
 - Rysowanie wielokątów wtyczką **Leaflet.draw**; geometria zamieniana jest na WKT (`POLYGON(...)`) i po nadaniu nazwy zapisywana w backendzie.
 - Aktywne strefy są dołączane do zapytania o trasę (`avoid_polygons`); trasa jest przeliczana po włączeniu lub wyłączeniu strefy.
 - Punkt trasy wewnątrz aktywnej strefy jest wykrywany przed wysłaniem zapytania (`RouteGeometryService`).
+- Szczegóły zapisanej trasy ostrzegają, gdy trasa przechodzi przez aktywne strefy. Przecięcie liczy PostGIS (`GET /api/routes/{id}/intersecting-zones`, `ST_Intersects`), a lista odświeża się przy wyborze trasy oraz dodaniu, usunięciu, włączeniu lub wyłączeniu strefy.
 
 ### 3. Profil wysokości (`ElevationChartComponent`)
 - Punkty profilu (odległość od startu, wysokość) pobierane są z backendu (`GET /api/routes/{id}/elevation`), gdzie liczy je PostGIS.
@@ -71,7 +74,7 @@ src
 
 | Serwis | Kategoria | Odpowiedzialność |
 |---|---|---|
-| `RouteStateService` | Stan | Lista zapisanych tras, wybrana trasa, profil wysokości, zapis, zmiana nazwy i folderu, eksport |
+| `RouteStateService` | Stan | Lista zapisanych tras, wybrana trasa, profil wysokości, strefy na trasie, zapis, zmiana nazwy i folderu, eksport |
 | `RoutePlanningStateService` | Stan | Punkty trasy, tryb mapy, szkic trasy, zapytania do ORS (trasa i pętla) |
 | `FolderStateService` | Stan | Lista folderów, tworzenie, zmiana nazwy, usuwanie (zdarzenie `folderDeleted$` dla tras) |
 | `AvoidanceZoneStateService` | Stan | Strefy omijane, ich aktywność i szkic rysowanej strefy |

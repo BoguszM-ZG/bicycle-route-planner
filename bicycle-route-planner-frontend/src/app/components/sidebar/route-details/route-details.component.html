@@ -21,6 +21,13 @@
       </div>
     }
 
+    @if (intersectingZoneNames()) {
+      <p class="zone-warning">
+        <span aria-hidden="true">⚠️</span>
+        {{ 'SIDEBAR.ROUTE_DETAILS_CROSSES_ZONES' | translate }} {{ intersectingZoneNames() }}
+      </p>
+    }
+
     <div class="detail-row stats-row">
       <div class="stat-box gain">
         <span class="stat-icon" aria-hidden="true">⬆️</span>

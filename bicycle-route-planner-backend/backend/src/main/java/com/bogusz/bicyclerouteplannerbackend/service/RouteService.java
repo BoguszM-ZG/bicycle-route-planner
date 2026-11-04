@@ -8,6 +8,7 @@ import com.bogusz.bicyclerouteplannerbackend.mapper.RouteMapper;
 import com.bogusz.bicyclerouteplannerbackend.model.Folder;
 import com.bogusz.bicyclerouteplannerbackend.model.Route;
 import com.bogusz.bicyclerouteplannerbackend.model.User;
+import com.bogusz.bicyclerouteplannerbackend.repository.AvoidanceZoneRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.FolderRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.RouteRepository;
 import com.bogusz.bicyclerouteplannerbackend.repository.UserRepository;
@@ -30,6 +31,7 @@ public class RouteService {
     private final UserRepository userRepository;
     private final GpxExportService gpxExportService;
     private final FolderRepository folderRepository;
+    private final AvoidanceZoneRepository avoidanceZoneRepository;
     private final RouteMapper routeMapper;
     private final ElevationProfileDownsampler elevationProfileDownsampler;
 
@@ -86,6 +88,12 @@ public class RouteService {
         getValidRouteForUser(routeId, userId);
         List<ElevationPointDto> elevationProfile = routeRepository.findElevationProfileById(routeId);
         return elevationProfileDownsampler.downsample(elevationProfile, MAX_ELEVATION_PROFILE_POINTS);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> getIntersectingZoneIds(Long routeId, Long userId) {
+        getValidRouteForUser(routeId, userId);
+        return avoidanceZoneRepository.findIdsIntersectingRoute(routeId, userId);
     }
 
     @Transactional
