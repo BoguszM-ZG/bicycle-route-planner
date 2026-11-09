@@ -109,6 +109,42 @@ class RouteIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldReturn400WhenSavingRouteGeometryWithoutElevation() throws Exception {
+        // Given
+        CreateRouteRequestDto request = new CreateRouteRequestDto(
+                TEST_ROUTE_NAME, TEST_ROUTE_TYPE, TEST_TARGET_DISTANCE, TEST_DISTANCE_METERS,
+                TEST_ELEVATION_GAIN, TEST_ELEVATION_LOSS, VALID_WKT_POINT, "LINESTRING(15.0 50.0, 15.1 50.1)", null
+        );
+
+        // When
+        mockMvc.perform(post(ROUTES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                // Then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.routeGeom").exists());
+    }
+
+    @Test
+    void shouldReturn400WhenSavingStartPointWithElevation() throws Exception {
+        // Given
+        CreateRouteRequestDto request = new CreateRouteRequestDto(
+                TEST_ROUTE_NAME, TEST_ROUTE_TYPE, TEST_TARGET_DISTANCE, TEST_DISTANCE_METERS,
+                TEST_ELEVATION_GAIN, TEST_ELEVATION_LOSS, "POINT Z(15.0 50.0 100.0)", VALID_WKT_LINESTRING, null
+        );
+
+        // When
+        mockMvc.perform(post(ROUTES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                // Then
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.startPoint").exists());
+    }
+
+    @Test
     void shouldGetAllRoutesForUser() throws Exception {
         // Given
         createRouteAndGetId();

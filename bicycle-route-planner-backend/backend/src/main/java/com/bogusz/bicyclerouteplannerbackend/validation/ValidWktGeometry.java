@@ -19,6 +19,8 @@ public @interface ValidWktGeometry {
 
     GeometryType expectedType();
 
+    boolean withZ() default false;
+
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};

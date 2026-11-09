@@ -87,6 +87,21 @@ class AvoidanceZoneIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldReturnBadRequestWhenCreatingZoneWithElevation() throws Exception {
+        // Given
+        CreateAvoidanceZoneRequestDto request = new CreateAvoidanceZoneRequestDto(TEST_ZONE_NAME,
+                "POLYGON Z((19.945 50.064 1, 19.946 50.064 1, 19.946 50.065 1, 19.945 50.065 1, 19.945 50.064 1))");
+
+        // When & Then
+        mockMvc.perform(post(AVOIDANCE_ZONES_URL)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.zoneGeom").exists());
+    }
+
+    @Test
     void shouldRejectZoneWiderThan20Km() throws Exception {
         // When & Then
         createZone(TOO_WIDE_WKT_POLYGON)

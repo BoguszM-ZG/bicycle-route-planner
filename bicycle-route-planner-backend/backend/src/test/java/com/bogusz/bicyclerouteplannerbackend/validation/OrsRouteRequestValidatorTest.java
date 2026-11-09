@@ -55,10 +55,11 @@ class OrsRouteRequestValidatorTest {
     }
 
     @Test
-    void shouldAcceptValidDirectRouteWithThreeDimensions() {
+    void shouldRejectCoordinateWithElevation() {
         // GIVEN
+        mockViolationBuilder();
         OrsRouteRequestDto dto = new OrsRouteRequestDto(
-                List.of(List.of(19.0, 52.0, 100.0), List.of(19.1, 52.1, 120.0)),
+                List.of(List.of(19.0, 52.0, 100.0), List.of(19.1, 52.1)),
                 true, true, null
         );
 
@@ -66,7 +67,7 @@ class OrsRouteRequestValidatorTest {
         boolean isValid = validator.isValid(dto, context);
 
         // THEN
-        assertThat(isValid).isTrue();
+        assertThat(isValid).isFalse();
     }
 
     @Test

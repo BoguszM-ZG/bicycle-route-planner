@@ -263,7 +263,7 @@ class RouteControllerTest {
                 100.0,
                 50.0,
                 START_POINT,
-                "LINESTRING(19.945 50.0647, 19.946 50.0648)",
+                "LINESTRING Z(19.945 50.0647 210.0, 19.946 50.0648 212.0)",
                 null
         );
 
@@ -289,7 +289,7 @@ class RouteControllerTest {
                 100.0,
                 50.0,
                 START_POINT,
-                "LINESTRING(19.945 100.0, 19.946 50.0648)",
+                "LINESTRING Z(19.945 100.0 210.0, 19.946 50.0648 212.0)",
                 null
         );
 

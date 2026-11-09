@@ -4,9 +4,6 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
@@ -18,10 +15,12 @@ public class WktGeometryValidator implements ConstraintValidator<ValidWktGeometr
     private static final double MAX_LATITUDE = 90.0;
 
     private GeometryType expectedType;
+    private boolean withZ;
 
     @Override
     public void initialize(ValidWktGeometry constraintAnnotation) {
         this.expectedType = constraintAnnotation.expectedType();
+        this.withZ = constraintAnnotation.withZ();
     }
 
     @Override
@@ -59,9 +58,9 @@ public class WktGeometryValidator implements ConstraintValidator<ValidWktGeometr
 
     private boolean matchesExpectedType(Geometry geometry) {
         return switch (expectedType) {
-            case POINT -> geometry instanceof Point;
-            case LINE_STRING -> geometry instanceof LineString;
-            case POLYGON -> geometry instanceof Polygon;
+            case POINT -> "Point".equals(geometry.getGeometryType());
+            case LINE_STRING -> "LineString".equals(geometry.getGeometryType());
+            case POLYGON -> "Polygon".equals(geometry.getGeometryType());
         };
     }
 
@@ -81,6 +80,14 @@ public class WktGeometryValidator implements ConstraintValidator<ValidWktGeometr
             if (coord.getY() < MIN_LATITUDE || coord.getY() > MAX_LATITUDE) {
                 return buildViolation(context, String.format(
                         "Latitude %f is out of bounds [%.1f, %.1f]", coord.getY(), MIN_LATITUDE, MAX_LATITUDE));
+            }
+
+            if (withZ && !Double.isFinite(coord.getZ())) {
+                return buildViolation(context, "Every coordinate must contain a finite elevation (Z)");
+            }
+
+            if (!withZ && !Double.isNaN(coord.getZ())) {
+                return buildViolation(context, "Geometry must not contain elevation (Z)");
             }
         }
         return true;

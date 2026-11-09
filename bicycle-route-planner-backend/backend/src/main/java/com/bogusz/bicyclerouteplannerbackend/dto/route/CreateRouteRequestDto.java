@@ -37,7 +37,7 @@ public record CreateRouteRequestDto(
         String startPoint,
 
         @NotBlank(message = "Route geometry is required")
-        @ValidWktGeometry(expectedType = GeometryType.LINE_STRING)
+        @ValidWktGeometry(expectedType = GeometryType.LINE_STRING, withZ = true)
         String routeGeom,
 
         Long folderId

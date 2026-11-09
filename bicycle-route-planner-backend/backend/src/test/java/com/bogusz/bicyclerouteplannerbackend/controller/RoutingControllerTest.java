@@ -25,6 +25,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = RoutingController.class)
@@ -184,6 +185,20 @@ class RoutingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturn400WhenCoordinateContainsElevation() throws Exception {
+        // Given
+        OrsRouteRequestDto requestDto = new OrsRouteRequestDto(
+                List.of(List.of(13.4, 52.5, 100.0), List.of(13.5, 52.6)), true, true, null);
+
+        // When & Then
+        mockMvc.perform(post(DIRECTIONS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.validationErrors.coordinates").exists());
     }
 
     @Test

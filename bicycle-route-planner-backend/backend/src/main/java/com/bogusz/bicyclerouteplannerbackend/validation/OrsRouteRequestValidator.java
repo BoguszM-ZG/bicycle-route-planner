@@ -13,8 +13,7 @@ public class OrsRouteRequestValidator implements ConstraintValidator<ValidOrsRou
     private static final double MAX_LONGITUDE = 180.0;
     private static final double MIN_LATITUDE = -90.0;
     private static final double MAX_LATITUDE = 90.0;
-    private static final int MIN_COORDINATE_DIMENSIONS = 2;
-    private static final int MAX_COORDINATE_DIMENSIONS = 3;
+    private static final int COORDINATE_DIMENSIONS = 2;
 
     @Override
     public boolean isValid(OrsRouteRequestDto dto, ConstraintValidatorContext context) {
@@ -57,9 +56,9 @@ public class OrsRouteRequestValidator implements ConstraintValidator<ValidOrsRou
     }
 
     private boolean isValidCoordinatePoint(List<Double> point, int index, ConstraintValidatorContext context) {
-        if (point == null || point.size() < MIN_COORDINATE_DIMENSIONS || point.size() > MAX_COORDINATE_DIMENSIONS) {
+        if (point == null || point.size() != COORDINATE_DIMENSIONS) {
             return buildCoordinateViolation(context,
-                    String.format("Coordinate at index %d must contain [longitude, latitude] or [longitude, latitude, elevation]", index));
+                    String.format("Coordinate at index %d must contain exactly [longitude, latitude]", index));
         }
 
         Double lon = point.get(0);
