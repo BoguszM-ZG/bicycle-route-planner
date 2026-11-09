@@ -59,7 +59,13 @@ export class FolderStateService {
       });
   }
 
-  public createFolder(request: FolderRequestDto): void {
+  public createFolder(name: string): void {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const request: FolderRequestDto = { name: trimmed };
     this.folderService
       .createFolder(request)
       .subscribe({

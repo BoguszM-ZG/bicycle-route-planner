@@ -8,6 +8,7 @@ import {
   RouteSummaryDto,
   CreateRouteRequestDto,
   ElevationPointDto,
+  RouteDraft,
   RouteExportFormat,
 } from '../models/route.model';
 import { RouteService } from './route.service';
@@ -218,10 +219,27 @@ export class RouteStateService {
     });
   }
 
-  public createRoute(dto: CreateRouteRequestDto, onSuccess?: () => void): void {
+  public createRoute(
+    draft: RouteDraft,
+    name: string,
+    folderId: number | null,
+    onSuccess?: () => void,
+  ): void {
     if (this._isSaving()) {
       return;
     }
+
+    const dto: CreateRouteRequestDto = {
+      name: name.trim(),
+      routeType: draft.routeType,
+      targetDistance: draft.targetDistance,
+      distanceMeters: draft.distanceMeters,
+      elevationGain: draft.elevationGain,
+      elevationLoss: draft.elevationLoss,
+      startPoint: draft.startPoint,
+      routeGeom: draft.geometryWkt,
+      folderId,
+    };
 
     this._isSaving.set(true);
 

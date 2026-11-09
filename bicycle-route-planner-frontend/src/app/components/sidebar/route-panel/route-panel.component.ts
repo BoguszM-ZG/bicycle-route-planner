@@ -49,7 +49,7 @@ export class RoutePanelComponent {
       return;
     }
 
-    this.folderStateService.createFolder({ name: this.newFolderName.value.trim() });
+    this.folderStateService.createFolder(this.newFolderName.value);
     this.toggleCreateFolder();
   }
 }

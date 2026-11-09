@@ -10,7 +10,7 @@ import {
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { RouteStateService } from '../../services/route-state.service';
 import { NotificationService } from '../../services/notification.service';
-import { RouteDraft, CreateRouteRequestDto } from '../../models/route.model';
+import { RouteDraft } from '../../models/route.model';
 import { FolderStateService } from '../../services/folder-state.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { LoggerService } from '../../services/logger.service';
@@ -83,18 +83,11 @@ export class SaveRouteModalComponent {
       return;
     }
 
-    const dto: CreateRouteRequestDto = {
-      name: this.routeNameControl.value.trim(),
-      routeType: this.routeDataToSave.routeType,
-      targetDistance: this.routeDataToSave.targetDistance,
-      distanceMeters: this.routeDataToSave.distanceMeters,
-      elevationGain: this.routeDataToSave.elevationGain,
-      elevationLoss: this.routeDataToSave.elevationLoss,
-      startPoint: this.routeDataToSave.startPoint,
-      routeGeom: this.routeDataToSave.geometryWkt,
-      folderId: this.selectedFolderControl.value,
-    };
-
-    this.routeStateService.createRoute(dto, () => this.close());
+    this.routeStateService.createRoute(
+      this.routeDataToSave,
+      this.routeNameControl.value,
+      this.selectedFolderControl.value,
+      () => this.close(),
+    );
   }
 }
